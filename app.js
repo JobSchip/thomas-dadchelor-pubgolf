@@ -81,10 +81,12 @@ async function flush(){
 async function poll(){
  if(polling||flushing)return;polling=true;
  try{
-  const response=await fetch("/api/state?room="+encodeURIComponent(room),{cache:"no-store"});
+  const response=await fetch("/api/state?room="+encodeURIComponent(room)+"&since="+encodeURIComponent(state.revision||0),
+   {cache:"no-store",signal:AbortSignal.timeout(7500)});
   if(!response.ok)throw Error("Geen verbinding");
   const remote=await response.json();const oldRevision=state.revision;
   if(remote.epoch!==RESET_EPOCH){network=false;notify("Ververs de app om verder te spelen");return}
+  if(remote.unchanged){network=true;if(queue.length)flush();return}
   queue.forEach(a=>apply(remote,a));state=remote;save();network=true;
   if(remote.revision!==oldRevision&&["board","choose","detail"].includes(view)){
    const list=el("screen")?.querySelector(".leader-list, .player-list"),offset=list?.scrollTop||0;
@@ -101,19 +103,31 @@ function avatar(p,extra=""){
  const name=escapeHtml(p.name?.slice(0,1)?.toUpperCase()||"?");
  return `<span class="avatar ${extra}">${p.avatar?`<img alt="" src="${p.avatar}">`:name}</span>`;
 }
-function header(){
+function salmariAvailable(){
  const p=me();
- const quick=el("salmari-quick"),count=el("salmari-count");
- if(quick){quick.disabled=!p;quick.setAttribute("aria-label",p?"Salmari, "+(p.salmari||0)+" shotjes geteld":"Registreer eerst een golfer")}
+ if(!p||Number.isInteger(p.scores?.[5]))return false;
+ const started=p.scores?.some(n=>Number.isInteger(n))||
+  localStorage.getItem("golf-firstdrink-"+room+"-"+myId)==="1";
+ return Boolean(started);
+}
+function header(){
+ const p=me(),quick=el("salmari-quick"),count=el("salmari-count");
+ const allowed=salmariAvailable();
+ if(quick){
+   quick.hidden=!allowed;
+   quick.disabled=!allowed;
+   quick.setAttribute("aria-label",allowed?"Salmari, "+(p.salmari||0)+" shotjes geteld":"Salmari nog niet beschikbaar");
+ }
  if(count)count.textContent=String(p?.salmari||0);
  status();
 }
 function setView(next){
  if(aceTimer){clearTimeout(aceTimer);aceTimer=null}
+ if(next==="preview"&&me())localStorage.setItem("golf-firstdrink-"+room+"-"+myId,"1");
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
  const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
- setTimeout(()=>rainIcons(kind,next==="ace"?75:next==="preview"?30:next==="board"?24:18),70);
+ setTimeout(()=>rainIcons(kind,next==="ace"?56:next==="preview"?22:next==="board"?16:14),120);
 }
 function nextHole(){
  const p=me();if(!p){setView("choose");return}
@@ -443,7 +457,9 @@ async function avatarFile(file){
 el("photo-input").addEventListener("change",e=>avatarFile(e.target.files?.[0]));
 
 el("salmari-quick").addEventListener("click",()=>{
- const p=me();if(!p)return notify("Kies eerst je profiel");
+ const p=me();
+ if(!salmariAvailable())return;
+ if(!p)return notify("Kies eerst je profiel");
  if((p.salmari||0)>=30)return notify("Maximum bereikt");
  update("setSalmari",{playerId:myId,value:(p.salmari||0)+1},true);
  header();
@@ -557,7 +573,8 @@ if(state.epoch!==RESET_EPOCH){
  queue=[];myId="";localStorage.removeItem(meKey);save();
 }
 render();
-if(me())nextHole();else setTimeout(()=>rainIcons("welcome",24),180);
-poll();setInterval(poll,3500);
+if(me())nextHole();else setTimeout(()=>rainIcons("welcome",15),450);
+poll();setInterval(()=>{if(!document.hidden)poll()},5500);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()});
 if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
 })();
