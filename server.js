@@ -2,6 +2,7 @@
 const http=require('node:http');
 const fs=require('node:fs');
 const path=require('node:path');
+const zlib=require('node:zlib');
 const {URL}=require('node:url');
 const root=__dirname;
 const dataDir=process.env.DATA_DIR||path.join(root,'data');
@@ -33,7 +34,25 @@ function roomFile(room){return path.join(dataDir,room+'.json')}
 function load(room){try{const s=JSON.parse(fs.readFileSync(roomFile(room),'utf8'));if(!Array.isArray(s.players)|| (room===resetRoom&&s.epoch!==resetEpoch))return initial();s.seenActions=Array.isArray(s.seenActions)?s.seenActions:[];return s}catch{return initial()}}
 function save(room,s){const dest=roomFile(room);const tmp=dest+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s));fs.renameSync(tmp,dest)}
 function publicState(s){return {players:s.players,revision:s.revision,updatedAt:s.updatedAt,epoch:resetEpoch}}
-function json(res,code,obj){res.writeHead(code,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(obj))}
+function json(res,code,obj,req){
+ const raw=Buffer.from(JSON.stringify(obj));
+ const headers={'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','vary':'Accept-Encoding'};
+ const accept=String(req?.headers?.['accept-encoding']||'');
+ if(raw.length>2048&&accept.includes('br')){headers['content-encoding']='br';res.writeHead(code,headers);return res.end(zlib.brotliCompressSync(raw,{params:{[zlib.constants.BROTLI_PARAM_QUALITY]:3}}))}
+ if(raw.length>2048&&accept.includes('gzip')){headers['content-encoding']='gzip';res.writeHead(code,headers);return res.end(zlib.gzipSync(raw,{level:4}))}
+ res.writeHead(code,headers);return res.end(raw);
+}
+const assetCache=new Map();
+function staticAsset(file){
+ const stat=fs.statSync(file),record=assetCache.get(file);
+ if(record&&record.mtimeMs===stat.mtimeMs&&record.size===stat.size)return record;
+ const raw=fs.readFileSync(file);
+ const compressible=/\.(html|css|js|webmanifest|json)$/.test(file);
+ const entry={mtimeMs:stat.mtimeMs,size:stat.size,etag:'W/"'+stat.size+'-'+Math.floor(stat.mtimeMs)+'"',raw,
+  br:compressible?zlib.brotliCompressSync(raw,{params:{[zlib.constants.BROTLI_PARAM_QUALITY]:4}}):null,
+  gzip:compressible?zlib.gzipSync(raw,{level:5}):null};
+ assetCache.set(file,entry);return entry;
+}
 function validId(id){return typeof id==='string'&&id.length>0&&id.length<=80&&/^[\w-]+$/.test(id)}
 function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeldige wijziging';if(s.seenActions.includes(a.id))return null;
  if(a.type==='addPlayer'){
@@ -68,17 +87,41 @@ function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeld
 }
 const server=http.createServer((req,res)=>{
   let url;try{url=new URL(req.url,'http://localhost')}catch{return json(res,400,{error:'Ongeldige URL'})}
-  if(url.pathname==='/api/state'&&req.method==='GET'){return json(res,200,publicState(load(roomName(url))))}
+  if(url.pathname==='/api/state'&&req.method==='GET'){
+    const current=load(roomName(url));
+    const sinceRaw=url.searchParams.get('since');
+    if(sinceRaw!==null&&/^\d+$/.test(sinceRaw)&&Number(sinceRaw)===current.revision&&current.epoch===resetEpoch){
+      return json(res,200,{unchanged:true,revision:current.revision,epoch:resetEpoch},req);
+    }
+    return json(res,200,publicState(current),req);
+  }
   if(url.pathname==='/api/action'&&req.method==='POST'){
     let body='',oversize=false;
     req.on('data',chunk=>{body+=chunk;if(body.length>110000){oversize=true;req.destroy()}});
-    req.on('end',()=>{if(oversize)return json(res,413,{error:'Te groot'});let action;try{action=JSON.parse(body)}catch{return json(res,400,{error:'Ongeldige JSON'})}if(action.epoch!==resetEpoch)return json(res,409,{error:'Laad de nieuwe app-versie opnieuw'});const room=roomName(url),s=load(room);const err=act(s,action);if(err)return json(res,400,{error:err});try{save(room,s)}catch(e){console.error(e);return json(res,500,{error:'Opslaan mislukt'})}return json(res,200,publicState(s))});return;
+    req.on('end',()=>{if(oversize)return json(res,413,{error:'Te groot'});let action;try{action=JSON.parse(body)}catch{return json(res,400,{error:'Ongeldige JSON'})}if(action.epoch!==resetEpoch)return json(res,409,{error:'Laad de nieuwe app-versie opnieuw'});const room=roomName(url),s=load(room);const err=act(s,action);if(err)return json(res,400,{error:err});try{save(room,s)}catch(e){console.error(e);return json(res,500,{error:'Opslaan mislukt'})}return json(res,200,publicState(s),req)});return;
   }
   if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Methode niet toegestaan'});
   const pathname=decodeURIComponent(url.pathname);const requested=pathname==='/'?'index.html':pathname.replace(/^\/+/, '');const file=path.resolve(root,requested);
   if(!file.startsWith(root+path.sep)||(file===dataDir||file.startsWith(dataDir+path.sep))||path.basename(file).startsWith('.')||!fs.existsSync(file)||!fs.statSync(file).isFile())return json(res,404,{error:'Niet gevonden'});
-  res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':file.endsWith('index.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
-  if(req.method==='HEAD')return res.end();fs.createReadStream(file).pipe(res);
+  const asset=staticAsset(file);
+  const isDocument=file.endsWith('index.html')||file.endsWith('sw.js');
+  const versioned=url.searchParams.has('v');
+  const headers={
+   'Content-Type':types[path.extname(file)]||'application/octet-stream',
+   'Cache-Control':isDocument?'no-cache':versioned?'public, max-age=31536000, immutable':'public, max-age=3600',
+   'X-Content-Type-Options':'nosniff',
+   'ETag':asset.etag,
+   'Vary':'Accept-Encoding'
+  };
+  if(req.headers['if-none-match']===asset.etag){res.writeHead(304,headers);return res.end()}
+  const accept=String(req.headers['accept-encoding']||'');
+  let output=asset.raw;
+  if(asset.br&&accept.includes('br')){headers['Content-Encoding']='br';output=asset.br}
+  else if(asset.gzip&&accept.includes('gzip')){headers['Content-Encoding']='gzip';output=asset.gzip}
+  headers['Content-Length']=output.length;
+  res.writeHead(200,headers);
+  if(req.method==='HEAD')return res.end();
+  return res.end(output);
 });
 if(require.main===module)server.listen(port,'0.0.0.0',()=>console.log(`Thomas' Pub Golf live at http://localhost:${port}`));
 module.exports={server,act,initial,publicState};
