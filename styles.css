@@ -137,3 +137,62 @@ p{line-height:1.45}
 @media(max-height:760px){.page{padding-top:15px}.hero-photo{max-height:250px}.drink-frame{min-height:120px;max-height:185px}.beer-svg{height:165px}.counter strong{font-size:73px}.counter button{width:52px;height:52px}.progress{margin-bottom:16px}.leader-list{max-height:48dvh}.mood{min-height:115px}.mood span{font-size:45px}}
 @media(max-width:355px){.page{padding-left:17px;padding-right:17px}.brand{font-size:10px}.venue{font-size:31px}.profile-switch{font-size:11px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+
+/* Universal score shortcut, discreet across all app screens */
+.topbar{padding:12px 13px;gap:7px}
+.brand{font-size:11px;letter-spacing:.07em;gap:5px}
+.brand-mark{font-size:19px}
+.top-actions{gap:6px}
+.salmari-quick{display:inline-flex;align-items:center;gap:5px;height:36px;padding:5px 11px;border:1px solid #b7d5c2;border-radius:999px;background:#e7f3e3;color:#23523c;font-weight:850;font-size:15px;white-space:nowrap;transition:transform .17s,background .17s}
+.salmari-quick span{font-size:13px;font-variant-numeric:tabular-nums}
+.salmari-quick:active{transform:scale(.88);background:#c8eabc}
+.salmari-quick:disabled{opacity:.45;filter:saturate(.45)}
+.profile-switch{gap:5px;min-height:36px;padding:4px 4px 4px 10px;font-size:11px}
+#header-avatar{width:26px;height:26px}
+.menu-button{width:30px;padding:4px}
+@media(max-width:390px){
+ .topbar{padding:10px 9px}
+ .brand{font-size:10px;gap:4px}
+ .brand-mark{font-size:17px}
+ .top-actions{gap:4px}
+ .salmari-quick{padding:4px 7px;font-size:13px;height:34px}
+ .profile-switch{font-size:10px;padding:4px 4px 4px 7px}
+ .menu-button{width:28px}
+}
+@media(max-width:338px){
+ .brand{font-size:9px}
+ .salmari-quick{gap:2px;padding-inline:6px}
+ .menu-button{width:24px}
+}
+
+/* The special Hole-in-One celebration screen */
+.page-ace{background:radial-gradient(circle at 50% 45%,#397b52 0%,#0f4234 45%,#082a24 95%);color:#fff;overflow:hidden;min-height:calc(100dvh - 70px);padding:0;animation:aceShake .8s ease both}
+.ace-wrap{position:relative;isolation:isolate;overflow:hidden;align-items:center;text-align:center;padding:25px 20px max(22px,env(safe-area-inset-bottom));width:100%}
+.ace-wrap::before{content:"";position:absolute;top:24%;left:50%;width:390px;height:390px;transform:translate(-50%,-50%);border:2px solid #e8db92aa;border-radius:50%;box-shadow:0 0 0 50px #fff1,0 0 0 100px #fff1,0 0 0 155px #fff1;z-index:-1;animation:aceRings 2.5s ease-in-out infinite}
+.ace-wrap::after{content:"✦    ★    ✧    ✦    ★";position:absolute;left:-30%;top:41%;font-size:31px;letter-spacing:36px;color:#eed276;transform:rotate(-13deg);animation:aceStars 2.5s linear infinite;z-index:-1;pointer-events:none}
+.ace-overline{font-size:12px;font-weight:850;letter-spacing:.2em;color:#f2d389;margin-bottom:5px}
+.ace-ball{font-size:85px;line-height:1.1;filter:drop-shadow(0px 18px 18px #0003);margin-top:15px;animation:aceBall .85s cubic-bezier(.15,.8,.26,1.3) infinite alternate}
+.ace-small{font-size:13px;letter-spacing:.24em;color:#f5f2d7;font-weight:900;margin:20px 0 4px}
+.ace-big{font-weight:1000;font-size:clamp(70px,18vw,110px);color:#f5d77f;letter-spacing:-.105em;line-height:.84;margin:10px 0 14px;text-shadow:0 5px 0 #bb8b3d50,0 15px 30px #041b1777;animation:aceType .85s cubic-bezier(.1,.7,.26,1.35) both}
+.ace-big span{color:#fff}
+.ace-wow{font-weight:1000;font-size:clamp(30px,9vw,46px);letter-spacing:-.045em;margin:10px 0 0;color:#fff;animation:aceWow .65s .5s both}
+.ace-copy{font-size:17px;color:#eaf4e8;margin:15px 0 26px}
+.ace-cta{background:#f3d992;color:#174030;box-shadow:0 10px 30px #0003}
+.ace-cta:active{background:#f8e6b6}
+@keyframes aceShake{0%{transform:translateX(0) rotate(0)}20%{transform:translateX(-8px) rotate(-1.2deg)}40%{transform:translateX(8px) rotate(1.3deg)}60%{transform:translateX(-5px) rotate(-.8deg)}80%{transform:translateX(3px) rotate(.5deg)}100%{transform:translateX(0) rotate(0)}}
+@keyframes aceType{0%{opacity:0;transform:translateY(80px) scale(.35) rotate(-8deg)}55%{opacity:1;transform:translateY(-8px) scale(1.12) rotate(3deg)}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+@keyframes aceWow{0%{opacity:0;transform:scale(.1) rotate(12deg)}70%{opacity:1;transform:scale(1.15) rotate(-2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes aceBall{0%{transform:translateY(1px) rotate(-9deg) scale(.95)}100%{transform:translateY(-16px) rotate(10deg) scale(1.12)}}
+@keyframes aceRings{0%{opacity:.12;scale:.75}60%{opacity:.85;scale:1.15}100%{opacity:.12;scale:1.34}}
+@keyframes aceStars{0%{transform:translate(-50px,0) rotate(-13deg);opacity:.2}50%{transform:translate(40px,-20px) rotate(10deg);opacity:1}100%{transform:translate(100px,35px) rotate(-13deg);opacity:.2}}
+@media(max-height:710px){
+ .ace-wrap{padding-top:14px}
+ .ace-ball{font-size:65px;margin-top:8px}
+ .ace-big{font-size:clamp(55px,16vw,85px)}
+ .ace-copy{margin:9px 0}
+ .ace-wow{font-size:29px}
+}
+@media(prefers-reduced-motion:reduce){
+ .page-ace,.ace-big,.ace-ball,.ace-wow,.ace-wrap::before,.ace-wrap::after{animation:none!important}
+}
