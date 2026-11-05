@@ -254,6 +254,7 @@ test('Thomas stickers maken cameo bij quizvragen, scorekaart en jackpot zonder s
  const two=player('Thomas','p1',[8,10,8,null,null,null],3,{one:'blue',two:'18'});
  const ui2=boot([two]);
  ui2.click('action','pourDrink');ui2.click('action','gotDrink');
+ ui2.click('action','plus'); // Een fluitje met 1 slag is terecht een jackpot.
  ui2.click('action','submit');
  assert.equal(ui2.view(),'board');
  assert.match(ui2.html(),/leader-sticker-peek/);
