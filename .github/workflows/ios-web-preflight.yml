@@ -1,0 +1,38 @@
+name: iOS web bundle and API preflight
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ios-app/**'
+      - 'app.js'
+      - 'index.html'
+      - 'styles.css'
+      - 'server.js'
+      - 'assets/**'
+      - '.github/workflows/ios-web-preflight.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    name: Validate Node API and Capacitor web bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify multiplayer game and CORS
+        run: npm test
+      - name: Install native JavaScript dependencies
+        run: npm install --prefix ios-app --no-audit --no-fund
+      - name: Build and validate local iPhone app assets
+        run: npm run ios:check --prefix ios-app
+      - name: Save generated local web assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: Thomas-PubGolf-iOS-web-assets
+          path: ios-app/www/
+          retention-days: 7
