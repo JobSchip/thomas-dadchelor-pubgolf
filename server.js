@@ -7,31 +7,23 @@ const root=__dirname;
 const dataDir=process.env.DATA_DIR||path.join(root,'data');
 fs.mkdirSync(dataDir,{recursive:true});
 const port=Number(process.env.PORT)||3000;
-const resetEpoch='THOMAS-NOV05-PROGRESS-RESET-3';
+const resetEpoch='THOMAS-NOV05-FULL-RESET-4';
 const resetRoom='THOMAS-OPEN';
-const resetMarker=path.join(dataDir,'.pubgolf-progress-reset-20261105-v3');
+const resetMarker=path.join(dataDir,'.pubgolf-full-reset-20261105-v4');
 if(!fs.existsSync(resetMarker)){
  const gameFile=path.join(dataDir,resetRoom+'.json');
  try{
+  let lastRevision=0;
   if(fs.existsSync(gameFile)){
-   const previous=JSON.parse(fs.readFileSync(gameFile,'utf8'));
-   if(!Array.isArray(previous.players))throw Error('Ongeldige wedstrijdgegevens');
-   const next={
-    players:previous.players.map(player=>({
-     id:player.id,name:player.name,avatar:player.avatar||'',
-     scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null
-    })),
-    revision:(Number(previous.revision)||0)+1,updatedAt:Date.now(),seenActions:[],epoch:resetEpoch
-   };
-   const temp=gameFile+'.reset-tmp';
-   fs.writeFileSync(temp,JSON.stringify(next),'utf8');
-   fs.renameSync(temp,gameFile);
-   console.info('PubGolf voortgang gereset — '+next.players.length+' profielen en profielfotos behouden; scores, Salmari en bonussen gewist');
-  }else{
-   console.info('PubGolf voortgang gereset — nog geen profielen aanwezig');
+   try{lastRevision=Number(JSON.parse(fs.readFileSync(gameFile,'utf8')).revision)||0}catch{}
   }
+  const clean={players:[],revision:lastRevision+1,updatedAt:Date.now(),seenActions:[],epoch:resetEpoch};
+  const temp=gameFile+'.full-reset-tmp';
+  fs.writeFileSync(temp,JSON.stringify(clean),'utf8');
+  fs.renameSync(temp,gameFile);
   fs.writeFileSync(resetMarker,new Date().toISOString(),'utf8');
- }catch(error){console.error('PubGolf voortgangsreset mislukt:',error.message)}
+  console.info('PubGolf volledige reset uitgevoerd — THOMAS-OPEN: 0 spelers, profielfotos, scores en bonussen');
+ }catch(error){console.error('PubGolf volledige reset mislukt:',error.message)}
 }
 
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.webp':'image/webp','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json; charset=utf-8'};
