@@ -327,3 +327,6 @@ p{line-height:1.45}
 .detail-page>.overline{max-width:calc(100% - 85px)}
 .detail-player-head{margin-top:32px}
 @media(max-width:355px){.leader-page>.display{font-size:34px}}
+
+/* Don't flash the Salmari shot before registration or after the final score. */
+.salmari-quick[hidden]{display:none!important}
