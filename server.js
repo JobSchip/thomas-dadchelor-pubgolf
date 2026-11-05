@@ -60,7 +60,7 @@ function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeld
  }else if(a.type==='setScore'){
   const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(!Number.isInteger(a.hole)||a.hole<0||a.hole>5)return 'Ongeldige hole';if(!Number.isInteger(a.value)||a.value<1||a.value>99)return 'Ongeldige score';if(Number.isInteger(p.scores[a.hole]))return 'Score is definitief en kan niet worden aangepast';p.scores[a.hole]=a.value;
  }else if(a.type==='setSalmari'){
-  const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(!Number.isInteger(a.value)||a.value<1||a.value>30)return 'Ongeldige bonus';if(a.value!==(p.salmari||0)+1)return 'Salmari kan alleen met één shot tegelijk worden opgehoogd';p.salmari=a.value;
+  const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(Number.isInteger(p.scores?.[5]))return 'De laatste ronde is afgerond';if(!Number.isInteger(a.value)||a.value<1||a.value>30)return 'Ongeldige bonus';if(a.value!==(p.salmari||0)+1)return 'Salmari kan alleen met één shot tegelijk worden opgehoogd';p.salmari=a.value;
  }else if(a.type==='setCheckin'){
   const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';
   if(!Number.isInteger(a.value)||a.value<0||a.value>3)return 'Ongeldige check-in';
