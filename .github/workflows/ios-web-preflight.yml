@@ -1,4 +1,4 @@
-name: iOS web bundle and API preflight
+name: Pub Golf web and mobile preflight
 on:
   workflow_dispatch:
   push:
@@ -8,6 +8,9 @@ on:
       - 'index.html'
       - 'styles.css'
       - 'server.js'
+      - 'tests/**'
+      - 'sw.js'
+      - 'manifest.webmanifest'
       - 'assets/**'
       - '.github/workflows/ios-web-preflight.yml'
 
