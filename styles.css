@@ -196,3 +196,93 @@ p{line-height:1.45}
 @media(prefers-reduced-motion:reduce){
  .page-ace,.ace-big,.ace-ball,.ace-wow,.ace-wrap::before,.ace-wrap::after{animation:none!important}
 }
+
+
+/* The always-visible Salmari shortcut: one big black shot, one tap */
+.salmari-quick{
+  position:fixed!important;z-index:45;right:max(10px,calc(50vw - 265px));top:49%;
+  width:78px;height:105px;transform:translateY(-50%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  padding:2px 3px 5px!important;outline-offset:3px;
+  border:1px solid #b1c8bc!important;border-radius:22px!important;
+  background:#f8fbf5!important;color:#183f31!important;
+  box-shadow:0 12px 30px #12382942,0 0 0 4px #ffffffd9!important;
+  transition:transform .14s,box-shadow .14s;overflow:visible;
+}
+.salmari-quick:active{transform:translateY(-50%) scale(.9)!important;box-shadow:0 3px 8px #12382942!important}
+.salmari-quick:disabled{opacity:.45;box-shadow:0 4px 12px #1a3d2619!important}
+.quick-shot{display:block;height:70px;width:56px}
+.quick-shot svg{display:block;width:100%;height:100%;filter:drop-shadow(0 3px 3px #0003)}
+.quick-label{font-size:11px;font-weight:900!important;letter-spacing:-.03em;line-height:1.1;color:#1a4c35;white-space:nowrap}
+.quick-count{position:absolute;right:-8px;top:-8px;display:grid;place-items:center;border-radius:50%;width:28px;height:28px;font-size:13px;font-weight:950;background:#111e19;color:#f8e5bb;border:2px solid #fff}
+@media(max-width:430px){.salmari-quick{right:10px;top:48%;width:70px;height:94px;border-radius:20px!important}.quick-shot{height:62px;width:49px}.quick-label{font-size:10px}.quick-count{width:25px;height:25px}}
+/* The next bar is its own screen. The atmosphere blurs more at every stop. */
+.bar-preview{position:relative;min-height:100%;isolation:isolate}
+.preview-venue{font-size:clamp(42px,11vw,64px);margin:10px 0 14px;letter-spacing:-.06em}
+.bar-scene{height:min(45vh,395px);min-height:245px;position:relative;overflow:hidden;border-radius:28px;background:#0d3025;margin:24px 0 14px;isolation:isolate;box-shadow:0 20px 40px #1c42262a}
+.bar-blur-bg{position:absolute;inset:-18px;width:calc(100% + 36px);height:calc(100% + 36px);object-fit:cover;filter:blur(var(--haze)) brightness(.48) saturate(1.4);transform:scale(1.08);animation:barBackgroundSway 6s ease-in-out infinite alternate}
+.bar-haze{position:absolute;inset:0;background:radial-gradient(circle at 55% 40%,#fff3 0%,#e7aa7640 30%,#091d17a0 90%);opacity:calc(.7 + var(--haze-alpha));backdrop-filter:blur(calc(var(--haze) * .42))}
+.bar-drink{position:absolute;z-index:2;inset:12px 5px 2px;display:grid;place-items:center}
+.bar-drink .beer-svg{height:min(36vh,272px);width:auto;filter:drop-shadow(0 11px 17px #0009) blur(calc(var(--haze) * .16))}
+.bar-par{position:absolute;z-index:3;bottom:17px;left:17px;border:1px solid #fffb;padding:9px 16px;color:white;background:#163b2aba;border-radius:999px;font-size:13px;font-weight:900;letter-spacing:.13em;backdrop-filter:blur(4px)}
+.preview-hint{color:#688073;font-size:14px;max-width:320px;margin:5px 4px 18px;line-height:1.4}
+.hole-page{position:relative;isolation:isolate}
+.hole-page:before{content:"";position:absolute;inset:-20px;z-index:-1;pointer-events:none;opacity:var(--haze-alpha);background:radial-gradient(circle at 75% 34%,#d5c8f1,transparent 42%),radial-gradient(circle at 4% 68%,#c8e4d0,transparent 40%);filter:blur(calc(var(--haze)*2))}
+.hole-page .drink-frame .beer-svg{filter:blur(calc(var(--haze)*.12)) drop-shadow(0 11px 12px #143b301b)}
+@keyframes barBackgroundSway{0%{transform:scale(1.05) rotate(-1deg)}100%{transform:scale(1.16) rotate(1deg)}}
+/* All the spontaneous interstitials */
+.question-page{position:relative;isolation:isolate;min-height:100%}
+.question-sub{font-size:20px;font-weight:630;letter-spacing:-.02em;color:#385b48;margin:18px 0 22px}
+.answer-stack{display:grid;gap:13px;margin:6px 0}
+.gender-answer{display:flex;align-items:center;gap:18px;padding:17px 19px;width:100%;min-height:88px;border:0;border-radius:21px;font-size:22px;font-weight:800;letter-spacing:-.035em;text-align:left}
+.gender-answer span{font-size:39px}.gender-answer b{margin-left:auto;font-size:26px}
+.gender-answer.boy{background:#d6e9ff;color:#0f4f9e}
+.gender-answer.girl{background:#ffe0ed;color:#a93c78}
+.gender-answer.rainbow{background:linear-gradient(110deg,#ffdcdf,#ffeab2,#d5ebcf,#d9e9ff,#efe2ff);color:#583f67}
+.gender-answer:active,.date-grid button:active,.name-choice button:active{transform:scale(.96)}
+.date-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:18px 0}
+.date-grid button{background:#f3f7ee;border:1px solid #dbe7d5;border-radius:17px;padding:20px 4px;min-height:95px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#214f39;transition:transform .16s}
+.date-grid strong{font-size:33px;letter-spacing:-.04em}
+.date-grid span{font-size:10px;letter-spacing:.15em;font-weight:900;color:#6d8c7c}
+.question-date .display{font-size:clamp(38px,10vw,58px)}
+/* Deliberately silly crowded Thomas-name screen */
+.question-name{background:#f6efd3;margin:-22px -24px calc(-1 * max(22px,env(safe-area-inset-bottom)));padding:24px;overflow:hidden}
+.question-name .display{position:relative;z-index:2;font-size:clamp(42px,12vw,67px);color:#192d21;text-shadow:0 2px 0 #fff7}
+.question-name .overline{position:relative;z-index:2}
+.thomas-cloud{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.thomas-cloud span{position:absolute;left:var(--x);top:var(--y);transform:rotate(var(--rotate));font-size:clamp(21px,7vw,42px);line-height:1;font-weight:1000;letter-spacing:-.08em;color:#bc8b2f44;white-space:nowrap}
+.name-choice{position:relative;z-index:2;display:grid;gap:10px;margin-top:35px}
+.name-choice button{min-height:77px;background:#fffdf1ef;color:#153c27;border:2px solid #ba9f57;border-radius:17px;font-size:clamp(23px,6.6vw,34px);font-weight:900;letter-spacing:-.04em;display:flex;align-items:center;justify-content:space-between;padding:14px 19px}
+.name-choice button:nth-child(2){transform:rotate(-2deg)}
+.name-choice button:nth-child(3){transform:rotate(2deg)}
+.name-choice button:nth-child(4){background:#f2df90}
+.quiz-result{min-height:100%;text-align:center;align-items:stretch}
+.quiz-result .display{font-size:clamp(46px,12vw,76px)}
+.quiz-result.win{background:radial-gradient(circle at 52% 49%,#f0f9d9,transparent 60%)}
+.quiz-result.loss{background:radial-gradient(circle at 52% 49%,#f8e2dc,transparent 60%)}
+.result-burst{margin:7vh auto 20px;font-size:100px;line-height:1.2;animation:emojiPop .65s cubic-bezier(.18,.88,.24,1.3)}
+.question-result-text{font-size:18px;color:#53715d;line-height:1.5;margin:25px auto}
+.impact{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:92px;letter-spacing:-.08em;font-weight:1000;line-height:1;color:#267852;animation:impactPop .6s .22s both}
+.loss .impact{color:#af5948}
+.impact small{font-size:13px;letter-spacing:.16em;margin-top:10px}
+@keyframes impactPop{0%{opacity:0;transform:translateY(30px) scale(.3)}65%{opacity:1;transform:translateY(-8px) scale(1.15)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.nominate-page .display{font-size:clamp(42px,10vw,64px)}
+.vote-list{max-height:61vh;gap:8px;padding-bottom:24px}
+.vote .chevron{font-size:18px;font-weight:900;color:#267c47}
+.rain-emoji{position:absolute;z-index:1;top:-72px;pointer-events:none;line-height:1;filter:drop-shadow(0px 5px 4px #0001);animation:emojiDrop 2.8s linear both}
+@keyframes emojiDrop{0%{opacity:0;transform:translate3d(0,-30px,0) rotate(calc(var(--spin)*-.5)) scale(.7)}8%{opacity:1}78%{opacity:1}100%{opacity:0;transform:translate3d(46px,115dvh,0) rotate(var(--spin)) scale(1.05)}}
+@media(max-height:750px){
+ .bar-scene{height:33vh;min-height:160px;margin:14px 0 10px}
+ .bar-drink .beer-svg{height:29vh}
+ .preview-venue{font-size:37px}
+ .question-sub{margin:12px 0}
+ .gender-answer{min-height:64px;padding:11px 15px;font-size:19px}
+ .gender-answer span{font-size:29px}
+ .date-grid button{min-height:75px;padding:10px 4px}
+ .name-choice{margin-top:18px;gap:6px}
+ .name-choice button{min-height:64px}
+ .result-burst{margin:3vh auto 8px;font-size:65px}
+ .impact{font-size:70px}
+}
+@media(max-width:350px){.date-grid{gap:7px}.date-grid strong{font-size:27px}.gender-answer{gap:11px;font-size:18px}}
+@media(prefers-reduced-motion:reduce){.bar-blur-bg,.rain-emoji,.impact{animation:none!important}}
