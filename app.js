@@ -445,16 +445,16 @@ function detail(){
 }
 function checkin(){
  const moods=[
-  ["😐","Vlees noch vis","Nog niet echt begonnen."],
-  ["😏","Stel je niet aan","Kan nog best een ronde bij."],
-  ["🥴","Net in de olie","Kijk, nu komen we ergens."],
-  ["🤪","Ga voor goud","Geen commentaar, chef."]
+  ["😐","Vlees nog vis","Het kan nog alle kanten op."],
+  ["🥴","Lekker in de oli","Kijk, nu wordt het gezellig."],
+  ["🤪","Poepiepapiepoe","Duidelijk verhaal, chef."],
+  ["🏆","GAA VOOR GOUUUDD","Voor die ene bonus. Uiteraard."]
  ];
  return `<div class="page-card checkin-page">
  <span class="checkin-pill">🍺 HALVERWEGE · HOLE 03</span>
  <div class="checkin-hero"><span aria-hidden="true">🪩</span>
- <h1 class="display">Hoe staat<br><i>de motor?</i></h1>
- <p>Even eerlijk, kameraad. Hoe staat ’t ervoor?</p></div>
+ <h1 class="display">Hoe ga <i>je?</i></h1>
+ <p>Even inchecken als vrienden onder elkaar</p></div>
  <div class="mood-grid">${moods.map((m,i)=>`<button class="mood mood-${i}" type="button" data-mood="${i}" aria-label="${m[1]}">
    <span class="mood-emoji" aria-hidden="true">${m[0]}</span>
    <span class="mood-copy"><strong>${m[1]}</strong><small>${m[2]}</small></span>
@@ -465,11 +465,11 @@ function checkin(){
 }
 function checkinResult(){
  const extra=checkinChoice===3;
- const lines=["Prima. We zien je bij de volgende.","Dat wilden we horen, maat.","Zo kennen we je weer.","Kijk, dát is een instelling."];
+ const lines=["Je bent er. Dat is wat telt.","Kijk, nu wordt het gezellig.","Duidelijk verhaal, chef.","GAA VOOR GOUUUDD. Kijk, dat is ambitie."];
  return `<div class="page-card result-page checkin-result ${extra?'checkin-gold':''}">
  <span class="overline">DE TUSSENSTAND · CHECK-IN</span>
  <div class="result-emoji">${extra?"🏅":"🍻"}</div>
- <h1 class="display">${extra?'Ga voor <i>goud.</i>':'Hoppakee.<br><i>Doorrr.</i>'}</h1>
+ <h1 class="display">${extra?'Goed gedaan,<br><i>maat!</i>':'Hoppakee.<br><i>Doorrr.</i>'}</h1>
  <p class="result-copy">${lines[checkinChoice]||lines[0]}</p>
  <div class="checkin-reward">${extra?'<strong>−1</strong><span>SLAG CADEAU</span>':'<strong>✓</strong><span>CHECK-IN BINNEN</span>'}</div>
  <div class="grow"></div><button class="cta" data-action="continue">Volgende kroeg <span>→</span></button></div>`;
