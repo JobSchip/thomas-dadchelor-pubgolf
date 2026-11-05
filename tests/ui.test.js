@@ -79,7 +79,9 @@ test('dronken-check-in gebruikt de nieuwe vrienden-copy en bewaart optie 4 als b
  const a=player('Alec','p1',[8,10,8,null,null,null],null,{one:'blue',two:'18'});
  const ui=boot([a]);
  assert.equal(ui.view(),'checkin');
- for(const label of ['Vlees noch vis','Stel je niet aan','Net in de olie','Ga voor goud'])
+ assert.match(ui.html(),/Hoe ga <i>je\?<\/i>/);
+ assert.match(ui.html(),/Even inchecken als vrienden onder elkaar/);
+ for(const label of ['Vlees nog vis','Lekker in de oli','Poepiepapiepoe','GAA VOOR GOUUUDD'])
   assert.ok(ui.html().includes(label),label+' ontbreekt');
  ui.click('mood','3');
  assert.equal(ui.view(),'checkinResult');
