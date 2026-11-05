@@ -81,7 +81,9 @@ test('dronken-check-in gebruikt de nieuwe vrienden-copy en bewaart optie 4 als b
  assert.equal(ui.view(),'checkin');
  assert.match(ui.html(),/Hoe ga <i>je\?<\/i>/);
  assert.match(ui.html(),/Even inchecken als vrienden onder elkaar/);
- for(const label of ['Vlees nog vis','Lekker in de oli','Poepiepapiepoe','GAA VOOR GOUUUDD'])
+ assert.equal((ui.html().match(/class="thomas-sticker sticker-[0-7] mood-sticker"/g)||[]).length,4,'vier echte stickers, geen smileys');
+ assert.doesNotMatch(ui.html(),/mood-emoji/);
+  for(const label of ['Vlees nog vis','Lekker in de oli','Poepiepapiepoe','GAA VOOR GOUUUDD'])
   assert.ok(ui.html().includes(label),label+' ontbreekt');
  ui.click('mood','3');
  assert.equal(ui.view(),'checkinResult');
@@ -115,6 +117,7 @@ test('startpagina heeft Pre Papa. Pluim Pub Golf. zonder Haarlem Open',()=>{
  assert.equal(ui.view(),'welcome');
  assert.match(ui.html(),/Pre Papa\.<br><i>Pluim Pub Golf\.<\/i>/);
  assert.doesNotMatch(ui.html(),/HAARLEM OPEN|Golf\. Bier\.|Thomas\.<\/i>/);
+ assert.match(ui.html(),/landing-sticker/);
 });
 
 test('tap-to-pour is een aparte kroegervaring, zonder score of bonus weg te schrijven',()=>{
@@ -152,6 +155,7 @@ test('elke van de zes kroegen heeft een eigen tap-to-pour-ervaring en behoudt zi
   assert.doesNotMatch(ui.html(),/taproom-topline|taproom-bottomline|taproom-banter|taproom-nudge|taproom-glass-label/);
   assert.doesNotMatch(ui.html(),/PAR [0-9]+|DE VOLGENDE RONDE|\/ 06|THOMAS&#39; OPEN · HOLE/);
   assert.match(ui.html(),/taproom-machine/);
+  assert.match(ui.html(),/taproom-peeker/);
   assert.match(ui.html(),new RegExp('data-tap-hole="'+(i+1)+'"'));
   assert.match(ui.html(),/data-action="pourDrink"/);
  }
@@ -237,4 +241,30 @@ test('andere scores dan één in een willekeurige hole houden de normale score-f
   assert.equal(ui.view(),'board','Geen jackpot voor '+(hole+1));
   assert.equal(ui.state().players[0].scores[hole],2);
  }
+});
+
+test('Thomas stickers maken cameo bij quizvragen, scorekaart en jackpot zonder spelregels te veranderen',()=>{
+ const golfer=player('Thomas','p1',[8,10,null,null,null,null],null,{one:'blue',two:'18'});
+ const ui=boot([golfer]);
+ assert.equal(ui.view(),'preview');
+ assert.match(ui.html(),/taproom-peeker/);
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ assert.match(ui.html(),/drink-sticker/);
+ const two=player('Thomas','p1',[8,10,8,null,null,null],3,{one:'blue',two:'18'});
+ const ui2=boot([two]);
+ ui2.click('action','pourDrink');ui2.click('action','gotDrink');
+ ui2.click('action','submit');
+ assert.equal(ui2.view(),'board');
+ assert.match(ui2.html(),/leader-sticker-peek/);
+ const ace=boot([player('Thomas','p1',[8,10,8,null,null,null],3,{one:'blue',two:'18'})]);
+ ace.click('action','pourDrink');ace.click('action','gotDrink');ace.click('action','submit');
+ assert.equal(ace.view(),'ace');
+ assert.equal((ace.html().match(/class="ace-sticker-fly/g)||[]).length,4);
+});
+test('jumpscare-script wordt één keer per speler en wedstrijd geactiveerd en hindert de score niet',()=>{
+ assert.match(source,/golf-jumpscare-v1-/);
+ assert.match(source,/localStorage\.setItem\(key,"1"\)/);
+ assert.match(source,/prefers-reduced-motion: reduce/);
+ assert.match(source,/wrap\.className="thomas-jumpscare"/);
 });
