@@ -1,6 +1,6 @@
-# Thomas' Dadchelor — Pub Golf 2.0
+# Thomas' Pub Golf — Haarlem Open
 
-Mobile-first PWA in het Nederlands voor de Haarlem Open. Geen framework of npm-dependencies: Node.js 20+.
+De originele multiplayer-webapp (PWA) blijft draaien op Railway met Node.js 20+. Er staat nu ook een aparte **echte iPhone-app** met Capacitor 8 en een TestFlight-workflow in [`ios-app/`](ios-app/README.md).
 
 ## Spelerservaring
 
@@ -8,7 +8,7 @@ Mobile-first PWA in het Nederlands voor de Haarlem Open. Geen framework of npm-d
 2. Upload optioneel een eigen profielfoto. Foto's worden lokaal bijgesneden, verkleind naar 160×160 JPEG en samen met de spelersgegevens gesynchroniseerd.
 3. Bekijk één hole per scherm, stel je aantal slagen in en bevestig met één knop.
 4. **Na iedere score** verschijnt automatisch het live klassement. De leider krijgt 👑, de laatste speler 💩. Daarna verschijnt na hole 1–5 een korte verrassingsronde, met een vraag, check-in of een cadeaubonus voor een andere speler.
-5. De Salmari-knop is bovenin op elk scherm beschikbaar. Via het menu kun je scores corrigeren en je foto wijzigen.
+5. De Salmari-shotknop verschijnt vanaf het eerste drankje en verdwijnt na hole 6. Opgeslagen scores staan definitief vast. Via het menu kan je je profielfoto wijzigen; tik op een deelnemer in het klassement om de volledige scorekaart in te zien.
 
 ## Spelregels
 
@@ -37,13 +37,13 @@ Totaal PAR 43. Iedere Salmari is één slag aftrek. Er is geen tijdslimiet.
 
 ## Beveiliging en privacy
 
-Deel de wedstrijdlink alleen met deelnemers: de huidige kleinschalige party-app heeft geen accounts of rollen. Iedereen met de link kan scores aanpassen of zich als een speler selecteren. Geüploade profielfoto's staan (als data-URL's) in de serveropslag, toegankelijk voor anderen met dezelfde link. Dit is niet geschikt voor gevoelige of publieke data. Een toekomstige versie kan deelnemerscodes en server-side identiteitscontrole toevoegen.
+Deel de wedstrijdlink alleen met deelnemers: de huidige kleinschalige party-app heeft geen accounts of rollen. Spelers kunnen ingediende hole-scores niet achteraf wijzigen, maar deelnemers hebben nog geen individuele identiteitstoets en kunnen een bestaand profiel selecteren. Geüploade profielfoto's staan (als data-URL's) in de serveropslag, toegankelijk voor anderen met dezelfde link. Dit is niet geschikt voor gevoelige of publieke data. Een toekomstige versie kan deelnemerscodes en server-side identiteitscontrole toevoegen.
 
 ## Pub Golf 4.0 — Quizflow en dynamische UX
 
 - Per hole verschijnt eerst de volgende kroeg en het drankje, daarna 'Ik heb m'n drankje' en vervolgens de score-invoer.
 - Steeds wazigere achtergrond per nieuwe bar, vallende feesticoontjes, bonusconfetti en veel 💩/🤡 bij een score boven PAR.
-- Eén grote zwarte Salmari-shotknop op alle schermen: iedere tik telt direct als één aftrek op de score.
+- Een grote zwarte Salmari-shotknop tijdens de ronde, vanaf het eerste drankje tot aan de definitieve score van hole 6. Iedere tik telt direct als één aftrek op de score.
 - Na hole 1: gok jongen (–1), meisje (+1), alle kleuren (+2).
 - Na hole 2: Danique's uitgerekende datum (18 januari is –1; de andere 7 keuzes zijn +1).
 - Na hole 3: bestaande vier-smiley check-in, vierde antwoord levert –1 op.
@@ -51,3 +51,12 @@ Deel de wedstrijdlink alleen met deelnemers: de huidige kleinschalige party-app 
 - Na hole 5: iedere deelnemer kiest één speler die –1 slag krijgt; de keuze telt slechts eenmaal en wordt centraal opgeslagen.
 - Per vraag volgt een apart scherm met de uitslag, voordat de volgende bar in beeld komt.
 - De profielwisselknop is verwijderd, maar een gebruiker kan bij het eerste aanmelden zijn bestaande naam selecteren.
+
+## Echte iPhone-app / TestFlight
+
+De iPhone-app staat in [`ios-app/`](ios-app/README.md) en gebruikt dezelfde Railway-server en wedstrijdkamer `THOMAS-OPEN`. De Xcode-projectgeneratie, iPhone-camera/fotobibliotheek, iOS-haptics, appicoon, privacy-permissies en twee GitHub Actions-workflows zijn voorbereid:
+
+- `.github/workflows/ios-build.yml`: controleert een niet-ondertekende iOS-simulator-build (geen Apple-account vereist).
+- `.github/workflows/testflight.yml`: uploadt na expliciete GitHub Actions-start een ondertekende distributiebuild naar TestFlight (Apple Developer Team, apprecord en vier secrets vereist).
+
+De website blijft onafhankelijk functioneren en de bestanden voor de native app worden tijdens de build lokaal in de app verpakt. Zie [het stappenplan voor TestFlight](ios-app/README.md) voor de Apple-stappen en beperkingen.
