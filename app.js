@@ -14,6 +14,12 @@ q.set("room",room);
 history.replaceState(null,"",location.pathname+"?"+q.toString());
 localStorage.setItem("golf-room",room);
 const RESET_EPOCH="THOMAS-NOV05-FULL-RESET-4";
+const API_BASE=String(globalThis.__PUBGOLF_API_BASE__||"").replace(/\/+$/,"");
+const isNative=()=>globalThis.__PUBGOLF_NATIVE__===true;
+function nativeFeedback(kind="light"){
+ if(!isNative())return;
+ try{window.dispatchEvent(new CustomEvent("pubgolf:haptic",{detail:{kind}}))}catch{}
+}
 const storeKey="golf-v5-"+room,meKey="golf-me-v5-"+room,queueKey="golf-queue-v5-"+room;
 // Clear test data and profile photos saved by older app versions on this device.
 for(const prefix of ["golf-v3-","golf-v4-","golf-me-","golf-me-v4-","golf-queue-","golf-queue-v4-"]){
@@ -71,7 +77,7 @@ async function flush(){
  flushing=true;
  try{
   while(queue.length){
-   const response=await fetch("/api/action?room="+encodeURIComponent(room),{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(queue[0])});
+   const response=await fetch(API_BASE+"/api/action?room="+encodeURIComponent(room),{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(queue[0])});
    if(!response.ok){const info=await response.json().catch(()=>({}));throw Error(info.error||"Opslaan mislukt")}
    const current=await response.json();queue.shift();queue.forEach(a=>apply(current,a));state=current;save();network=true;
   }
@@ -81,7 +87,7 @@ async function flush(){
 async function poll(){
  if(polling||flushing)return;polling=true;
  try{
-  const response=await fetch("/api/state?room="+encodeURIComponent(room)+"&since="+encodeURIComponent(state.revision||0),
+  const response=await fetch(API_BASE+"/api/state?room="+encodeURIComponent(room)+"&since="+encodeURIComponent(state.revision||0),
    {cache:"no-store",signal:AbortSignal.timeout(7500)});
   if(!response.ok)throw Error("Geen verbinding");
   const remote=await response.json();const oldRevision=state.revision;
@@ -455,6 +461,8 @@ async function avatarFile(file){
  finally{URL.revokeObjectURL(url);el("photo-input").value=""}
 }
 el("photo-input").addEventListener("change",e=>avatarFile(e.target.files?.[0]));
+window.addEventListener("pubgolf:photo-selected",event=>avatarFile(event.detail?.file));
+window.addEventListener("pubgolf:photo-error",()=>notify("Foto kiezen is niet gelukt"));
 
 el("salmari-quick").addEventListener("click",()=>{
  const p=me();
@@ -464,7 +472,7 @@ el("salmari-quick").addEventListener("click",()=>{
  update("setSalmari",{playerId:myId,value:(p.salmari||0)+1},true);
  header();
  if(["board","finish"].includes(view))render();
- notify("🥃 Salmari! −1 slag");
+ nativeFeedback("medium");notify("🥃 Salmari! −1 slag");
 });
 el("menu").addEventListener("click",()=>setView("menu"));
 el("screen").addEventListener("dblclick",e=>{if(e.target.closest(".counter"))e.preventDefault()});
@@ -506,7 +514,7 @@ el("screen").addEventListener("click",e=>{
   }
   questionResult={delta,title,heading,subheading,description,emoji};
   update("answerRound",{playerId:myId,round,choice},true);
-  setView("quizResult");if(delta<0)celebrate(36);
+  setView("quizResult");nativeFeedback(delta<0?"success":"error");if(delta<0)celebrate(36);
   rainIcons(delta<0?"good":"bad",46);return;
  }
  const vote=e.target.closest("[data-nominate]");
@@ -515,7 +523,7 @@ el("screen").addEventListener("click",e=>{
   if(!p||p.nomination||!chosen)return;
   questionResult={friend:chosen.name};
   update("nominate",{playerId:myId,targetPlayerId:chosen.id},true);
-  setView("giftResult");celebrate(34);return;
+  setView("giftResult");nativeFeedback("success");celebrate(34);return;
  }
  const golfer=e.target.closest("[data-leader]");
  if(golfer){selectedPlayerId=golfer.dataset.leader;setView("detail");return;}
@@ -525,7 +533,10 @@ el("screen").addEventListener("click",e=>{
   case "welcome":setView("welcome");break;
   case "choose":setView("choose");break;
   case "create":avatarDraft="";setView("profile");break;
-  case "photo":el("photo-input").click();break;
+  case "photo":
+   if(isNative())window.dispatchEvent(new Event("pubgolf:choose-photo"));
+   else el("photo-input").click();
+   break;
   case "register":{
    const name=el("player-name")?.value.trim().replace(/\s+/g," ");
    if(!name||name.length<2)return notify("Vul je naam in");
@@ -536,14 +547,15 @@ el("screen").addEventListener("click",e=>{
    setView("rules");break;
   }
   case "rulesDone":localStorage.setItem("golf-intro-"+myId,"1");nextHole();break;
-  case "minus":strokes=Math.max(1,strokes-1);refreshCounter();break;
-  case "plus":strokes=Math.min(99,strokes+1);refreshCounter();break;
+  case "minus":strokes=Math.max(1,strokes-1);refreshCounter();nativeFeedback("light");break;
+  case "plus":strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");break;
   case "submit":{
    if(Number.isInteger(me()?.scores?.[hole])){notify("Deze score staat al vast");break}
    const under=strokes<HOLES[hole].par;
    const above=strokes>HOLES[hole].par;
    const holeInOne=hole===3&&strokes===1;
    update("setScore",{playerId:myId,hole,value:strokes},true);
+   nativeFeedback(holeInOne?"success":above?"error":"medium");
    if(holeInOne){
      setView("ace");
      setTimeout(()=>{if(view==="ace"){celebrate(110);flyBeer(9);rainIcons("ace",90)}},70);
