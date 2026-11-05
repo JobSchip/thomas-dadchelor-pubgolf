@@ -183,3 +183,47 @@ test('score twee op hole vier toont klassement, niet de hole-in-one-jackpot',()=
  assert.equal(ui.state().players[0].scores[3],2);
  assert.doesNotMatch(ui.html(),/ace-insane/);
 });
+
+test('alle zes holes geven de BOEM-jackpot bij precies één slag, met de juiste bar en het juiste drankje',()=>{
+ const venues=['Jopen',"Tierney's Irish Pub",'Proeflokaal In den Uiver','Bierlokaal de Uiver','Café De Lift','Café Studio'];
+ const drinks=['Mooie Nel IPA','Guinness','Halve liter bier','Fluitje','Brugse Zot','Vaasje'];
+ const pars=[8,10,8,1,7,9];
+ for(let hole=0;hole<6;hole++){
+  const scores=pars.map((p,i)=>i<hole?p:null);
+  const golfer=player('Thomas','p1',scores,3,{one:'blue',two:'18',four:'Thomas'},'p1');
+  const ui=boot([golfer]);
+  assert.equal(ui.view(),'preview','Hole '+(hole+1)+' moet klaarstaan');
+  ui.click('action','pourDrink');
+  ui.click('action','gotDrink');
+  assert.equal(ui.view(),'hole');
+  assert.match(ui.html(),/1 SLAG = HOLE-IN-ONE/);
+  for(let n=1;n<pars[hole];n++)ui.click('action','minus');
+  ui.click('action','submit');
+  assert.equal(ui.view(),'ace','Hole '+(hole+1)+' moet jackpot tonen');
+  assert.match(ui.html(),new RegExp('HOLE 0'+(hole+1)));
+  assert.ok(ui.html().includes(venues[hole].replace(/'/g,'&#39;')),'Juiste locatie hole '+(hole+1));
+  assert.ok(ui.html().includes(drinks[hole]),'Juiste drankje hole '+(hole+1));
+  assert.match(ui.html(),/1 SLAG · 1 SLOK/);
+  assert.match(ui.html(),/Goed gedaan, maat!/);
+  assert.equal(ui.state().players[0].scores[hole],1);
+  assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1);
+  ui.click('action','replayAce');
+  assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1,'Opnieuw afspelen mag niet opnieuw scoren');
+  ui.click('action','board');
+  assert.equal(ui.view(),'board');
+ }
+});
+
+test('andere scores dan één in een willekeurige hole houden de normale score-flow',()=>{
+ const pars=[8,10,8,1,7,9];
+ for(let hole of [0,1,2,4,5]){
+  const scores=pars.map((p,i)=>i<hole?p:null);
+  const ui=boot([player('Thomas','p1',scores,3,{one:'blue',two:'18',four:'Thomas'},'p1')]);
+  ui.click('action','pourDrink');
+  ui.click('action','gotDrink');
+  for(let i=2;i<pars[hole];i++)ui.click('action','minus');
+  ui.click('action','submit');
+  assert.equal(ui.view(),'board','Geen jackpot voor '+(hole+1));
+  assert.equal(ui.state().players[0].scores[hole],2);
+ }
+});
