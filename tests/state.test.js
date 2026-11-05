@@ -77,3 +77,15 @@ test('iOS Capacitor origin kan de gedeelde scores lezen en een preflight uitvoer
   assert.equal(originNotAllowed.headers.get('access-control-allow-origin'),null);
  }finally{await new Promise(resolve=>server.close(resolve))}
 });
+
+test('cadeau aan jezelf mag alleen als je de enige golfer bent',()=>{
+ const state=initial();
+ act(state,{id:'join1',type:'addPlayer',player:{id:'one',name:'Eerste'}});
+ act(state,{id:'join2',type:'addPlayer',player:{id:'two',name:'Tweede'}});
+ assert.match(act(state,{id:'self',type:'nominate',playerId:'one',targetPlayerId:'one'}),/andere golfer/);
+ assert.equal(state.players[0].nomination,null);
+ assert.equal(act(state,{id:'friend',type:'nominate',playerId:'one',targetPlayerId:'two'}),null);
+ const solo=initial();
+ act(solo,{id:'join-solo',type:'addPlayer',player:{id:'solo',name:'Solo'}});
+ assert.equal(act(solo,{id:'self-solo',type:'nominate',playerId:'solo',targetPlayerId:'solo'}),null);
+});
