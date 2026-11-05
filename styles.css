@@ -667,3 +667,173 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
  .leader-heading{padding-right:69px}
  .leader-heading .display{font-size:33px}
 }
+
+
+/* ======================================================
+   TAPROOM v14 — an immersive, tappable bar between holes.
+   Different on purpose from questions and score screens.
+   ====================================================== */
+.page-preview{padding:0!important;background:#081b16!important}
+.taproom{
+ --beer:#e6a12c;
+ --foam:#fff4ce;
+ position:relative;isolation:isolate;overflow:hidden;
+ min-height:calc(100dvh - 74px - env(safe-area-inset-top));
+ padding:21px clamp(18px,5vw,29px) calc(15px + env(safe-area-inset-bottom));
+ color:#f6f6eb;
+ background:radial-gradient(circle at 65% 42%,#42614572,transparent 54%),#0a2219;
+}
+.taproom-photo{position:absolute;z-index:-2;inset:-30px;overflow:hidden;pointer-events:none}
+.taproom-photo img{width:100%;height:100%;object-fit:cover;filter:blur(19px) brightness(.24) saturate(1.4);transform:scale(1.16)}
+.taproom:before{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;
+ background:
+ radial-gradient(circle at 15% 34%,#d8973130,transparent 35%),
+ linear-gradient(180deg,#071711a8 0%,#17372760 46%,#06160ed6 100%)
+}
+.taproom:after{content:"";position:absolute;z-index:-1;top:22%;right:-60px;width:190px;height:190px;
+ border:1px solid #e9bb6840;border-radius:50%;box-shadow:0 0 0 28px #ddcb6e08,0 0 0 62px #ddcb6e06;pointer-events:none}
+.taproom-topline{display:flex;justify-content:space-between;align-items:center;gap:14px;min-height:36px}
+.taproom-onair{display:inline-flex;align-items:center;gap:8px;max-width:calc(100% - 95px);
+ font-size:10px;letter-spacing:.15em;font-weight:950;color:#f0e6bc}
+.taproom-light{height:8px;width:8px;flex-shrink:0;border-radius:50%;background:#ecbf57;
+ box-shadow:0 0 0 5px #ffd6681b,0 0 15px #e8b451a8}
+.taproom-hole{font-weight:950;font-size:23px;color:#f6e5b4;font-variant-numeric:tabular-nums;letter-spacing:-.06em}
+.taproom-hole small{font-size:13px;color:#f0e0b474;letter-spacing:0}
+.taproom-heading{position:relative;margin-top:17px;max-width:calc(100% - 69px)}
+.taproom-label{font-size:10px;font-weight:900;letter-spacing:.21em;color:#d5b06c}
+.taproom-heading h1{
+ font-size:clamp(33px,9.3vw,50px);line-height:.98;letter-spacing:-.065em;
+ font-weight:950;color:#fffef0;margin:8px 0 12px;
+ text-shadow:0 3px 24px #0008;overflow-wrap:break-word
+}
+.taproom-order{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0;
+ color:#f8ebc7;font-size:15px;letter-spacing:-.025em;line-height:1.3}
+.taproom-order strong{font-weight:850}
+.taproom-order span{border:1px solid #f8e8c741;background:#f4d18c11;padding:4px 8px;
+ border-radius:8px;font-size:11px;white-space:nowrap;font-weight:750;color:#eed6a2}
+.taproom-machine-area{display:flex;flex:1;min-height:215px;flex-direction:column;align-items:center;justify-content:center}
+.taproom-nudge{font-size:10px;letter-spacing:.16em;font-weight:950;text-align:center;
+ color:#e7d89c;margin:9px auto -1px;min-height:15px}
+.taproom-machine{position:relative;display:block;flex-shrink:0;width:min(290px,79vw);
+ height:clamp(218px,35dvh,305px);border:0;padding:0;background:transparent;color:inherit;
+ cursor:pointer;isolation:isolate}
+.taproom-machine:focus-visible{outline:3px solid #ecce86;outline-offset:-8px;border-radius:30px}
+.taproom-machine:active{transform:scale(.986)}
+.taproom-tap{position:absolute;z-index:6;top:0;left:50%;transform:translateX(-50%);
+ width:104px;height:108px;pointer-events:none}
+.taproom-tap-neck{position:absolute;top:25px;left:32px;width:39px;height:74px;
+ background:linear-gradient(90deg,#262e2c,#b4b8aa 35%,#fffbe2 54%,#424c45 100%);
+ border:3px solid #3c4842;border-radius:13px 13px 8px 8px;box-shadow:5px 6px 15px #0007}
+.taproom-tap-head{position:absolute;top:18px;left:14px;width:75px;height:24px;border-radius:11px;
+ background:linear-gradient(#f7e0a6,#ba8b39 53%,#604920);border:2px solid #e3c488;
+ box-shadow:0 4px 8px #0007}
+.taproom-tap-handle{position:absolute;top:-3px;left:44px;width:16px;height:30px;
+ background:linear-gradient(90deg,#a98b66,#eed5a2,#78582f);border-radius:8px;transform-origin:bottom center}
+.taproom-tap-handle:before{content:"";position:absolute;top:-10px;left:-12px;width:40px;height:19px;
+ border-radius:12px;background:linear-gradient(#342d25,#090f0c);border:2px solid #d0bb78}
+.is-served .taproom-tap-handle{animation:tapLever .45s ease-in-out both}
+.taproom-tap-spout{position:absolute;top:75px;left:43px;width:18px;height:30px;
+ background:linear-gradient(90deg,#313b34,#d8ded3 45%,#5c6257);border-radius:0 0 7px 7px}
+.taproom-stream{position:absolute;z-index:5;left:50%;top:91px;width:9px;height:100px;
+ transform:translateX(-50%) scaleY(0);transform-origin:top center;opacity:0;
+ background:linear-gradient(90deg,#f3d89766,#f7dc91,#cd813d);border-radius:0 0 20px 20px;
+ pointer-events:none;box-shadow:0 0 9px #e6a73f75}
+.is-served .taproom-stream{animation:tapPourStream 1.3s ease-out both}
+.taproom-glass{position:absolute;z-index:4;bottom:25px;left:50%;transform:translateX(-50%);
+ width:131px;height:clamp(133px,21dvh,172px);border:5px solid #edf0e4ad;
+ border-top:7px solid #f5f6e5e8;border-bottom:8px solid #e2ecead6;
+ border-radius:8px 8px 22px 22px;overflow:hidden;
+ background:linear-gradient(115deg,#e1f5ef24 0%,#e2f4f234 16%,#ffffff04 24%,#ffffff14 80%,#ffffff40 95%);
+ box-shadow:inset 5px 0 8px #ffffff41,inset -6px 0 8px #ffffff1f,0 18px 19px #0009;
+ pointer-events:none}
+.taproom-glass:before{content:"";position:absolute;z-index:3;inset:0;pointer-events:none;
+ background:linear-gradient(90deg,#ffffff39 0%,transparent 15%,transparent 77%,#ffffff30 94%,#fff5)}
+.taproom-beer{position:absolute;z-index:1;bottom:0;left:1px;right:1px;height:0;
+ border-radius:8px 8px 10px 10px;background:linear-gradient(90deg,#91591f,var(--beer) 24%,#ffce6499 55%,var(--beer) 82%,#955f2b);
+ box-shadow:inset 7px 0 9px #ffffff22, inset -9px 0 14px #7d451a38}
+.is-served .taproom-beer{animation:tapBeerFill 1.2s cubic-bezier(.24,.72,.24,1) both}
+.taproom-beer i{position:absolute;width:4px;height:6px;border-radius:50%;background:#fff8d565;bottom:15%;left:18%;
+ animation:tapBubble 2.1s ease-in infinite;opacity:0}
+.taproom-beer i:nth-child(2){left:37%;animation-delay:.32s}
+.taproom-beer i:nth-child(3){left:66%;animation-delay:.62s}
+.taproom-beer i:nth-child(4){left:76%;animation-delay:1.04s}
+.taproom-beer i:nth-child(5){left:48%;animation-delay:1.35s}
+.taproom-foam{position:absolute;z-index:2;left:1px;right:1px;bottom:0;height:17px;
+ background:var(--foam);border-radius:55% 48% 8px 8px;opacity:0;filter:drop-shadow(0 0 3px #fff6c582)}
+.taproom-foam i{position:absolute;width:23px;height:17px;background:var(--foam);border-radius:50%;top:-8px}
+.taproom-foam i:nth-child(1){left:2%}
+.taproom-foam i:nth-child(2){left:21%;top:-11px}
+.taproom-foam i:nth-child(3){left:42%;top:-6px}
+.taproom-foam i:nth-child(4){left:59%;top:-10px}
+.taproom-foam i:nth-child(5){left:78%;top:-6px}
+.is-served .taproom-foam{animation:tapFoamRise 1.2s ease-out both}
+.taproom-glass-shine{position:absolute;z-index:4;top:9px;left:12px;bottom:14px;width:8px;
+ border-radius:99px;background:#ffffff63;filter:blur(2px)}
+.taproom-glass-label{position:absolute;z-index:5;left:50%;top:45%;transform:translate(-50%,-50%) rotate(-8deg);
+ font-size:15px;font-weight:950;letter-spacing:-.06em;line-height:.83;text-align:center;color:#fff9df8a;
+ text-shadow:0 2px 4px #0005}
+.taproom-driptray{position:absolute;left:50%;bottom:13px;transform:translateX(-50%);
+ width:184px;height:15px;background:linear-gradient(#b5b7a3,#2e3c30);
+ border-radius:50%;box-shadow:0 11px 14px #000a;pointer-events:none}
+.glass-stout{--beer:#1d150f;--foam:#ddc3aa}
+.glass-stout .taproom-beer{background:linear-gradient(90deg,#100b08,#2e1d13 38%,#1c0f0b 75%,#040405)}
+.glass-ipa{--beer:#e7a52c}
+.glass-mug{--beer:#dca037}
+.glass-flute{--beer:#f8c344;--foam:#fff2cd;width:90px;border-radius:7px 7px 17px 17px}
+.glass-chalice{--beer:#e9a33f;--foam:#fff3d8;width:151px;border-radius:21px 21px 65px 65px}
+.glass-vaasje{--beer:#e8b63c;--foam:#fff6d7;width:108px;height:clamp(125px,19dvh,156px)}
+.taproom-footer{margin-top:0;display:flex;flex-direction:column;gap:11px;flex-shrink:0}
+.taproom-banter{display:flex;align-items:center;gap:9px;min-height:43px;
+ border:1px solid #d9bb6742;background:#173b2cbc;padding:8px 13px;border-radius:15px;
+ color:#e9e7d0;box-shadow:inset 0 1px 0 #ffffff10}
+.taproom-banter>span{font-size:18px}
+.taproom-banter p{font-size:13px;line-height:1.25;font-weight:650;margin:0;letter-spacing:-.01em}
+.taproom-cta{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;min-height:72px;
+ border:1px solid #f5ffa7;background:#ddfca0;color:#183525;border-radius:19px;text-align:left;
+ box-shadow:0 9px 30px #d5fca51c;transition:transform .15s ease,background .15s}
+.taproom-cta:active{transform:scale(.978);background:#c1e985}
+.taproom-cta-icon{display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border-radius:14px;
+ background:#153a2b;color:#e8ffa9;font-size:23px;font-weight:900}
+.taproom-cta-copy{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
+.taproom-cta-copy strong{font-size:16px;font-weight:900;letter-spacing:-.03em;line-height:1.12}
+.taproom-cta-copy small{font-size:11px;color:#566d42;font-weight:750}
+.taproom-arrow{font-size:22px;display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#b8df8055}
+.taproom-bottomline{display:flex;align-items:center;justify-content:space-between;gap:10px;
+ font-size:10px;font-weight:900;letter-spacing:.1em;color:#a4baa5;padding:0 3px}
+.taproom-bottomline span:first-child{color:#f3db9c}
+@keyframes tapBeerFill{0%{height:0}30%{height:10%}100%{height:78%}}
+@keyframes tapFoamRise{0%,25%{bottom:0;opacity:0}44%{opacity:1}100%{bottom:calc(78% - 8px);opacity:1}}
+@keyframes tapPourStream{0%{opacity:0;transform:translateX(-50%) scaleY(0)}
+  12%{opacity:1;transform:translateX(-50%) scaleY(1)}
+  77%{opacity:1;transform:translateX(-50%) scaleY(1)}
+  100%{opacity:0;transform:translateX(-50%) scaleY(.15)}}
+@keyframes tapLever{0%{transform:rotate(0)}28%{transform:rotate(24deg)}78%{transform:rotate(24deg)}100%{transform:rotate(0)}}
+@keyframes tapBubble{0%{opacity:0;transform:translateY(0)}20%{opacity:.6}100%{opacity:0;transform:translateY(-46px)}}
+@media(max-height:750px){
+ .taproom{padding-top:13px;padding-bottom:calc(9px + env(safe-area-inset-bottom))}
+ .taproom-topline{min-height:26px}
+ .taproom-heading{margin-top:9px}
+ .taproom-heading h1{font-size:clamp(29px,8vw,42px);margin:5px 0 8px}
+ .taproom-machine-area{min-height:172px}
+ .taproom-machine{height:clamp(183px,31dvh,250px)}
+ .taproom-glass{height:clamp(119px,19dvh,146px);bottom:23px}
+ .taproom-tap{transform:translateX(-50%) scale(.83);transform-origin:top center}
+ .taproom-stream{top:81px;height:86px}
+ .taproom-footer{gap:6px}
+ .taproom-banter{min-height:32px;padding:5px 10px}
+ .taproom-cta{min-height:59px;padding:8px 11px}
+ .taproom-cta-icon{height:37px;width:37px}
+}
+@media(max-width:350px){
+ .taproom{padding-inline:15px}
+ .taproom-heading{max-width:calc(100% - 52px)}
+ .taproom-heading h1{font-size:30px}
+ .taproom-cta-copy strong{font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){
+ .taproom-photo img{filter:brightness(.26)}
+ .is-served .taproom-stream,.is-served .taproom-tap-handle{animation:none!important}
+ .is-served .taproom-beer{height:78%;animation:none!important}
+ .is-served .taproom-foam{bottom:calc(78% - 8px);opacity:1;animation:none!important}
+ .taproom-beer i{animation:none!important}
+}
