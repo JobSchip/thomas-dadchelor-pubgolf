@@ -82,7 +82,12 @@ async function poll(){
   const remote=await response.json();const oldRevision=state.revision;
   if(remote.epoch!==RESET_EPOCH){network=false;notify("Ververs de app om verder te spelen");return}
   queue.forEach(a=>apply(remote,a));state=remote;save();network=true;
-  if(remote.revision!==oldRevision&&["board","choose","nominate"].includes(view))render();
+  if(remote.revision!==oldRevision&&["board","choose"].includes(view)){
+   const list=el("screen")?.querySelector(".leader-list, .player-list"),offset=list?.scrollTop||0;
+   render();
+   const updated=el("screen")?.querySelector(".leader-list, .player-list");
+   if(updated)updated.scrollTop=offset;
+  }
   if(queue.length)flush();
  }catch{network=false}
  finally{polling=false;status()}
