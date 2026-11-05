@@ -118,6 +118,11 @@ function svgDrink(kind){
  }
  return start+content+"</svg>";
 }
+function refreshCounter(){
+ const number=el("stroke-value"),hint=el("screen")?.querySelector(".counter-note");
+ if(number)number.textContent=String(strokes);
+ if(hint){const par=HOLES[hole].par;hint.textContent=strokes<par?(par-strokes)+" onder par":strokes===par?"Precies op par":(strokes-par)+" boven par"}
+}
 function landing(){
  return `<div class="landing page-card">
  <div class="intro-copy"><span class="overline">HAARLEM OPEN</span><h1 class="display">Golf. Bier.<br><i>Thomas.</i></h1><p>De ronde is begonnen.</p></div>
@@ -236,9 +241,10 @@ async function avatarFile(file){
   ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,176,176);
   let output=canvas.toDataURL("image/jpeg",.66);if(output.length>60000)output=canvas.toDataURL("image/jpeg",.48);
   if(output.length>60000)return notify("Foto te groot");
+  const currentName=view==="profile"?el("player-name")?.value:null;
   if(me()&&view!=="profile")update("setAvatar",{playerId:myId,avatar:output});
   else avatarDraft=output;
-  render();notify("Foto opgeslagen");
+  render();if(currentName!==null&&el("player-name"))el("player-name").value=currentName;notify("Foto opgeslagen");
  }catch{notify("Deze foto kon niet worden gelezen")}
  finally{URL.revokeObjectURL(url);el("photo-input").value=""}
 }
@@ -280,8 +286,8 @@ el("screen").addEventListener("click",e=>{
    setView("rules");break;
   }
   case "rulesDone":localStorage.setItem("golf-intro-"+myId,"1");nextHole();break;
-  case "minus":strokes=Math.max(1,strokes-1);render();break;
-  case "plus":strokes=Math.min(99,strokes+1);render();break;
+  case "minus":strokes=Math.max(1,strokes-1);refreshCounter();break;
+  case "plus":strokes=Math.min(99,strokes+1);refreshCounter();break;
   case "submit":{
    const under=strokes<HOLES[hole].par;
    update("setScore",{playerId:myId,hole,value:strokes},true);
