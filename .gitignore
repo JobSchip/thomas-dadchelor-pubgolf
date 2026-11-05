@@ -6,3 +6,5 @@ data/
 ios-app/www/
 ios-app/ios/
 ios-app/.DS_Store
+ios-app/android/
+ios-app/dist/
