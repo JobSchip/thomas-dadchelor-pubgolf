@@ -1103,3 +1103,163 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
 @media(max-width:360px){
  .landing .intro-copy .display{font-size:clamp(29px,8.7vw,35px)}
 }
+
+
+/* ============================================================
+   THOMAS STICKER INVASION v21
+   Transparent, pixel-aligned crops from the supplied 8-sticker
+   screenshot, packed into one 4x2 / 640x320 sprite sheet.
+   ============================================================ */
+.thomas-sticker{
+ display:block;flex-shrink:0;aspect-ratio:1;
+ background-image:url("./assets/thomas-stickers.webp");
+ background-repeat:no-repeat;
+ background-size:400% 200%;
+ pointer-events:none;
+}
+.thomas-sticker.sticker-0{background-position:0% 0%}
+.thomas-sticker.sticker-1{background-position:33.333333% 0%}
+.thomas-sticker.sticker-2{background-position:66.666667% 0%}
+.thomas-sticker.sticker-3{background-position:100% 0%}
+.thomas-sticker.sticker-4{background-position:0% 100%}
+.thomas-sticker.sticker-5{background-position:33.333333% 100%}
+.thomas-sticker.sticker-6{background-position:66.666667% 100%}
+.thomas-sticker.sticker-7{background-position:100% 100%}
+
+/* The intro gets one mischievous head peeking past the picture. */
+.landing .hero-photo{position:relative}
+.landing .landing-sticker{
+ position:absolute;z-index:5;bottom:-15px;right:-13px;
+ width:108px;height:108px;transform:rotate(12deg);
+ filter:drop-shadow(0 6px 7px #142b2580)
+}
+
+/* A different friend peeks out from behind each tap CTA. */
+.taproom-footer{position:relative;isolation:isolate}
+.taproom-peeker{
+ position:absolute;right:23px;top:-73px;z-index:0;
+ width:112px;height:112px;overflow:visible;
+ transform:rotate(11deg);
+ animation:stickerPeek .5s .27s both;
+ pointer-events:none;
+}
+.taproom-peeker .thomas-sticker{width:100%;height:100%;filter:drop-shadow(0 5px 5px #0006)}
+.taproom-cta{position:relative;z-index:2}
+@keyframes stickerPeek{
+ from{opacity:0;transform:translateY(45px) rotate(11deg)}
+ to{opacity:1;transform:translateY(0) rotate(11deg)}
+}
+
+/* Score screen shows a smaller, non-interactive sticker reaction. */
+.hole-page .drink-frame{position:relative}
+.hole-page .drink-sticker{
+ position:absolute;right:-3px;bottom:0;z-index:3;
+ width:100px;height:100px;transform:rotate(-9deg);
+ filter:drop-shadow(0 6px 6px #041f1b47)
+}
+
+/* The four check-in answers use their actual Thomas stickers. */
+.mood-grid{gap:11px}
+.mood{
+ min-height:193px;padding:10px 12px 13px;
+ justify-content:space-between;overflow:hidden;
+}
+.mood-sticker{
+ width:clamp(92px,26vw,113px);height:clamp(92px,26vw,113px);
+ align-self:center;margin:-9px auto -1px;
+ filter:drop-shadow(0 5px 4px #161b1830);
+ transform:rotate(-4deg);
+}
+.mood-1 .mood-sticker{transform:rotate(8deg) scale(1.04)}
+.mood-2 .mood-sticker{transform:rotate(-8deg) scale(1.07)}
+.mood-3 .mood-sticker{transform:rotate(5deg) scale(1.08)}
+.mood .mood-copy{position:relative;z-index:2}
+.mood-copy strong{font-size:clamp(14px,4vw,18px)}
+.mood-3 .mood-copy strong{font-size:clamp(13px,3.7vw,16px)}
+.mood-copy small{font-size:10px}
+.mood-arrow{z-index:3}
+.mood:active .mood-sticker{filter:drop-shadow(0 2px 2px #0003)}
+
+/* Sticker cameos in Thomas trivia and at the clubhouse. */
+.question-page{position:relative;isolation:isolate}
+.question-page .quiz-sticker{
+ position:absolute;top:93px;right:-13px;z-index:0;
+ height:110px;width:110px;opacity:.58;transform:rotate(9deg);
+}
+.question-page>h1,.question-page>.question-sub{position:relative;z-index:1}
+.leader-page{position:relative}
+.leader-sticker-peek{
+ position:absolute;right:-14px;top:119px;z-index:0;
+ width:90px;height:90px;opacity:.5;transform:rotate(12deg);
+ pointer-events:none;
+}
+.leader-sticker-peek .thomas-sticker{width:100%;height:100%}
+.leader-page>.podium,.leader-page>.leader-list,.leader-page>.leader-bottom{position:relative;z-index:1}
+
+/* BOEM — four giant sticker cutouts join the jackpot blast. */
+.ace-sticker-fly{
+ position:absolute;z-index:1;width:clamp(102px,31vw,152px);
+ height:clamp(102px,31vw,152px);
+ pointer-events:none;filter:drop-shadow(0 10px 10px #41160c85);
+ animation:stickerJackpot 2.8s cubic-bezier(.19,.77,.22,1) both;
+}
+.ace-sticker-fly .thomas-sticker{
+ position:static;top:auto;left:auto;display:block;width:100%;height:100%;
+ transform:none;animation:none!important;opacity:1;
+}
+.ace-fly-0{left:-23px;top:22%;--sx:-40px;--sy:-130px;--sr:-35deg;animation-delay:.13s}
+.ace-fly-1{right:-22px;top:34%;--sx:35px;--sy:-80px;--sr:35deg;animation-delay:.29s}
+.ace-fly-2{left:7px;bottom:13%;--sx:-24px;--sy:70px;--sr:24deg;animation-delay:.47s}
+.ace-fly-3{right:0;bottom:9%;--sx:36px;--sy:90px;--sr:-25deg;animation-delay:.65s}
+@keyframes stickerJackpot{
+ 0%{opacity:0;transform:translate(0,70px) rotate(-20deg) scale(.2)}
+ 27%{opacity:1}
+ 60%{opacity:1;transform:translate(0,-10px) rotate(8deg) scale(1.15)}
+ 100%{opacity:0;transform:translate(var(--sx),var(--sy)) rotate(var(--sr)) scale(1.18)}
+}
+
+/* One non-blocking, under-one-second surprise per player/room. */
+.thomas-jumpscare{
+ position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
+ background:#061411db;pointer-events:none;overflow:hidden;
+ animation:stickerScareBackdrop .92s both;
+}
+.thomas-jumpscare-card{
+ width:min(86vw,370px);display:flex;flex-direction:column;
+ justify-content:center;align-items:center;
+ gap:0;color:#fff2a5;text-align:center;
+ filter:drop-shadow(0 12px 22px #0009);
+ animation:stickerScare .92s cubic-bezier(.19,.87,.33,1) both;
+}
+.thomas-jumpscare .jumpscare-sticker{width:min(76vw,312px);height:min(76vw,312px)}
+.thomas-jumpscare-card>span:last-child{
+ background:#f9df70;color:#133a25;
+ transform:rotate(-6deg);border-radius:14px;padding:9px 19px;
+ font-weight:1000;font-size:clamp(30px,11vw,53px);
+ letter-spacing:-.07em;white-space:nowrap;
+}
+@keyframes stickerScareBackdrop{
+ 0%{opacity:0}12%,65%{opacity:1}100%{opacity:0}
+}
+@keyframes stickerScare{
+ 0%{opacity:0;transform:rotate(-15deg) scale(.28)}
+ 18%{opacity:1;transform:rotate(8deg) scale(1.27)}
+ 37%{transform:rotate(-5deg) scale(1.02)}
+ 67%{opacity:1;transform:rotate(3deg) scale(1.07)}
+ 100%{opacity:0;transform:rotate(0) scale(.8)}
+}
+@media(max-width:355px){
+ .mood{min-height:178px;padding:9px 9px 12px}
+ .mood-sticker{width:90px;height:90px}
+ .mood-copy strong{font-size:13px}
+ .mood-3 .mood-copy strong{font-size:12px}
+ .taproom-peeker{right:15px}
+}
+@media(max-height:700px){
+ .mood{min-height:165px}
+ .mood-sticker{width:76px;height:76px}
+}
+@media(prefers-reduced-motion:reduce){
+ .taproom-peeker,.ace-sticker-fly,.thomas-jumpscare,.thomas-jumpscare-card{animation:none!important}
+ .thomas-jumpscare{display:none!important}
+}
