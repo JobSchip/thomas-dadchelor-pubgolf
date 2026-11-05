@@ -12,7 +12,7 @@ if (!fs.existsSync(path.join(app,'AndroidManifest.xml'))) {
  throw new Error('Android project ontbreekt: voer eerst npm run android:init uit');
 }
 const name="Thomas' Pub Golf";
-const xmlEscape=value=>String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'\\');
+const xmlEscape=value=>String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,"\\'");
 
 // Capacitor generated strings should remain stable across app updates.
 const stringFile=path.join(resources,'values','strings.xml');
