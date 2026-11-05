@@ -656,3 +656,14 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
 @media(prefers-reduced-motion:reduce){
  .page,.vote-card,.mood,.podium-card{animation:none!important;transition:none!important}
 }
+
+
+/* Keep the live badge outside the floating Salmari shortcut's tap area. */
+.leader-heading{display:block;position:relative;padding-right:75px}
+.leader-heading .display{max-width:100%;font-size:clamp(33px,8vw,45px)}
+.leader-heading .leader-live{display:inline-flex;position:relative;margin:14px 0 0}
+.leader-helper{margin-top:11px!important;margin-bottom:17px!important}
+@media(max-width:365px){
+ .leader-heading{padding-right:69px}
+ .leader-heading .display{font-size:33px}
+}
