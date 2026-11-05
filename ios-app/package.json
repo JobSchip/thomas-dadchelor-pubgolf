@@ -9,7 +9,7 @@
     "ios:init": "npm run build:web && node scripts/ensure-ios.mjs && npx cap sync ios && node scripts/configure-ios.mjs",
     "ios:sync": "npm run build:web && npx cap sync ios && node scripts/configure-ios.mjs",
     "ios:open": "npm run ios:sync && npx cap open ios",
-    "ios:check": "node scripts/prepare-web.mjs && node scripts/check-package.mjs",
+    "ios:check": "npm run build:web && node scripts/check-package.mjs",
     "ios:doctor": "npx cap doctor"
   },
   "engines": {
