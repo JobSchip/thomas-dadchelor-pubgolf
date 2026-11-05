@@ -1,6 +1,6 @@
 # Thomas' Pub Golf — Haarlem Open
 
-De originele multiplayer-webapp (PWA) blijft draaien op Railway met Node.js 20+. Er staat nu ook een aparte **echte iPhone-app** met Capacitor 8 en een TestFlight-workflow in [`ios-app/`](ios-app/README.md).
+De originele multiplayer-webapp (PWA) blijft draaien op Railway met Node.js 20+. Er staat nu ook een aparte **echte iPhone- én Android-app** met Capacitor 8 en een TestFlight-workflow in [`ios-app/`](ios-app/README.md).
 
 ## Spelerservaring
 
@@ -52,11 +52,15 @@ Deel de wedstrijdlink alleen met deelnemers: de huidige kleinschalige party-app 
 - Per vraag volgt een apart scherm met de uitslag, voordat de volgende bar in beeld komt.
 - De profielwisselknop is verwijderd, maar een gebruiker kan bij het eerste aanmelden zijn bestaande naam selecteren.
 
-## Echte iPhone-app / TestFlight
+## Echte iPhone-app / TestFlight en Android-app / APK
 
-De iPhone-app staat in [`ios-app/`](ios-app/README.md) en gebruikt dezelfde Railway-server en wedstrijdkamer `THOMAS-OPEN`. De Xcode-projectgeneratie, iPhone-camera/fotobibliotheek, iOS-haptics, appicoon, privacy-permissies en twee GitHub Actions-workflows zijn voorbereid:
+De beide mobiele apps staan in [`ios-app/`](ios-app/README.md) en gebruiken dezelfde Railway-server en wedstrijdkamer `THOMAS-OPEN`. Android kan als APK direct naar vrienden worden gestuurd zonder Google Play. De Xcode-projectgeneratie, iPhone-camera/fotobibliotheek, iOS-haptics, appicoon, privacy-permissies en twee GitHub Actions-workflows zijn voorbereid:
 
 - `.github/workflows/ios-build.yml`: controleert een niet-ondertekende iOS-simulator-build (geen Apple-account vereist).
 - `.github/workflows/testflight.yml`: uploadt na expliciete GitHub Actions-start een ondertekende distributiebuild naar TestFlight (Apple Developer Team, apprecord en vier secrets vereist).
 
 De website blijft onafhankelijk functioneren en de bestanden voor de native app worden tijdens de build lokaal in de app verpakt. Zie [het stappenplan voor TestFlight](ios-app/README.md) voor de Apple-stappen en beperkingen.
+
+## Android-APK voor vrienden
+
+GitHub Actions bouwt een installeerbare Android-debug-APK via [Android APK — Thomas Pub Golf](https://github.com/JobSchip/thomas-dadchelor-pubgolf/actions/workflows/android-apk.yml). Download het artifact van de laatste succesvolle build, pak de ZIP uit en deel `Thomas-PubGolf-Android.apk` met je vrienden. De app ondersteunt Android 8 of nieuwer. **Zie [de Android-handleiding](ios-app/ANDROID.md)** voor installatie, checksums, privacy en updatebeperkingen. iPhone, Android en web gebruiken hetzelfde live klassement.
