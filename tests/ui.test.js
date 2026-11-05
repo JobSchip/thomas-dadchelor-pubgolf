@@ -145,3 +145,41 @@ test('elke van de zes kroegen heeft een eigen tap-to-pour-ervaring en behoudt zi
   assert.match(ui.html(),/data-action="pourDrink"/);
  }
 });
+
+test('hole-in-one-jackpot na exact één slag in hole vier blijft zichtbaar tot zelf doorklikken',()=>{
+ const golfer=player('Thomas','p1',[8,10,8,null,null,null],0,{one:'blue',two:'18'});
+ const ui=boot([golfer]);
+ assert.equal(ui.view(),'preview');
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ assert.equal(ui.view(),'hole');
+ ui.click('action','submit');
+ assert.equal(ui.view(),'ace');
+ assert.match(ui.html(),/ace-insane/);
+ assert.match(ui.html(),/ace-jackpot-ring/);
+ assert.match(ui.html(),/BOEM/);
+ assert.match(ui.html(),/GE-WEL-/);
+ assert.match(ui.html(),/Goed gedaan, maat!/);
+ assert.match(ui.html(),/data-action="replayAce"/);
+ assert.match(ui.html(),/data-action="board"/);
+ assert.equal(ui.state().players[0].scores[3],1);
+ assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1);
+ ui.click('action','replayAce');
+ assert.equal(ui.view(),'ace');
+ assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1,'replay mag nooit extra slagen opslaan');
+ ui.click('action','board');
+ assert.equal(ui.view(),'board');
+ assert.equal(ui.state().players[0].scores[3],1);
+});
+
+test('score twee op hole vier toont klassement, niet de hole-in-one-jackpot',()=>{
+ const golfer=player('Thomas','p1',[8,10,8,null,null,null],0,{one:'blue',two:'18'});
+ const ui=boot([golfer]);
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ ui.click('action','plus');
+ ui.click('action','submit');
+ assert.equal(ui.view(),'board');
+ assert.equal(ui.state().players[0].scores[3],2);
+ assert.doesNotMatch(ui.html(),/ace-insane/);
+});
