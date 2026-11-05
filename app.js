@@ -29,7 +29,7 @@ const parse=(raw,fallback)=>{try{return JSON.parse(raw)||fallback}catch{return f
 let state=parse(localStorage.getItem(storeKey),{players:[],revision:0,epoch:RESET_EPOCH});
 let queue=parse(localStorage.getItem(queueKey),[]);
 let myId=localStorage.getItem(meKey)||"",view="welcome",hole=0,strokes=8,selectedPlayerId="";
-let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={};
+let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={},nomineeDraft="";
 const el=id=>document.getElementById(id);
 const escapeHtml=text=>String(text??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const newId=()=>globalThis.crypto?.randomUUID?.()||"x"+Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -130,6 +130,7 @@ function header(){
 function setView(next){
  if(aceTimer){clearTimeout(aceTimer);aceTimer=null}
  if(next==="preview"&&me())localStorage.setItem("golf-firstdrink-"+room+"-"+myId,"1");
+ if(next==="nominate")nomineeDraft="";
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
  const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
@@ -285,21 +286,41 @@ function quizResult(){
  <div class="grow"></div><button class="cta" data-action="continue">Volgende kroeg <span>→</span></button></div>`;
 }
 function nominate(){
- const all=state.players;
+ const all=state.players,options=all.length>1?all.filter(p=>p.id!==myId):all;
+ const selected=options.find(p=>p.id===nomineeDraft);
  return `<div class="page-card nominate-page">
- <span class="overline">NA HOLE 5 · BONUS</span>
- <h1 class="display">Hoppakee.<br><i>Vragen op.</i></h1>
- <p class="question-sub">Wie gun jij −1 slag?</p>
- <div class="player-list vote-list">${all.map(p=>`<button class="pick vote" data-nominate="${escapeHtml(p.id)}">${avatar(p)}<strong>${escapeHtml(p.name)}</strong><span class="chevron">−1 ↗</span></button>`).join("")}</div>
- <div class="grow"></div></div>`;
+ <div class="gift-ambient" aria-hidden="true"><span>✦</span><span>🎁</span><span>✦</span></div>
+ <span class="gift-kicker"><span class="gift-kicker-icon">🎁</span> BONUSRONDE 05 / 06</span>
+ <div class="gift-hero">
+   <span class="gift-hero-emoji" aria-hidden="true">💌</span>
+   <h1 class="display">Hoppakee.<br><i>Vragen op.</i></h1>
+   <p>Een gratis <strong>−1 slag</strong> voor iemand uit de club. Wie gun jij ’m?</p>
+ </div>
+ <div class="vote-heading"><span>KIES JE GELUKSVOGEL</span><span>${options.length} ${options.length===1?'GOLFER':'GOLFERS'}</span></div>
+ <div class="vote-grid" role="group" aria-label="Kies een golfer voor een slag aftrek">
+ ${options.map((p,i)=>`<button class="vote-card ${nomineeDraft===p.id?'is-picked':''}" type="button" data-nominate="${escapeHtml(p.id)}" aria-pressed="${nomineeDraft===p.id}" style="--vote-index:${Math.min(i,12)}">
+  <span class="vote-check" aria-hidden="true">${nomineeDraft===p.id?'✓':'+'}</span>
+  ${avatar(p,"vote-avatar")}
+  <strong>${escapeHtml(p.name)}</strong>
+  <small>−1 SLAG CADEAU</small>
+ </button>`).join("")}</div>
+ <div class="grow"></div>
+ <div class="vote-confirm">
+  <div class="vote-preview" aria-live="polite">${selected?`<span>🎯</span><span><strong>${escapeHtml(selected.name)}</strong> krijgt een slag cadeau.</span>`:'<span>👆</span><span>Kies eerst een maat hierboven.</span>'}</div>
+  <button class="cta gift-cta" data-action="confirmNominate" ${selected?'':'disabled'}>${selected?`Geef ${escapeHtml(selected.name)} −1 slag`:'Kies een golfer'} <span>→</span></button>
+ </div>
+ </div>`;
 }
 function giftResult(){
  const name=questionResult.friend||'je maat';
- return `<div class="page-card quiz-result win">
- <span class="overline">CADEAUTJE UITGEDEELD</span><div class="result-burst">🎁</div>
- <h1 class="display">Dat is<br><i>lief zeg.</i></h1>
- <p class="question-result-text">${escapeHtml(name)} krijgt 1 slag minder. Jij bent een goed mens. Waarschijnlijk.</p>
- <div class="grow"></div><button class="cta" data-action="continue">Naar de laatste kroeg <span>→</span></button>
+ const giftPlayer=state.players.find(p=>p.name===name);
+ return `<div class="page-card gift-done">
+ <span class="overline">CADEAUTJE UITGEDEELD</span>
+ <div class="gift-done-art" aria-hidden="true"><span class="gift-spot">✨</span>${giftPlayer?avatar(giftPlayer,"gift-done-avatar"):'<span class="gift-done-avatar">🎁</span>'}<span class="gift-bow">🎀</span></div>
+ <div class="gift-done-ticket"><span>GUNFACTOR +100</span><strong>−1</strong><span>SLAG CADEAU</span></div>
+ <h1 class="display">Kijk je eens<br><i>gul zijn.</i></h1>
+ <p class="question-result-text"><strong>${escapeHtml(name)}</strong> krijgt één slag minder. Van jou. Wat een wereldgozer.</p>
+ <div class="grow"></div><button class="cta" data-action="continue">Op naar de laatste kroeg <span>→</span></button>
  </div>`;
 }
 const RANK_ICONS=["👑","🥈","🥉","🏅","🎖️","🦚","🕺","🍻","🦆","🍆","🥨","🧦","🐌","🥴","🤡","🚽","🪠","🫠","🥀","🧻","🦠","🪳","🗑️","🫧","🪦","💩"];
@@ -310,21 +331,40 @@ function rankIcon(index,total){
 }
 function leaderboard(){
  const players=leaders(),p=me(),st=p?score(p):null,done=st?.completed===6;
+ const podium=players.slice(0,3),rest=players.slice(3);
+ const format=n=>n>0?'+'+n:String(n);
  return `<div class="page-card leader-page">
- <span class="overline">${done?"DE EINDSTAND":"LIVE KLASSEMENT"}</span>
- <h1 class="display">The <i>clubhouse.</i></h1>
- <p class="helper">Tik op een naam voor alle slagen en Salmari-shotjes.</p>
- <div class="leader-list">${players.map((player,index)=>{
- const stat=score(player),last=index===players.length-1&&players.length>1,emblem=rankIcon(index,players.length);
- return `<button type="button" data-leader="${escapeHtml(player.id)}" aria-label="Bekijk de scorekaart van ${escapeHtml(player.name)}" class="leader-row ${index===0?'winner':''} ${player.id===myId?'selected':''}" style="--row:${Math.min(index,18)}">
- <span class="rank"><span class="rank-emoji" aria-hidden="true">${emblem}</span><span class="rank-num">${index+1}</span></span>
- <span class="avatar-holder">${avatar(player)}${index===0?'<span class="award crown">👑</span>':last?'<span class="award poo">💩</span>':''}</span>
- <span class="leader-name"><strong>${escapeHtml(player.name)}${player.id===myId?' <span class="you">jij</span>':''}</strong><small>${stat.completed} van 6 holes</small></span>
- <span class="leader-score">${stat.completed?`${stat.relative>0?'+':''}${stat.relative}`:'–'}<small>t.o.v. PAR</small></span>
- <span class="leader-arrow" aria-hidden="true">›</span>
+ <div class="leader-heading">
+  <div><span class="overline">${done?'DE EINDSTAND':'LIVE KLASSEMENT'}</span>
+  <h1 class="display">The <i>clubhouse.</i></h1></div>
+  <span class="leader-live"><span class="leader-live-dot"></span>${done?'FINISH':'LIVE'}</span>
+ </div>
+ <p class="helper leader-helper">De stand van zaken. Tik op een golfer voor de scorekaart.</p>
+ ${players.length? `<div class="podium" aria-label="Top drie golfers">
+ ${podium.map((player,index)=>{
+ const stat=score(player);
+ return `<button type="button" class="podium-card place-${index+1} ${player.id===myId?'is-you':''}" data-leader="${escapeHtml(player.id)}" aria-label="Bekijk scorekaart van ${escapeHtml(player.name)}">
+  <span class="podium-medal">${rankIcon(index,players.length)}</span>
+  ${avatar(player,"podium-avatar")}
+  <span class="podium-name">${escapeHtml(player.name)}${player.id===myId?' <small>JIJ</small>':''}</span>
+  <strong class="podium-score">${stat.completed?format(stat.relative):'–'}</strong>
+  <small class="podium-meta">${stat.completed}/6 holes · PAR</small>
  </button>`;
- }).join("")}</div>
- <div class="leader-bottom"><button class="cta" data-action="${done?'finish':'continue'}">${done?'Mijn eindscore':'Volgende hole'} <span>→</span></button></div></div>`;
+ }).join("")}</div>` : '<div class="no-players">Nog geen golfers aan de start.</div>'}
+ ${rest.length?`<div class="leader-section-title"><span>DE REST VAN DE CLUB</span><span>${players.length} DEELNEMERS</span></div>
+ <div class="leader-list">${rest.map((player,i)=>{
+  const index=i+3,stat=score(player),last=index===players.length-1,emblem=rankIcon(index,players.length);
+  return `<button type="button" data-leader="${escapeHtml(player.id)}" aria-label="Bekijk de scorekaart van ${escapeHtml(player.name)}" class="leader-row ${player.id===myId?'selected':''}" style="--row:${Math.min(index,18)}">
+  <span class="rank"><span class="rank-emoji" aria-hidden="true">${emblem}</span><span class="rank-num">${index+1}</span></span>
+  <span class="avatar-holder">${avatar(player)}${last?'<span class="award poo">💩</span>':''}</span>
+  <span class="leader-name"><strong>${escapeHtml(player.name)}${player.id===myId?' <span class="you">jij</span>':''}</strong><small>${stat.completed} van 6 holes</small></span>
+  <span class="leader-score">${stat.completed?format(stat.relative):'–'}<small>t.o.v. PAR</small></span>
+  <span class="leader-arrow" aria-hidden="true">›</span>
+  </button>`;
+ }).join("")}</div>`:''}
+ <div class="grow"></div>
+ <div class="leader-bottom"><button class="cta" data-action="${done?'finish':'continue'}">${done?'Mijn eindscore':'Volgende hole'} <span>→</span></button></div>
+ </div>`;
 }
 function detail(){
  const p=state.players.find(x=>x.id===selectedPlayerId);
@@ -360,18 +400,35 @@ function detail(){
  </div>`;
 }
 function checkin(){
- const moods=[["😎","Topfit"],["😊","Gezellig"],["🥴","Licht wankel"],["🤪","Erg dronken"]];
- return `<div class="page-card checkin-page"><span class="overline">HALVERWEGE</span><h1 class="display">Even<br><i>inchecken.</i></h1><p class="checkin-question">Hoe dronken ben je?</p>
- <div class="mood-grid">${moods.map((m,i)=>`<button class="mood" data-mood="${i}" aria-label="${m[1]}"><span>${m[0]}</span><strong>${m[1]}</strong></button>`).join("")}</div>
- <p class="small-message">Gewoon even eerlijk inchecken.</p>
+ const moods=[
+  ["😐","Vlees noch vis","Nog niet echt begonnen."],
+  ["😏","Stel je niet aan","Kan nog best een ronde bij."],
+  ["🥴","Net in de olie","Kijk, nu komen we ergens."],
+  ["🤪","Ga voor goud","Geen commentaar, chef."]
+ ];
+ return `<div class="page-card checkin-page">
+ <span class="checkin-pill">🍺 HALVERWEGE · HOLE 03</span>
+ <div class="checkin-hero"><span aria-hidden="true">🪩</span>
+ <h1 class="display">Hoe staat<br><i>de motor?</i></h1>
+ <p>Even eerlijk, kameraad. Hoe staat ’t ervoor?</p></div>
+ <div class="mood-grid">${moods.map((m,i)=>`<button class="mood mood-${i}" type="button" data-mood="${i}" aria-label="${m[1]}">
+   <span class="mood-emoji" aria-hidden="true">${m[0]}</span>
+   <span class="mood-copy"><strong>${m[1]}</strong><small>${m[2]}</small></span>
+   <span class="mood-arrow" aria-hidden="true">↗</span>
+ </button>`).join("")}</div>
+ <p class="small-message">Geen jury. Wel een bonusslag als je voor goud gaat. 🏅</p>
  <div class="grow"></div></div>`;
 }
 function checkinResult(){
  const extra=checkinChoice===3;
- return `<div class="page-card result-page"><span class="overline">CHECK-IN COMPLETE</span>
- <div class="result-emoji">${extra?"🏅":"🙌"}</div><h1 class="display">${extra?"Lekker bezig,<br><i>maat.</i>":"Mooie<br><i>check-in.</i>"}</h1>
- <p class="result-copy">${extra?"Gefeliciteerd! −1 slag voor de effort.":"Op naar de volgende hole!"}</p>
- <div class="grow"></div><button class="cta" data-action="continue">Volgende hole <span>→</span></button></div>`;
+ const lines=["Prima. We zien je bij de volgende.","Dat wilden we horen, maat.","Zo kennen we je weer.","Kijk, dát is een instelling."];
+ return `<div class="page-card result-page checkin-result ${extra?'checkin-gold':''}">
+ <span class="overline">DE TUSSENSTAND · CHECK-IN</span>
+ <div class="result-emoji">${extra?"🏅":"🍻"}</div>
+ <h1 class="display">${extra?'Ga voor <i>goud.</i>':'Hoppakee.<br><i>Doorrr.</i>'}</h1>
+ <p class="result-copy">${lines[checkinChoice]||lines[0]}</p>
+ <div class="checkin-reward">${extra?'<strong>−1</strong><span>SLAG CADEAU</span>':'<strong>✓</strong><span>CHECK-IN BINNEN</span>'}</div>
+ <div class="grow"></div><button class="cta" data-action="continue">Volgende kroeg <span>→</span></button></div>`;
 }
 function finish(){
  const p=me(),s=p?score(p):{net:0,relative:0,bonus:0},rank=leaders().findIndex(x=>x.id===myId)+1;
@@ -389,7 +446,9 @@ function menu(){
 function render(){
  if(!me()&&["preview","hole","ace","board","detail","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules"].includes(view))view="choose";
  const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,detail,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu};
- el("screen").innerHTML=`<section class="page page-${view}">${(pages[view]||landing)()}</section>`;
+ const screen=el("screen");
+ screen.innerHTML=`<section class="page page-${view}">${(pages[view]||landing)()}</section>`;
+ el("app").dataset.view=view;
  header();
 }
 
@@ -519,11 +578,14 @@ el("screen").addEventListener("click",e=>{
  }
  const vote=e.target.closest("[data-nominate]");
  if(vote){
-  const p=me(),chosen=state.players.find(x=>x.id===vote.dataset.nominate);
-  if(!p||p.nomination||!chosen)return;
-  questionResult={friend:chosen.name};
-  update("nominate",{playerId:myId,targetPlayerId:chosen.id},true);
-  setView("giftResult");nativeFeedback("success");celebrate(34);return;
+  if(view!=="nominate"||me()?.nomination)return;
+  const chosen=state.players.find(p=>p.id===vote.dataset.nominate);
+  if(!chosen||(state.players.length>1&&chosen.id===myId))return;
+  nomineeDraft=chosen.id;nativeFeedback("light");
+  const currentScroll=el("screen")?.querySelector(".vote-grid")?.scrollTop||0;
+  render();
+  const grid=el("screen")?.querySelector(".vote-grid");if(grid)grid.scrollTop=currentScroll;
+  return;
  }
  const golfer=e.target.closest("[data-leader]");
  if(golfer){selectedPlayerId=golfer.dataset.leader;setView("detail");return;}
@@ -568,6 +630,15 @@ el("screen").addEventListener("click",e=>{
      setTimeout(()=>flyBeer(3),95);
    }
    break;
+  }
+  case "confirmNominate":{
+   if(view!=="nominate"||me()?.nomination)return;
+   const chosen=state.players.find(p=>p.id===nomineeDraft);
+   if(!chosen||(state.players.length>1&&chosen.id===myId))return notify("Kies een andere golfer");
+   questionResult={friend:chosen.name};
+   update("nominate",{playerId:myId,targetPlayerId:chosen.id},true);
+   nomineeDraft="";
+   nativeFeedback("success");setView("giftResult");celebrate(42);return;
   }
   case "continue":nextHole();break;
   case "gotDrink":setView("hole");break;
