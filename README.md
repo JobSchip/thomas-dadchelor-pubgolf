@@ -7,7 +7,7 @@ Mobile-first PWA in het Nederlands voor de Haarlem Open. Geen framework of npm-d
 1. Open de link. Kies bestaande speler of registreer een nieuwe golfer.
 2. Upload optioneel een eigen profielfoto. Foto's worden lokaal bijgesneden, verkleind naar 160×160 JPEG en samen met de spelersgegevens gesynchroniseerd.
 3. Bekijk één hole per scherm, stel je aantal slagen in en bevestig met één knop.
-4. **Na iedere score** verschijnt automatisch het live klassement. De leider krijgt 👑, de laatste speler 💩. Daarna ga je met één knop door naar de volgende nog niet voltooide hole.
+4. **Na iedere score** verschijnt automatisch het live klassement. De leider krijgt 👑, de laatste speler 💩. Daarna verschijnt na hole 1–5 een korte verrassingsronde, met een vraag, check-in of een cadeaubonus voor een andere speler.
 5. De Salmari-knop is bovenin op elk scherm beschikbaar. Via het menu kun je scores corrigeren en je foto wijzigen.
 
 ## Spelregels
@@ -38,3 +38,16 @@ Totaal PAR 43. Iedere Salmari is één slag aftrek. Er is geen tijdslimiet.
 ## Beveiliging en privacy
 
 Deel de wedstrijdlink alleen met deelnemers: de huidige kleinschalige party-app heeft geen accounts of rollen. Iedereen met de link kan scores aanpassen of zich als een speler selecteren. Geüploade profielfoto's staan (als data-URL's) in de serveropslag, toegankelijk voor anderen met dezelfde link. Dit is niet geschikt voor gevoelige of publieke data. Een toekomstige versie kan deelnemerscodes en server-side identiteitscontrole toevoegen.
+
+## Pub Golf 4.0 — Quizflow en dynamische UX
+
+- Per hole verschijnt eerst de volgende kroeg en het drankje, daarna 'Ik heb m'n drankje' en vervolgens de score-invoer.
+- Steeds wazigere achtergrond per nieuwe bar, vallende feesticoontjes, bonusconfetti en veel 💩/🤡 bij een score boven PAR.
+- Eén grote zwarte Salmari-shotknop op alle schermen: iedere tik telt direct als één aftrek op de score.
+- Na hole 1: gok jongen (–1), meisje (+1), alle kleuren (+2).
+- Na hole 2: Danique's uitgerekende datum (18 januari is –1; de andere 7 keuzes zijn +1).
+- Na hole 3: bestaande vier-smiley check-in, vierde antwoord levert –1 op.
+- Na hole 4: Thomas' naamquiz. Ieder antwoord is –1. Een hole-in-one op de fluitjes-hole krijgt de grote feestanimatie.
+- Na hole 5: iedere deelnemer kiest één speler die –1 slag krijgt; de keuze telt slechts eenmaal en wordt centraal opgeslagen.
+- Per vraag volgt een apart scherm met de uitslag, voordat de volgende bar in beeld komt.
+- De profielwisselknop is verwijderd, maar een gebruiker kan bij het eerste aanmelden zijn bestaande naam selecteren.
