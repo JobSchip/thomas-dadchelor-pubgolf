@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/applekeys"
-          printf '%s' "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/applekeys/AuthKey_${ASC_KEY_ID}.p8"
+          printf '%s' "$ASC_KEY_P8_BASE64" | base64 -D > "$RUNNER_TEMP/applekeys/AuthKey_${ASC_KEY_ID}.p8"
           chmod 600 "$RUNNER_TEMP/applekeys/AuthKey_${ASC_KEY_ID}.p8"
           echo "ASC_KEY_PATH=$RUNNER_TEMP/applekeys/AuthKey_${ASC_KEY_ID}.p8" >> "$GITHUB_ENV"
       - name: Archive signed iPhone app
