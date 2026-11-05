@@ -7,16 +7,31 @@ const root=__dirname;
 const dataDir=process.env.DATA_DIR||path.join(root,'data');
 fs.mkdirSync(dataDir,{recursive:true});
 const port=Number(process.env.PORT)||3000;
-const resetEpoch='THOMAS-NOV05-RESET-2';
+const resetEpoch='THOMAS-NOV05-PROGRESS-RESET-3';
 const resetRoom='THOMAS-OPEN';
-const resetMarker=path.join(dataDir,'.pubgolf-reset-20261105-v2');
+const resetMarker=path.join(dataDir,'.pubgolf-progress-reset-20261105-v3');
 if(!fs.existsSync(resetMarker)){
+ const gameFile=path.join(dataDir,resetRoom+'.json');
  try{
-  const previous=path.join(dataDir,resetRoom+'.json');
-  if(fs.existsSync(previous))fs.unlinkSync(previous);
+  if(fs.existsSync(gameFile)){
+   const previous=JSON.parse(fs.readFileSync(gameFile,'utf8'));
+   if(!Array.isArray(previous.players))throw Error('Ongeldige wedstrijdgegevens');
+   const next={
+    players:previous.players.map(player=>({
+     id:player.id,name:player.name,avatar:player.avatar||'',
+     scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null
+    })),
+    revision:(Number(previous.revision)||0)+1,updatedAt:Date.now(),seenActions:[],epoch:resetEpoch
+   };
+   const temp=gameFile+'.reset-tmp';
+   fs.writeFileSync(temp,JSON.stringify(next),'utf8');
+   fs.renameSync(temp,gameFile);
+   console.info('PubGolf voortgang gereset — '+next.players.length+' profielen en profielfotos behouden; scores, Salmari en bonussen gewist');
+  }else{
+   console.info('PubGolf voortgang gereset — nog geen profielen aanwezig');
+  }
   fs.writeFileSync(resetMarker,new Date().toISOString(),'utf8');
-  console.info('PubGolf reset uitgevoerd: THOMAS-OPEN — alle testprofielen en scores gewist');
- }catch(error){console.error('PubGolf reset mislukt:',error.message)}
+ }catch(error){console.error('PubGolf voortgangsreset mislukt:',error.message)}
 }
 
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.webp':'image/webp','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json; charset=utf-8'};
@@ -32,7 +47,7 @@ function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeld
  if(a.type==='addPlayer'){
   if(!a.player||!validId(a.player.id)||typeof a.player.name!=='string')return 'Ongeldige speler';const name=a.player.name.trim().replace(/\s+/g,' ');if(name.length<2||name.length>32)return 'Spelersnaam moet 2-32 tekens zijn';if(s.players.length>=32)return 'Maximaal 32 spelers';if(s.players.some(p=>p.id===a.player.id||p.name.toLowerCase()===name.toLowerCase()))return 'Speler bestaat al';s.players.push({id:a.player.id,name,avatar:typeof a.player.avatar==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.player.avatar)&&a.player.avatar.length<60000?a.player.avatar:'',scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null});
  }else if(a.type==='setScore'){
-  const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(!Number.isInteger(a.hole)||a.hole<0||a.hole>5)return 'Ongeldige hole';if(a.value!==null&&(!Number.isInteger(a.value)||a.value<1||a.value>99))return 'Ongeldige score';p.scores[a.hole]=a.value;
+  const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(!Number.isInteger(a.hole)||a.hole<0||a.hole>5)return 'Ongeldige hole';if(!Number.isInteger(a.value)||a.value<1||a.value>99)return 'Ongeldige score';if(Number.isInteger(p.scores[a.hole]))return 'Score is definitief en kan niet worden aangepast';p.scores[a.hole]=a.value;
  }else if(a.type==='setSalmari'){
   const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(!Number.isInteger(a.value)||a.value<0||a.value>30)return 'Ongeldige bonus';p.salmari=a.value;
  }else if(a.type==='setCheckin'){
