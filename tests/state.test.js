@@ -38,3 +38,22 @@ test('een speler deelt één keer een bonus uit aan een bestaande speler',()=>{
  assert.match(act(s,{id:'gift-again',type:'nominate',playerId:'p1',targetPlayerId:'p2'}),/al iemand gekozen/);
  assert.match(act(s,{id:'bad-gift',type:'nominate',playerId:'p2',targetPlayerId:'missing'}),/niet gevonden/);
 });
+
+
+test('ingediende holes zijn definitief en niet te overschrijven of te wissen',()=>{
+ const s=initial();
+ act(s,{id:'new-locked',type:'addPlayer',player:{id:'locked',name:'Golfmaat'}});
+ assert.equal(act(s,{id:'initial-score',type:'setScore',playerId:'locked',hole:0,value:8}),null);
+ assert.match(act(s,{id:'rewrite-score',type:'setScore',playerId:'locked',hole:0,value:2}),/definitief/);
+ assert.match(act(s,{id:'erase-score',type:'setScore',playerId:'locked',hole:0,value:null}),/Ongeldige score/);
+ assert.equal(s.players[0].scores[0],8);
+});
+test('Salmari telt per knopdruk op en mag niet teruggezet worden',()=>{
+ const s=initial();
+ act(s,{id:'new-salmari',type:'addPlayer',player:{id:'shots',name:'Golfer'}});
+ assert.equal(act(s,{id:'shot-one',type:'setSalmari',playerId:'shots',value:1}),null);
+ assert.match(act(s,{id:'shot-decrease',type:'setSalmari',playerId:'shots',value:0}),/Ongeldige bonus/);
+ assert.match(act(s,{id:'shot-skip',type:'setSalmari',playerId:'shots',value:3}),/één shot/);
+ assert.equal(act(s,{id:'shot-two',type:'setSalmari',playerId:'shots',value:2}),null);
+ assert.equal(s.players[0].salmari,2);
+});
