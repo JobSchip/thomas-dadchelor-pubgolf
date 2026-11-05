@@ -29,7 +29,7 @@ const parse=(raw,fallback)=>{try{return JSON.parse(raw)||fallback}catch{return f
 let state=parse(localStorage.getItem(storeKey),{players:[],revision:0,epoch:RESET_EPOCH});
 let queue=parse(localStorage.getItem(queueKey),[]);
 let myId=localStorage.getItem(meKey)||"",view="welcome",hole=0,strokes=8,selectedPlayerId="";
-let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={},nomineeDraft="";
+let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={},nomineeDraft="",pourReady=false;
 const el=id=>document.getElementById(id);
 const escapeHtml=text=>String(text??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const newId=()=>globalThis.crypto?.randomUUID?.()||"x"+Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -131,6 +131,7 @@ function setView(next){
  if(aceTimer){clearTimeout(aceTimer);aceTimer=null}
  if(next==="preview"&&me())localStorage.setItem("golf-firstdrink-"+room+"-"+myId,"1");
  if(next==="nominate")nomineeDraft="";
+ if(next==="preview")pourReady=false;
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
  const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
@@ -203,21 +204,43 @@ function rules(){
  <div class="rule"><span>04</span><p>Salmari: één slag aftrek per shot op de totaalscore.</p></div>
  <div class="grow"></div><button class="cta" data-action="rulesDone">Begrepen. Tee off! <span>→</span></button></div>`;
 }
+
+const BAR_LINES=[
+ ["Dit begint verdacht veel op een goed idee.","De eerste staat. De lat ligt nog laag."],
+ ["De Ieren noemen dit cultuur.","Guinness getapt. Tijd om te presteren."],
+ ["Een halve liter ambitie graag.","Kijk eens aan. Professioneel werk."],
+ ["Klein glas, grote verwachtingen.","Een fluitje met grootheidswaanzin."],
+ ["België heeft zijn werk gedaan.","De Zot is binnen. Jij bent aan zet."],
+ ["Het laatste rondje is aangebroken.","Finale. Net doen alsof je nog scherp bent."]
+];
 function preview(){
- const h=HOLES[hole],pic=[1,2,3,4,1,3][hole];
- return `<div class="page-card bar-preview" style="--haze:${hole*2.6}px;--haze-alpha:${0.09+hole*.045}">
- <div class="progress">${HOLES.map((_,i)=>`<span class="${i<=hole?'active':''}"></span>`).join("")}</div>
- <span class="overline">VOLGENDE STOP · HOLE ${hole+1}</span>
- <h1 class="venue preview-venue">${escapeHtml(h.venue)}</h1>
- <p class="drink-name">${escapeHtml(h.drink)} <span>· ${escapeHtml(h.details)}</span></p>
- <div class="bar-scene">
- <img class="bar-blur-bg" src="./assets/thomas-${pic}.webp" alt="">
- <span class="bar-haze"></span>
- <div class="bar-drink">${svgDrink(h.visual)}</div>
- <div class="bar-par">PAR ${h.par}</div>
+ const h=HOLES[hole],pic=[1,2,3,4,1,3][hole],ready=pourReady;
+ return `<div class="page-card taproom ${ready?'is-served':'is-waiting'}" data-tap-hole="${hole+1}">
+ <div class="taproom-photo" aria-hidden="true"><img src="./assets/thomas-${pic}.webp" alt=""></div>
+ <div class="taproom-topline"><span class="taproom-onair"><span class="taproom-light"></span>DE VOLGENDE RONDE</span><span class="taproom-hole">0${hole+1}<small> / 06</small></span></div>
+ <div class="taproom-heading"><span class="taproom-label">AAN DE BAR BIJ</span>
+ <h1>${escapeHtml(h.venue)}</h1>
+ <p class="taproom-order"><strong>${escapeHtml(h.drink)}</strong><span>${escapeHtml(h.details)}</span></p>
  </div>
- <p class="preview-hint">${hole===0?'De aftrap.':'Daar gaan we weer.'} Bestel je drankje en speel verder.</p>
- <div class="grow"></div><button class="cta" data-action="gotDrink">Ik heb m'n drankje <span>→</span></button>
+ <div class="taproom-machine-area">
+  <div class="taproom-nudge" aria-live="polite">${ready?'VERS GETAPT. NETJES.':'TIK OP DE TAP OM IN TE SCHENKEN'}</div>
+  <button class="taproom-machine ${ready?'has-poured':''}" data-action="${ready?'gotDrink':'pourDrink'}" type="button" aria-label="${ready?'Je drankje is klaar, ga naar de score':'Tik op de tap om je glas te vullen'}">
+    <span class="taproom-tap" aria-hidden="true"><span class="taproom-tap-neck"></span><span class="taproom-tap-head"></span><span class="taproom-tap-handle"></span><span class="taproom-tap-spout"></span></span>
+    <span class="taproom-stream" aria-hidden="true"></span>
+    <span class="taproom-glass glass-${h.visual}" aria-hidden="true">
+      <span class="taproom-beer"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="taproom-foam"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="taproom-glass-shine"></span>
+      <span class="taproom-glass-label">T<br>O</span>
+    </span>
+    <span class="taproom-driptray" aria-hidden="true"></span>
+  </button>
+ </div>
+ <div class="taproom-footer">
+  <div class="taproom-banter" aria-live="polite"><span>${ready?'🍻':'🗣️'}</span><p>${escapeHtml(BAR_LINES[hole][ready?1:0])}</p></div>
+  <button type="button" class="taproom-cta" data-action="${ready?'gotDrink':'pourDrink'}"><span class="taproom-cta-icon">${ready?'✓':'🍺'}</span><span class="taproom-cta-copy"><strong>${ready?"Ik heb m'n drankje!":"Tap dat biertje"}</strong><small>${ready?'Op naar de scorekaart':'Eén tik en hij staat klaar'}</small></span><span class="taproom-arrow">→</span></button>
+  <div class="taproom-bottomline"><span>⛳ PAR ${h.par}</span><span>THOMAS' OPEN · HOLE ${hole+1}</span></div>
+ </div>
  </div>`;
 }
 function holeView(){
@@ -641,7 +664,17 @@ el("screen").addEventListener("click",e=>{
    nativeFeedback("success");setView("giftResult");celebrate(42);return;
   }
   case "continue":nextHole();break;
-  case "gotDrink":setView("hole");break;
+  case "pourDrink":
+   if(view!=="preview"||pourReady)break;
+   pourReady=true;
+   nativeFeedback("medium");
+   render();
+   break;
+  case "gotDrink":
+   if(view!=="preview"||!pourReady)break;
+   nativeFeedback("light");
+   setView("hole");
+   break;
   case "board":setView("board");break;
   case "finish":setView("finish");break;
   case "menu":setView("menu");break;
