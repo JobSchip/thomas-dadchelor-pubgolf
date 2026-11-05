@@ -107,3 +107,41 @@ test('Salmari blijft verborgen zodra de laatste hole is geregistreerd',()=>{
  assert.equal(ui.view(),'finish');
  assert.equal(ui.element('salmari-quick').hidden,true);
 });
+
+test('tap-to-pour is een aparte kroegervaring, zonder score of bonus weg te schrijven',()=>{
+ const golfer=player('Thomas','p1',[null,null,null,null,null,null],null,{});
+ const ui=boot([golfer]);
+ assert.equal(ui.view(),'preview');
+ assert.match(ui.html(),/class="page-card taproom is-waiting"/);
+ assert.match(ui.html(),/taproom-machine/);
+ assert.match(ui.html(),/Tap dat biertje/);
+ assert.doesNotMatch(ui.html(),/class="bar-scene"/);
+ ui.click('action','gotDrink');
+ assert.equal(ui.view(),'preview','oude scoreknop mag de tap niet overslaan');
+ ui.click('action','pourDrink');
+ assert.equal(ui.view(),'preview');
+ assert.match(ui.html(),/taproom is-served/);
+ assert.match(ui.html(),/Je drankje is klaar/);
+ assert.match(ui.html(),/Ik heb m&#39;n drankje!|Ik heb m'n drankje!/);
+ assert.equal(ui.queue().length,0,'gimmick verstuurt geen score');
+ assert.equal(ui.state().players[0].scores[0],null);
+ ui.click('action','gotDrink');
+ assert.equal(ui.view(),'hole');
+ assert.match(ui.html(),/Score vastleggen/);
+ assert.equal(ui.queue().length,0);
+});
+
+test('elke van de zes kroegen heeft een eigen tap-to-pour-ervaring en behoudt zijn PAR',()=>{
+ const venues=['Jopen',"Tierney's Irish Pub",'Proeflokaal In den Uiver','Bierlokaal de Uiver','Café De Lift','Café Studio'];
+ const par=[8,10,8,1,7,9];
+ for(let i=0;i<6;i++){
+  const scores=Array.from({length:6},(_,j)=>j<i?par[j]:null);
+  const golfer=player('Thomas','p1',scores,3,{one:'blue',two:'18',four:'Thomas'},'p1');
+  const ui=boot([golfer]);
+  assert.equal(ui.view(),'preview','hole '+(i+1));
+  assert.ok(ui.html().includes(venues[i].replace(/'/g,'&#39;')),'kroeg '+(i+1));
+  assert.ok(ui.html().includes('PAR '+par[i]),'par '+(i+1));
+  assert.match(ui.html(),new RegExp('data-tap-hole="'+(i+1)+'"'));
+  assert.match(ui.html(),/data-action="pourDrink"/);
+ }
+});
