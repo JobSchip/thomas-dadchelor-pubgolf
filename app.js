@@ -13,12 +13,12 @@ const room=(q.get("room")||localStorage.getItem("golf-room")||"THOMAS-OPEN").toU
 q.set("room",room);
 history.replaceState(null,"",location.pathname+"?"+q.toString());
 localStorage.setItem("golf-room",room);
-const RESET_EPOCH="THOMAS-NOV05-RESET-2";
+const RESET_EPOCH="THOMAS-NOV05-PROGRESS-RESET-3";
 const storeKey="golf-v4-"+room,meKey="golf-me-v4-"+room,queueKey="golf-queue-v4-"+room;
 const parse=(raw,fallback)=>{try{return JSON.parse(raw)||fallback}catch{return fallback}};
 let state=parse(localStorage.getItem(storeKey),{players:[],revision:0,epoch:RESET_EPOCH});
 let queue=parse(localStorage.getItem(queueKey),[]);
-let myId=localStorage.getItem(meKey)||"",view="welcome",hole=0,strokes=8,fromEdit=false;
+let myId=localStorage.getItem(meKey)||"",view="welcome",hole=0,strokes=8,selectedPlayerId="";
 let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={};
 const el=id=>document.getElementById(id);
 const escapeHtml=text=>String(text??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
@@ -48,8 +48,8 @@ function notify(message){
 function apply(s,a){
  const p=s.players.find(p=>p.id===a.playerId);
  if(a.type==="addPlayer"&&!s.players.some(x=>x.id===a.player.id)){
-  s.players.push({...a.player,scores:Array(6).fill(null),salmari:0,checkin:null});
- }else if(a.type==="setScore"&&p)p.scores[a.hole]=a.value;
+  s.players.push({...a.player,scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null});
+ }else if(a.type==="setScore"&&p&&!Number.isInteger(p.scores[a.hole]))p.scores[a.hole]=a.value;
  else if(a.type==="setSalmari"&&p)p.salmari=a.value;
  else if(a.type==="setAvatar"&&p)p.avatar=a.avatar;
  else if(a.type==="setCheckin"&&p)p.checkin=a.value;
@@ -82,7 +82,7 @@ async function poll(){
   const remote=await response.json();const oldRevision=state.revision;
   if(remote.epoch!==RESET_EPOCH){network=false;notify("Ververs de app om verder te spelen");return}
   queue.forEach(a=>apply(remote,a));state=remote;save();network=true;
-  if(remote.revision!==oldRevision&&["board","choose"].includes(view)){
+  if(remote.revision!==oldRevision&&["board","choose","detail"].includes(view)){
    const list=el("screen")?.querySelector(".leader-list, .player-list"),offset=list?.scrollTop||0;
    render();
    const updated=el("screen")?.querySelector(".leader-list, .player-list");
@@ -108,7 +108,7 @@ function setView(next){
  if(aceTimer){clearTimeout(aceTimer);aceTimer=null}
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
- const kind={preview:"preview",hole:"drink",board:"board",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
+ const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
  setTimeout(()=>rainIcons(kind,next==="ace"?75:next==="preview"?30:next==="board"?24:18),70);
 }
 function nextHole(){
@@ -122,7 +122,7 @@ function nextHole(){
  if(Number.isInteger(done[4])&&!p.nomination){setView("nominate");return}
  const first=done.findIndex(n=>!Number.isInteger(n));
  if(first<0){setView("finish");return}
- hole=first;fromEdit=false;strokes=HOLES[hole].par;
+ hole=first;strokes=HOLES[hole].par;
  setView("preview");
 }
 function svgDrink(kind){
@@ -264,7 +264,7 @@ function nominate(){
  const all=state.players;
  return `<div class="page-card nominate-page">
  <span class="overline">NA HOLE 5 · BONUS</span>
- <h1 class="display">Hoperdop.<br><i>Vragen op.</i></h1>
+ <h1 class="display">Hoppakee.<br><i>Vragen op.</i></h1>
  <p class="question-sub">Wie gun jij −1 slag?</p>
  <div class="player-list vote-list">${all.map(p=>`<button class="pick vote" data-nominate="${escapeHtml(p.id)}">${avatar(p)}<strong>${escapeHtml(p.name)}</strong><span class="chevron">−1 ↗</span></button>`).join("")}</div>
  <div class="grow"></div></div>`;
@@ -278,20 +278,62 @@ function giftResult(){
  <div class="grow"></div><button class="cta" data-action="continue">Naar de laatste kroeg <span>→</span></button>
  </div>`;
 }
+const RANK_ICONS=["👑","🥈","🥉","🏅","🎖️","🚀","🍻","🕺","🦆","🍆","🥨","🧦","🐌","🥴","🤡","🚽","🪠","🫠","🥀","🧻"];
+function rankIcon(index,total){
+ if(index===0)return "👑";
+ if(total>1&&index===total-1)return "💩";
+ return RANK_ICONS[index]||"🧻";
+}
 function leaderboard(){
- const players=leaders(),p=me(),s=p?score(p):null,done=s?.completed===6;
+ const players=leaders(),p=me(),st=p?score(p):null,done=st?.completed===6;
  return `<div class="page-card leader-page">
  <span class="overline">${done?"DE EINDSTAND":"LIVE KLASSEMENT"}</span>
- <h1 class="display">The <i>clubhouse.</i></h1><p class="helper">De stand na jouw laatste hole.</p>
+ <h1 class="display">The <i>clubhouse.</i></h1>
+ <p class="helper">Tik op een speler voor de scorekaart.</p>
  <div class="leader-list">${players.map((player,index)=>{
- const stat=score(player),last=index===players.length-1&&players.length>1;
- return `<div class="leader-row ${index===0?'winner':''} ${player.id===myId?'selected':''}" style="--row:${Math.min(index,12)}">
- <div class="rank">${index+1}</div><div class="avatar-holder">${avatar(player)}${index===0?'<span class="award crown">👑</span>':last?'<span class="award poo">💩</span>':''}</div>
- <div class="leader-name"><strong>${escapeHtml(player.name)}${player.id===myId?' <span class="you">jij</span>':''}</strong><small>${stat.completed} / 6 holes</small></div>
- <div class="leader-score">${stat.completed?`${stat.relative>0?'+':''}${stat.relative}`:'–'}<small>t.o.v. par</small></div>
- </div>`;
+ const stat=score(player),last=index===players.length-1&&players.length>1,emblem=rankIcon(index,players.length);
+ return `<button type="button" data-leader="${escapeHtml(player.id)}" aria-label="Bekijk de scorekaart van ${escapeHtml(player.name)}" class="leader-row ${index===0?'winner':''} ${player.id===myId?'selected':''}" style="--row:${Math.min(index,18)}">
+ <span class="rank"><span class="rank-emoji" aria-hidden="true">${emblem}</span><span class="rank-num">${index+1}</span></span>
+ <span class="avatar-holder">${avatar(player)}${index===0?'<span class="award crown">👑</span>':last?'<span class="award poo">💩</span>':''}</span>
+ <span class="leader-name"><strong>${escapeHtml(player.name)}${player.id===myId?' <span class="you">jij</span>':''}</strong><small>${stat.completed} van 6 holes</small></span>
+ <span class="leader-score">${stat.completed?`${stat.relative>0?'+':''}${stat.relative}`:'–'}<small>t.o.v. PAR</small></span>
+ <span class="leader-arrow" aria-hidden="true">›</span>
+ </button>`;
  }).join("")}</div>
  <div class="leader-bottom"><button class="cta" data-action="${done?'finish':'continue'}">${done?'Mijn eindscore':'Volgende hole'} <span>→</span></button></div></div>`;
+}
+function detail(){
+ const p=state.players.find(x=>x.id===selectedPlayerId);
+ if(!p)return `<div class="page-card"><button class="back" data-action="board">← Klassement</button><p>Deze golfer is niet gevonden.</p></div>`;
+ const st=score(p),rank=leaders().findIndex(x=>x.id===p.id)+1;
+ const otherAdjustment=st.net-st.total+(p.salmari||0);
+ const signed=n=>n>0?`+${n}`:n<0?`−${Math.abs(n)}`:"0";
+ return `<div class="page-card detail-page">
+ <button class="back" data-action="board">← Terug naar klassement</button>
+ <span class="overline">SPELERSPROFIEL · POSITIE ${rank}</span>
+ <div class="detail-player-head">
+  ${avatar(p,"detail-avatar")}
+  <div><h1 class="detail-player-name">${escapeHtml(p.name)}</h1><p class="detail-rank">${rankIcon(rank-1,state.players.length)} Nummer ${rank} in het klassement</p></div>
+ </div>
+ <div class="detail-section-title">De zes biertjes</div>
+ <div class="detail-holes">
+  ${HOLES.map((h,i)=>{
+   const n=p.scores?.[i],done=Number.isInteger(n);
+   return `<div class="detail-hole-row">
+    <span class="detail-hole-index">${i+1}</span>
+    <span class="detail-hole-name"><strong>${escapeHtml(h.venue)}</strong><small>${escapeHtml(h.drink)} · PAR ${h.par}</small></span>
+    <span class="detail-hole-strokes">${done?n:'–'}<small>${done?signed(n-h.par):'Nog niet'}</small></span>
+   </div>`;
+  }).join("")}
+ </div>
+ <div class="detail-calculation">
+  <div><span>Totaal aantal slagen</span><strong>${st.completed?st.total:"–"}</strong></div>
+  <div><span>🥃 Salmari-shotjes</span><strong>${p.salmari||0} <small>× −1</small></strong></div>
+  <div><span>Quizzen, check-in en cadeaus</span><strong>${signed(otherAdjustment)}</strong></div>
+  <div class="detail-total"><span>Netto slagen</span><strong>${st.completed?st.net:"–"}</strong></div>
+ </div>
+ <div class="grow"></div><button class="cta" data-action="board">Terug naar klassement <span>→</span></button>
+ </div>`;
 }
 function checkin(){
  const moods=[["😎","Topfit"],["😊","Gezellig"],["🥴","Licht wankel"],["🤪","Erg dronken"]];
@@ -316,13 +358,10 @@ function finish(){
 }
 function menu(){
  const p=me();return `<div class="page-card menu-page"><button class="back" data-action="return">← Terug</button><span class="overline">HET CLUBHOUSE</span><h1 class="display">Jouw<br><i>menu.</i></h1>
- <div class="menu-list"><button data-action="board">Live klassement <span>↗</span></button><button data-action="edit">Scores aanpassen <span>↗</span></button><button data-action="photo">Profielfoto wijzigen <span>↗</span></button></div>
+ <div class="menu-list"><button data-action="board">Live klassement <span>↗</span></button><button data-action="photo">Profielfoto wijzigen <span>↗</span></button></div>
  <div class="grow"></div>${p?`<p class="menu-footer">Je speelt als ${escapeHtml(p.name)}</p>`:""}</div>`;
 }
-function editView(){
- const p=me();return `<div class="page-card edit-page"><button class="back" data-action="menu">← Terug</button><span class="overline">SCOREKAART</span><h1 class="display">Jouw<br><i>holes.</i></h1>
- <div class="edit-list">${HOLES.map((h,i)=>`<button data-hole="${i}"><span class="edit-num">${i+1}</span><span class="edit-name">${escapeHtml(h.venue)}<small>${escapeHtml(h.drink)}</small></span><strong>${Number.isInteger(p?.scores[i])?p.scores[i]:"–"}</strong><span>→</span></button>`).join("")}</div></div>`;
-}
+
 function bonus(){
  const p=me(),n=p?.salmari||0;
  return `<div class="page-card bonus-page"><button class="back" data-action="menu">← Terug</button><span class="overline">BONUS</span><h1 class="display">Salmari<br><i>bonus.</i></h1>
@@ -331,8 +370,8 @@ function bonus(){
  <div class="grow"></div><button class="cta" data-action="board">Klaar <span>→</span></button></div>`;
 }
 function render(){
- if(!me()&&["preview","hole","ace","board","edit","bonus","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules"].includes(view))view="choose";
- const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu,edit:editView,bonus};
+ if(!me()&&["preview","hole","ace","board","detail","bonus","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules"].includes(view))view="choose";
+ const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,detail,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu,bonus};
  el("screen").innerHTML=`<section class="page page-${view}">${(pages[view]||landing)()}</section>`;
  header();
 }
@@ -455,10 +494,8 @@ el("screen").addEventListener("click",e=>{
   update("nominate",{playerId:myId,targetPlayerId:chosen.id},true);
   setView("giftResult");celebrate(34);return;
  }
- const selectedHole=e.target.closest("[data-hole]");
- if(selectedHole){
-  hole=Number(selectedHole.dataset.hole);strokes=me()?.scores?.[hole]??HOLES[hole].par;fromEdit=true;setView("hole");return;
- }
+ const golfer=e.target.closest("[data-leader]");
+ if(golfer){selectedPlayerId=golfer.dataset.leader;setView("detail");return;}
  const button=e.target.closest("[data-action]");if(!button)return;
  switch(button.dataset.action){
   case "start":if(me())nextHole();else setView("choose");break;
@@ -479,6 +516,7 @@ el("screen").addEventListener("click",e=>{
   case "minus":strokes=Math.max(1,strokes-1);refreshCounter();break;
   case "plus":strokes=Math.min(99,strokes+1);refreshCounter();break;
   case "submit":{
+   if(Number.isInteger(me()?.scores?.[hole])){notify("Deze score staat al vast");break}
    const under=strokes<HOLES[hole].par;
    const above=strokes>HOLES[hole].par;
    const holeInOne=hole===3&&strokes===1;
@@ -502,13 +540,15 @@ el("screen").addEventListener("click",e=>{
   case "finish":setView("finish");break;
   case "menu":setView("menu");break;
   case "return":nextHole();break;
-  case "edit":setView("edit");break;
   case "bonus":setView("bonus");break;
   case "bonusplus":if(me())update("setSalmari",{playerId:myId,value:Math.min(30,(me().salmari||0)+1)});break;
   case "bonusminus":if(me())update("setSalmari",{playerId:myId,value:Math.max(0,(me().salmari||0)-1)});break;
  }
 });
-if(state.epoch!==RESET_EPOCH){state={players:[],revision:0,epoch:RESET_EPOCH};queue=[];myId="";localStorage.removeItem(meKey);save()}
+if(state.epoch!==RESET_EPOCH){
+ state={players:(state.players||[]).map(p=>({...p,scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null})),revision:0,epoch:RESET_EPOCH};
+ queue=[];save();
+}
 render();
 if(me())nextHole();else setTimeout(()=>rainIcons("welcome",24),180);
 poll();setInterval(poll,3500);
