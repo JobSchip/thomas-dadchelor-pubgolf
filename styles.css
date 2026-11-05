@@ -692,7 +692,7 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
 }
 .taproom:after{content:"";position:absolute;z-index:-1;top:22%;right:-60px;width:190px;height:190px;
  border:1px solid #e9bb6840;border-radius:50%;box-shadow:0 0 0 28px #ddcb6e08,0 0 0 62px #ddcb6e06;pointer-events:none}
-.taproom-topline{display:flex;justify-content:space-between;align-items:center;gap:14px;min-height:36px}
+.taproom-topline{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:36px;padding-right:76px}
 .taproom-onair{display:inline-flex;align-items:center;gap:8px;max-width:calc(100% - 95px);
  font-size:10px;letter-spacing:.15em;font-weight:950;color:#f0e6bc}
 .taproom-light{height:8px;width:8px;flex-shrink:0;border-radius:50%;background:#ecbf57;
@@ -837,3 +837,6 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
  .is-served .taproom-foam{bottom:calc(78% - 8px);opacity:1;animation:none!important}
  .taproom-beer i{animation:none!important}
 }
+
+/* Reserve room for the floating Salmari shot on small phones. */
+@media(max-width:375px){.taproom-topline{padding-right:68px;gap:7px}.taproom-onair{font-size:9px;letter-spacing:.08em}.taproom-hole{font-size:19px}}
