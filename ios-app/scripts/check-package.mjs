@@ -6,7 +6,7 @@ const dir = path.join(app, 'www');
 const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
 const native = fs.readFileSync(path.join(dir, 'native-config.js'), 'utf8');
 const js = fs.readFileSync(path.join(dir, 'app.js'), 'utf8');
-const required = ['app.js', 'styles.css', 'native-config.js', 'manifest.webmanifest', 'assets/icon-512.png', 'assets/thomas-1.webp', 'assets/thomas-4.webp'];
+const required = ['app.js', 'styles.css', 'native-config.js', 'native.js', 'manifest.webmanifest', 'assets/icon-512.png', 'assets/thomas-1.webp', 'assets/thomas-4.webp'];
 for (const filename of required) {
   if (!fs.existsSync(path.join(dir, filename))) throw new Error('Missing: ' + filename);
 }
