@@ -110,6 +110,13 @@ test('Salmari blijft verborgen zodra de laatste hole is geregistreerd',()=>{
  assert.equal(ui.element('salmari-quick').hidden,true);
 });
 
+test('startpagina heeft Pre Papa. Pluim Pub Golf. zonder Haarlem Open',()=>{
+ const ui=boot([]);
+ assert.equal(ui.view(),'welcome');
+ assert.match(ui.html(),/Pre Papa\.<br><i>Pluim Pub Golf\.<\/i>/);
+ assert.doesNotMatch(ui.html(),/HAARLEM OPEN|Golf\. Bier\.|Thomas\.<\/i>/);
+});
+
 test('tap-to-pour is een aparte kroegervaring, zonder score of bonus weg te schrijven',()=>{
  const golfer=player('Thomas','p1',[null,null,null,null,null,null],null,{});
  const ui=boot([golfer]);
@@ -142,7 +149,9 @@ test('elke van de zes kroegen heeft een eigen tap-to-pour-ervaring en behoudt zi
   const ui=boot([golfer]);
   assert.equal(ui.view(),'preview','hole '+(i+1));
   assert.ok(ui.html().includes(venues[i].replace(/'/g,'&#39;')),'kroeg '+(i+1));
-  assert.ok(ui.html().includes('PAR '+par[i]),'par '+(i+1));
+  assert.doesNotMatch(ui.html(),/taproom-topline|taproom-bottomline|taproom-banter|taproom-nudge|taproom-glass-label/);
+  assert.doesNotMatch(ui.html(),/PAR [0-9]+|DE VOLGENDE RONDE|\/ 06|THOMAS&#39; OPEN · HOLE/);
+  assert.match(ui.html(),/taproom-machine/);
   assert.match(ui.html(),new RegExp('data-tap-hole="'+(i+1)+'"'));
   assert.match(ui.html(),/data-action="pourDrink"/);
  }
