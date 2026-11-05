@@ -1070,3 +1070,36 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
 .mood-copy strong{overflow-wrap:break-word;hyphens:none}
 .mood-3 .mood-copy strong{font-size:clamp(14px,3.9vw,17px);line-height:1.02;letter-spacing:-.045em}
 @media(max-width:360px){.mood-copy strong{font-size:15px}.mood-3 .mood-copy strong{font-size:14px}}
+
+/* v20 — Minimal pub screens and compact two-line event name */
+.landing .intro-copy .display{
+ font-size:clamp(30px,9vw,51px);
+ line-height:1.08;
+ letter-spacing:-.065em;
+ overflow-wrap:normal;
+}
+.landing .intro-copy{margin-top:4px}
+.landing .intro-copy p{margin-top:20px}
+.taproom{
+ padding-top:clamp(38px,7dvh,72px);
+ padding-bottom:calc(22px + env(safe-area-inset-bottom));
+}
+.taproom-heading{margin-top:0}
+.taproom-machine-area{
+ min-height:235px;
+ padding:12px 0;
+}
+.taproom-footer{
+ margin-top:auto;
+ gap:0;
+}
+.taproom-machine{
+ margin:0 auto;
+}
+@media(max-height:700px){
+ .taproom{padding-top:25px}
+ .taproom-machine-area{min-height:172px;padding:0}
+}
+@media(max-width:360px){
+ .landing .intro-copy .display{font-size:clamp(29px,8.7vw,35px)}
+}
