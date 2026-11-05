@@ -8,7 +8,7 @@
 <meta name="description" content="Thomas' Dadchelor — Haarlem Pub Golf">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./assets/icon-192.png">
-<link rel="stylesheet" href="./styles.css?v=7">
+<link rel="stylesheet" href="./styles.css?v=8">
 <title>Thomas' Pub Golf — Haarlem Open</title>
 </head><body>
 <div id="app">
@@ -16,8 +16,22 @@
     <div class="brand"><span class="brand-mark">⛳</span><span>THOMAS' OPEN</span></div>
     <div class="top-actions">
       <span id="connection" class="connection-dot" aria-label="Status synchronisatie"></span>
-      <button id="salmari-quick" class="salmari-quick" aria-label="Salmari toevoegen, één slag aftrek">🥃 <span id="salmari-count">0</span></button>
-      <button class="profile-switch" id="switcher" aria-label="Wissel spelersprofiel" title="Wissel speler">Wissel <span id="header-avatar">↗</span></button>
+      <button id="salmari-quick" class="salmari-quick" aria-label="Salmari, één slag aftrek" title="Salmari: -1 slag">
+  <span class="quick-shot" aria-hidden="true">
+   <svg viewBox="0 0 70 92" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zwart Salmari-shotje">
+    <defs><linearGradient id="shotGlass" x1="0" x2="1"><stop stop-color="#f6faf5" stop-opacity=".88"/><stop offset=".5" stop-color="#d7e3df" stop-opacity=".35"/><stop offset="1" stop-color="#f8fcfa" stop-opacity=".75"/></linearGradient></defs>
+    <path d="M11 21 L59 21 L52 79 Q35 86 18 79Z" fill="url(#shotGlass)" stroke="#a2c5b7" stroke-width="3"/>
+    <path d="M15 36 L55 36 L50 75 Q35 83 20 75Z" fill="#101010"/>
+    <ellipse cx="35" cy="36" rx="20" ry="5" fill="#202020" stroke="#484848"/>
+    <path d="M16 26 L20 69" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".65"/>
+    <path d="M52 27 L49 64" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".35"/>
+    <ellipse cx="35" cy="21" rx="24" ry="5" fill="none" stroke="#b5cfc7" stroke-width="3"/>
+    <text x="35" y="60" text-anchor="middle" fill="#f2f0e9" font-size="9" font-weight="900" font-family="Arial">SALMARI</text>
+   </svg>
+  </span>
+  <span class="quick-label">−1 slag</span>
+  <span class="quick-count" id="salmari-count">0</span>
+</button>
       <button class="menu-button" id="menu" aria-label="Open menu"><span></span><span></span></button>
     </div>
   </header>
@@ -26,5 +40,5 @@
 <input id="photo-input" type="file" accept="image/*" hidden>
 <div id="effects" aria-hidden="true"></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="./app.js?v=7" defer></script>
+<script src="./app.js?v=8" defer></script>
 </body></html>
