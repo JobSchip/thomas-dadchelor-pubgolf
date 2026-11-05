@@ -105,6 +105,29 @@ async function poll(){
  finally{polling=false;status()}
 }
 function status(){const dot=el("connection");if(dot)dot.classList.toggle("online",network)}
+function sticker(index,extra=""){
+ // One optimized 4x2 transparent sprite sheet, used by PWA and native mobile apps.
+ return `<span class="thomas-sticker sticker-${index} ${extra}" aria-hidden="true"></span>`;
+}
+function maybeJumpScare(event){
+ const p=me();
+ if(!p||hole<1||hole>4||!["preview","hole","board","quiz1","quiz2","quiz4","checkin"].includes(view))return;
+ if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches||!document.body?.appendChild)return;
+ const clicked=event.target.closest("[data-action]")||event.target.closest("[data-mood]")||event.target.closest("[data-round]");
+ if(!clicked)return;
+ const key="golf-jumpscare-v1-"+room+"-"+myId;
+ if(localStorage.getItem(key)||hole<4&&Math.random()>.33)return;
+ localStorage.setItem(key,"1");
+ setTimeout(()=>{
+  const wrap=document.createElement("div");
+  wrap.className="thomas-jumpscare";
+  wrap.setAttribute("aria-hidden","true");
+  wrap.innerHTML=`<div class="thomas-jumpscare-card">${sticker(3,"jumpscare-sticker")}<span>BOE, MAAT!</span></div>`;
+  document.body.appendChild(wrap);
+  nativeFeedback("medium");
+  setTimeout(()=>wrap.remove(),920);
+ },90);
+}
 function avatar(p,extra=""){
  const name=escapeHtml(p.name?.slice(0,1)?.toUpperCase()||"?");
  return `<span class="avatar ${extra}">${p.avatar?`<img alt="" src="${p.avatar}">`:name}</span>`;
@@ -178,7 +201,7 @@ function refreshCounter(){
 function landing(){
  return `<div class="landing page-card">
  <div class="intro-copy"><h1 class="display">Pre Papa.<br><i>Pluim Pub Golf.</i></h1><p>De ronde is begonnen.</p></div>
- <div class="hero-photo"><img src="./assets/thomas-4.webp" alt="Thomas in feeststemming"><span class="hero-tag">THE DADCHELOR CUP</span></div>
+ <div class="hero-photo"><img src="./assets/thomas-4.webp" alt="Thomas in feeststemming">${sticker(7,"landing-sticker")}<span class="hero-tag">THE DADCHELOR CUP</span></div>
  <div class="grow"></div><button class="cta" data-action="start">Ik speel mee <span>→</span></button>
  </div>`;
 }
@@ -235,6 +258,7 @@ function preview(){
    </button>
   </div>
   <div class="taproom-footer">
+    <div class="taproom-peeker">${sticker([2,4,5,7,6,3][hole])}</div>
     <button type="button" class="taproom-cta" data-action="${ready?'gotDrink':'pourDrink'}">
       <span class="taproom-cta-icon">${ready?'✓':'🍺'}</span>
       <span class="taproom-cta-copy"><strong>${ready?"Ik heb m'n drankje!":"Tap dat biertje"}</strong><small>${ready?'Op naar de scorekaart':'Eén tik en hij staat klaar'}</small></span>
@@ -249,7 +273,7 @@ function holeView(){
  <div class="hole-head"><span class="overline">HOLE ${hole+1} / 6</span><span class="par-badge">PAR ${h.par}</span></div>
  <h1 class="venue">${escapeHtml(h.venue)}</h1><p class="drink-name">${escapeHtml(h.drink)} <span>· ${escapeHtml(h.details)}</span></p>
  <div class="hole-tag">⭐ 1 SLAG = HOLE-IN-ONE</div>
- <div class="drink-frame">${svgDrink(h.visual)}</div>
+ <div class="drink-frame">${sticker([0,5,4,2,7,3][hole],"drink-sticker")}${svgDrink(h.visual)}</div>
  <div class="score-control"><div class="overline">JOUW SLAGEN</div>
  <div class="counter" role="group" aria-label="Aantal slagen"><button data-action="minus" aria-label="Minder slagen" type="button">−</button><strong id="stroke-value">${strokes}</strong><button data-action="plus" aria-label="Meer slagen" type="button">+</button></div>
  <p class="counter-note">${strokes<h.par?`${h.par-strokes} onder par`:strokes===h.par?"Precies op par":`${strokes-h.par} boven par`}</p></div>
@@ -263,6 +287,7 @@ function ace(){
    <div class="ace-jackpot-ring" aria-hidden="true"><span>HOLE IN ONE · HOLE IN ONE ·</span></div>
    <div class="ace-blast-layer" aria-hidden="true">
      ${icons.map((icon,i)=>`<span style="--ace-i:${i}">${icon}</span>`).join("")}
+     ${[3,6,7,2].map((n,i)=>`<div class="ace-sticker-fly ace-fly-${i}">${sticker(n)}</div>`).join("")}
    </div>
    <span class="ace-topline">⛳ HOLE ${String(hole+1).padStart(2,"0")} <span>•</span> ${escapeHtml(h.venue.toUpperCase())}</span>
    <div class="ace-main">
@@ -291,7 +316,7 @@ function aceBlast(){
  setTimeout(()=>{if(view==="ace"){celebrate(25);flyBeer(4)}},1920);
 }
 function quiz1(){
- return `<div class="page-card question-page question-baby">
+ return `<div class="page-card question-page question-baby">${sticker(2,"quiz-sticker")}
  <span class="overline">NA HOLE 1 · THOMAS TRIVIA</span>
  <h1 class="display">Jongen<br>of <i>meisje?</i></h1>
  <p class="question-sub">Wat wordt het voor Thomas en Danique?</p>
@@ -303,7 +328,7 @@ function quiz1(){
 }
 function quiz2(){
  const days=['10','12','14','16','18','20','22','25'];
- return `<div class="page-card question-page question-date"><span class="overline">NA HOLE 2 · THOMAS TRIVIA</span>
+ return `<div class="page-card question-page question-date">${sticker(4,"quiz-sticker")}<span class="overline">NA HOLE 2 · THOMAS TRIVIA</span>
  <h1 class="display">Wanneer<br>is <i>Danique</i><br>uitgerekend?</h1>
  <p class="question-sub">Kies de juiste dag in januari.</p>
  <div class="date-grid">${days.map(x=>`<button data-round="two" data-choice="${x}"><strong>${x}</strong><span>JAN</span></button>`).join("")}</div>
@@ -313,6 +338,7 @@ function quiz4(){
  const labels=['Thomas','Thomas','thomas','Misschien Thomas'];
  const choice=['Thomas','THOMAS','thomas','misschien-thomas'];
  return `<div class="page-card question-page question-name">
+ ${sticker(7,"quiz-sticker")}
  <div class="thomas-cloud" aria-hidden="true">${Array.from({length:35},(_,i)=>`<span style="--i:${i};--x:${(i*37)%92}%;--y:${(i*23)%82}%;--rotate:${(i*17)%42-21}deg">Thomas</span>`).join("")}</div>
  <span class="overline">NA HOLE 4 · CRUCIALE VRAAG</span>
  <h1 class="display">Hoe gaat<br>de zoon van<br><i>Thomas</i> heten?</h1>
@@ -384,6 +410,7 @@ function leaderboard(){
   <span class="leader-live"><span class="leader-live-dot"></span>${done?'FINISH':'LIVE'}</span>
  </div>
  <p class="helper leader-helper">De stand van zaken. Tik op een golfer voor de scorekaart.</p>
+ <div class="leader-sticker-peek">${sticker(5)}</div>
  ${players.length? `<div class="podium" aria-label="Top drie golfers">
  ${podium.map((player,index)=>{
  const stat=score(player);
@@ -445,18 +472,18 @@ function detail(){
 }
 function checkin(){
  const moods=[
-  ["😐","Vlees nog vis","Het kan nog alle kanten op."],
-  ["🥴","Lekker in de oli","Kijk, nu wordt het gezellig."],
-  ["🤪","Poepiepapiepoe","Duidelijk verhaal, chef."],
-  ["🏆","GAA VOOR GOUUUDD","Voor die ene bonus. Uiteraard."]
+  [4,"Vlees nog vis","Het kan nog alle kanten op."],
+  [3,"Lekker in de oli","Kijk, nu wordt het gezellig."],
+  [2,"Poepiepapiepoe","Duidelijk verhaal, chef."],
+  [6,"GAA VOOR GOUUUDD","Voor die ene bonus. Uiteraard."]
  ];
  return `<div class="page-card checkin-page">
  <span class="checkin-pill">🍺 HALVERWEGE · HOLE 03</span>
- <div class="checkin-hero"><span aria-hidden="true">🪩</span>
+ <div class="checkin-hero">
  <h1 class="display">Hoe ga <i>je?</i></h1>
  <p>Even inchecken als vrienden onder elkaar</p></div>
  <div class="mood-grid">${moods.map((m,i)=>`<button class="mood mood-${i}" type="button" data-mood="${i}" aria-label="${m[1]}">
-   <span class="mood-emoji" aria-hidden="true">${m[0]}</span>
+   ${sticker(m[0],"mood-sticker")}
    <span class="mood-copy"><strong>${m[1]}</strong><small>${m[2]}</small></span>
    <span class="mood-arrow" aria-hidden="true">↗</span>
  </button>`).join("")}</div>
@@ -582,6 +609,7 @@ el("salmari-quick").addEventListener("click",()=>{
 el("menu").addEventListener("click",()=>setView("menu"));
 el("screen").addEventListener("dblclick",e=>{if(e.target.closest(".counter"))e.preventDefault()});
 el("screen").addEventListener("click",e=>{
+ maybeJumpScare(e);
  const pick=e.target.closest("[data-player]");
  if(pick){
   myId=pick.dataset.player;localStorage.setItem(meKey,myId);
