@@ -10,3 +10,11 @@ test('profile avatar uploads are accepted for known players and validated', () =
  assert.equal(act(state,{id:'x-avatar-update',type:'setAvatar',playerId:'person_a',avatar:'data:image/jpeg;base64,SGVsbG8='}),null);
  assert.match(act(state,{id:'x-avatar-bad',type:'setAvatar',playerId:'person_a',avatar:'javascript:alert(1)'}),/Ongeldige/);
 });
+
+test('post-third-hole check-in is validated and persisted',()=>{
+ const s=initial();act(s,{id:'p-new',type:'addPlayer',player:{id:'person3',name:'Thomas'}});
+ assert.equal(act(s,{id:'checkin1',type:'setCheckin',playerId:'person3',value:3}),null);
+ assert.equal(s.players[0].checkin,3);
+ assert.equal(typeof act(s,{id:'checkin-bad',type:'setCheckin',playerId:'person3',value:5}),'string');
+ assert.equal(s.players[0].checkin,3);
+});
