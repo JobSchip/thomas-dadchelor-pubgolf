@@ -26,6 +26,8 @@ jobs:
           node-version: '22'
       - name: Check Xcode version
         run: xcodebuild -version
+      - name: Test shared game API and score rules
+        run: npm test
       - name: Install Capacitor dependencies
         run: npm install --prefix ios-app --no-audit --no-fund
       - name: Create native Xcode project and bundle web app
