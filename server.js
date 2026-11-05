@@ -76,7 +76,7 @@ function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeld
   const p=s.players.find(p=>p.id===a.playerId);
   if(!p)return 'Speler niet gevonden';
   if(typeof p.nomination==='string'&&p.nomination.length)return 'Er is al iemand gekozen';
-  if(!validId(a.targetPlayerId)||!s.players.some(x=>x.id===a.targetPlayerId))return 'Speler niet gevonden';
+  if(!validId(a.targetPlayerId)||!s.players.some(x=>x.id===a.targetPlayerId))return 'Speler niet gevonden';if(s.players.length>1&&a.targetPlayerId===a.playerId)return 'Kies een andere golfer';
   p.nomination=a.targetPlayerId;
  }else if(a.type==='setAvatar'){
   const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(typeof a.avatar!=='string'||a.avatar.length>60000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.avatar))return 'Ongeldige profielfoto';p.avatar=a.avatar;
