@@ -1063,3 +1063,10 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
 
 /* Keep the full-screen jackpot completely clear of the floating Salmari shortcut. */
 #app[data-view="ace"] .salmari-quick{display:none!important}
+
+/* Revised friends check-in copy v19 */
+.checkin-hero .display{max-width:calc(100% - 35px);font-size:clamp(44px,12vw,62px)}
+.mood-copy{min-width:0;width:100%}
+.mood-copy strong{overflow-wrap:break-word;hyphens:none}
+.mood-3 .mood-copy strong{font-size:clamp(14px,3.9vw,17px);line-height:1.02;letter-spacing:-.045em}
+@media(max-width:360px){.mood-copy strong{font-size:15px}.mood-3 .mood-copy strong{font-size:14px}}
