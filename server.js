@@ -7,13 +7,25 @@ const root=__dirname;
 const dataDir=process.env.DATA_DIR||path.join(root,'data');
 fs.mkdirSync(dataDir,{recursive:true});
 const port=Number(process.env.PORT)||3000;
+const resetEpoch='THOMAS-NOV05-RESET-2';
+const resetRoom='THOMAS-OPEN';
+const resetMarker=path.join(dataDir,'.pubgolf-reset-20261105-v2');
+if(!fs.existsSync(resetMarker)){
+ try{
+  const previous=path.join(dataDir,resetRoom+'.json');
+  if(fs.existsSync(previous))fs.unlinkSync(previous);
+  fs.writeFileSync(resetMarker,new Date().toISOString(),'utf8');
+  console.info('PubGolf reset uitgevoerd: THOMAS-OPEN — alle testprofielen en scores gewist');
+ }catch(error){console.error('PubGolf reset mislukt:',error.message)}
+}
+
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.webp':'image/webp','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json; charset=utf-8'};
-const initial=()=>({players:[],revision:0,updatedAt:Date.now(),seenActions:[]});
+const initial=()=>({players:[],revision:0,updatedAt:Date.now(),seenActions:[],epoch:resetEpoch});
 function roomName(requestUrl){return String(requestUrl.searchParams.get('room')||'THOMAS').toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,24)||'THOMAS'}
 function roomFile(room){return path.join(dataDir,room+'.json')}
-function load(room){try{const s=JSON.parse(fs.readFileSync(roomFile(room),'utf8'));if(!Array.isArray(s.players))return initial();s.seenActions=Array.isArray(s.seenActions)?s.seenActions:[];return s}catch{return initial()}}
+function load(room){try{const s=JSON.parse(fs.readFileSync(roomFile(room),'utf8'));if(!Array.isArray(s.players)|| (room===resetRoom&&s.epoch!==resetEpoch))return initial();s.seenActions=Array.isArray(s.seenActions)?s.seenActions:[];return s}catch{return initial()}}
 function save(room,s){const dest=roomFile(room);const tmp=dest+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s));fs.renameSync(tmp,dest)}
-function publicState(s){return {players:s.players,revision:s.revision,updatedAt:s.updatedAt}}
+function publicState(s){return {players:s.players,revision:s.revision,updatedAt:s.updatedAt,epoch:resetEpoch}}
 function json(res,code,obj){res.writeHead(code,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(obj))}
 function validId(id){return typeof id==='string'&&id.length>0&&id.length<=80&&/^[\w-]+$/.test(id)}
 function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeldige wijziging';if(s.seenActions.includes(a.id))return null;
@@ -40,7 +52,7 @@ const server=http.createServer((req,res)=>{
   if(url.pathname==='/api/action'&&req.method==='POST'){
     let body='',oversize=false;
     req.on('data',chunk=>{body+=chunk;if(body.length>110000){oversize=true;req.destroy()}});
-    req.on('end',()=>{if(oversize)return json(res,413,{error:'Te groot'});let action;try{action=JSON.parse(body)}catch{return json(res,400,{error:'Ongeldige JSON'})}const room=roomName(url),s=load(room);const err=act(s,action);if(err)return json(res,400,{error:err});try{save(room,s)}catch(e){console.error(e);return json(res,500,{error:'Opslaan mislukt'})}return json(res,200,publicState(s))});return;
+    req.on('end',()=>{if(oversize)return json(res,413,{error:'Te groot'});let action;try{action=JSON.parse(body)}catch{return json(res,400,{error:'Ongeldige JSON'})}if(action.epoch!==resetEpoch)return json(res,409,{error:'Laad de nieuwe app-versie opnieuw'});const room=roomName(url),s=load(room);const err=act(s,action);if(err)return json(res,400,{error:err});try{save(room,s)}catch(e){console.error(e);return json(res,500,{error:'Opslaan mislukt'})}return json(res,200,publicState(s))});return;
   }
   if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Methode niet toegestaan'});
   const pathname=decodeURIComponent(url.pathname);const requested=pathname==='/'?'index.html':pathname.replace(/^\/+/, '');const file=path.resolve(root,requested);
