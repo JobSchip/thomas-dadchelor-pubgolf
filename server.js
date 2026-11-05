@@ -1,0 +1,48 @@
+'use strict';
+const http=require('node:http');
+const fs=require('node:fs');
+const path=require('node:path');
+const {URL}=require('node:url');
+const root=__dirname;
+const dataDir=process.env.DATA_DIR||path.join(root,'data');
+fs.mkdirSync(dataDir,{recursive:true});
+const port=Number(process.env.PORT)||3000;
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.webp':'image/webp','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json; charset=utf-8'};
+const initial=()=>({players:[],revision:0,updatedAt:Date.now(),seenActions:[]});
+function roomName(requestUrl){return String(requestUrl.searchParams.get('room')||'THOMAS').toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,24)||'THOMAS'}
+function roomFile(room){return path.join(dataDir,room+'.json')}
+function load(room){try{const s=JSON.parse(fs.readFileSync(roomFile(room),'utf8'));if(!Array.isArray(s.players))return initial();s.seenActions=Array.isArray(s.seenActions)?s.seenActions:[];return s}catch{return initial()}}
+function save(room,s){const dest=roomFile(room);const tmp=dest+'.tmp';fs.writeFileSync(tmp,JSON.stringify(s));fs.renameSync(tmp,dest)}
+function publicState(s){return {players:s.players,revision:s.revision,updatedAt:s.updatedAt}}
+function json(res,code,obj){res.writeHead(code,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(obj))}
+function validId(id){return typeof id==='string'&&id.length>0&&id.length<=80&&/^[\w-]+$/.test(id)}
+function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeldige wijziging';if(s.seenActions.includes(a.id))return null;
+ if(a.type==='addPlayer'){
+  if(!a.player||!validId(a.player.id)||typeof a.player.name!=='string')return 'Ongeldige speler';const name=a.player.name.trim().replace(/\s+/g,' ');if(name.length<2||name.length>32)return 'Spelersnaam moet 2-32 tekens zijn';if(s.players.length>=32)return 'Maximaal 32 spelers';if(s.players.some(p=>p.id===a.player.id||p.name.toLowerCase()===name.toLowerCase()))return 'Speler bestaat al';s.players.push({id:a.player.id,name,avatar:typeof a.player.avatar==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.player.avatar)&&a.player.avatar.length<60000?a.player.avatar:'',scores:Array(6).fill(null),salmari:0});
+ }else if(a.type==='setScore'){
+  const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(!Number.isInteger(a.hole)||a.hole<0||a.hole>5)return 'Ongeldige hole';if(a.value!==null&&(!Number.isInteger(a.value)||a.value<1||a.value>99))return 'Ongeldige score';p.scores[a.hole]=a.value;
+ }else if(a.type==='setSalmari'){
+  const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(!Number.isInteger(a.value)||a.value<0||a.value>30)return 'Ongeldige bonus';p.salmari=a.value;
+ }else if(a.type==='setAvatar'){
+  const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(typeof a.avatar!=='string'||a.avatar.length>60000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.avatar))return 'Ongeldige profielfoto';p.avatar=a.avatar;
+ }else if(a.type==='removePlayer'){
+  if(!validId(a.playerId))return 'Ongeldige speler';s.players=s.players.filter(p=>p.id!==a.playerId);
+ }else return 'Onbekende wijziging';
+ s.revision=(s.revision||0)+1;s.updatedAt=Date.now();s.seenActions.push(a.id);if(s.seenActions.length>600)s.seenActions=s.seenActions.slice(-450);return null;
+}
+const server=http.createServer((req,res)=>{
+  let url;try{url=new URL(req.url,'http://localhost')}catch{return json(res,400,{error:'Ongeldige URL'})}
+  if(url.pathname==='/api/state'&&req.method==='GET'){return json(res,200,publicState(load(roomName(url))))}
+  if(url.pathname==='/api/action'&&req.method==='POST'){
+    let body='',oversize=false;
+    req.on('data',chunk=>{body+=chunk;if(body.length>110000){oversize=true;req.destroy()}});
+    req.on('end',()=>{if(oversize)return json(res,413,{error:'Te groot'});let action;try{action=JSON.parse(body)}catch{return json(res,400,{error:'Ongeldige JSON'})}const room=roomName(url),s=load(room);const err=act(s,action);if(err)return json(res,400,{error:err});try{save(room,s)}catch(e){console.error(e);return json(res,500,{error:'Opslaan mislukt'})}return json(res,200,publicState(s))});return;
+  }
+  if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Methode niet toegestaan'});
+  const pathname=decodeURIComponent(url.pathname);const requested=pathname==='/'?'index.html':pathname.replace(/^\/+/, '');const file=path.resolve(root,requested);
+  if(!file.startsWith(root+path.sep)||file.includes(path.sep+'data'+path.sep)||path.basename(file).startsWith('.')||!fs.existsSync(file)||!fs.statSync(file).isFile())return json(res,404,{error:'Niet gevonden'});
+  res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':file.endsWith('index.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
+  if(req.method==='HEAD')return res.end();fs.createReadStream(file).pipe(res);
+});
+if(require.main===module)server.listen(port,'0.0.0.0',()=>console.log(`Thomas' Pub Golf live at http://localhost:${port}`));
+module.exports={server,act,initial,publicState};
