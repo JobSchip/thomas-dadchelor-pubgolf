@@ -18,3 +18,23 @@ test('post-third-hole check-in is validated and persisted',()=>{
  assert.equal(typeof act(s,{id:'checkin-bad',type:'setCheckin',playerId:'person3',value:5}),'string');
  assert.equal(s.players[0].checkin,3);
 });
+
+test('jongen/meisje, januari en Thomas-antwoord zijn éénmalige keuzes',()=>{
+ const s=initial();act(s,{id:'test-new',type:'addPlayer',player:{id:'p1',name:'Thomas'}});
+ assert.equal(act(s,{id:'q1',type:'answerRound',playerId:'p1',round:'one',choice:'blue'}),null);
+ assert.equal(s.players[0].answers.one,'blue');
+ assert.match(act(s,{id:'q1-again',type:'answerRound',playerId:'p1',round:'one',choice:'pink'}),/al beantwoord/);
+ assert.equal(act(s,{id:'q2',type:'answerRound',playerId:'p1',round:'two',choice:'18'}),null);
+ assert.equal(act(s,{id:'q4',type:'answerRound',playerId:'p1',round:'four',choice:'misschien-thomas'}),null);
+ assert.equal(s.players[0].answers.four,'misschien-thomas');
+ assert.match(act(s,{id:'bad',type:'answerRound',playerId:'p1',round:'two',choice:'19'}),/Ongeldig|al beantwoord/);
+});
+test('een speler deelt één keer een bonus uit aan een bestaande speler',()=>{
+ const s=initial();
+ act(s,{id:'p-1',type:'addPlayer',player:{id:'p1',name:'Thomas'}});
+ act(s,{id:'p-2',type:'addPlayer',player:{id:'p2',name:'Jan'}});
+ assert.equal(act(s,{id:'gift',type:'nominate',playerId:'p1',targetPlayerId:'p2'}),null);
+ assert.equal(s.players[0].nomination,'p2');
+ assert.match(act(s,{id:'gift-again',type:'nominate',playerId:'p1',targetPlayerId:'p2'}),/al iemand gekozen/);
+ assert.match(act(s,{id:'bad-gift',type:'nominate',playerId:'p2',targetPlayerId:'missing'}),/niet gevonden/);
+});
