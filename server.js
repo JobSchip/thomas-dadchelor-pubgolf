@@ -30,7 +30,7 @@ function json(res,code,obj){res.writeHead(code,{'content-type':'application/json
 function validId(id){return typeof id==='string'&&id.length>0&&id.length<=80&&/^[\w-]+$/.test(id)}
 function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeldige wijziging';if(s.seenActions.includes(a.id))return null;
  if(a.type==='addPlayer'){
-  if(!a.player||!validId(a.player.id)||typeof a.player.name!=='string')return 'Ongeldige speler';const name=a.player.name.trim().replace(/\s+/g,' ');if(name.length<2||name.length>32)return 'Spelersnaam moet 2-32 tekens zijn';if(s.players.length>=32)return 'Maximaal 32 spelers';if(s.players.some(p=>p.id===a.player.id||p.name.toLowerCase()===name.toLowerCase()))return 'Speler bestaat al';s.players.push({id:a.player.id,name,avatar:typeof a.player.avatar==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.player.avatar)&&a.player.avatar.length<60000?a.player.avatar:'',scores:Array(6).fill(null),salmari:0,checkin:null});
+  if(!a.player||!validId(a.player.id)||typeof a.player.name!=='string')return 'Ongeldige speler';const name=a.player.name.trim().replace(/\s+/g,' ');if(name.length<2||name.length>32)return 'Spelersnaam moet 2-32 tekens zijn';if(s.players.length>=32)return 'Maximaal 32 spelers';if(s.players.some(p=>p.id===a.player.id||p.name.toLowerCase()===name.toLowerCase()))return 'Speler bestaat al';s.players.push({id:a.player.id,name,avatar:typeof a.player.avatar==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.player.avatar)&&a.player.avatar.length<60000?a.player.avatar:'',scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null});
  }else if(a.type==='setScore'){
   const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(!Number.isInteger(a.hole)||a.hole<0||a.hole>5)return 'Ongeldige hole';if(a.value!==null&&(!Number.isInteger(a.value)||a.value<1||a.value>99))return 'Ongeldige score';p.scores[a.hole]=a.value;
  }else if(a.type==='setSalmari'){
@@ -39,6 +39,19 @@ function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeld
   const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';
   if(!Number.isInteger(a.value)||a.value<0||a.value>3)return 'Ongeldige check-in';
   p.checkin=a.value;
+ }else if(a.type==='answerRound'){
+  const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';
+  const valid={one:['blue','pink','rainbow'],two:['10','12','14','16','18','20','22','25'],four:['Thomas','THOMAS','thomas','misschien-thomas']};
+  if(!Object.prototype.hasOwnProperty.call(valid,a.round)||!valid[a.round].includes(a.choice))return 'Ongeldig antwoord';
+  if(!p.answers||typeof p.answers!=='object')p.answers={};
+  if(Object.prototype.hasOwnProperty.call(p.answers,a.round))return 'Deze vraag is al beantwoord';
+  p.answers[a.round]=a.choice;
+ }else if(a.type==='nominate'){
+  const p=s.players.find(p=>p.id===a.playerId);
+  if(!p)return 'Speler niet gevonden';
+  if(typeof p.nomination==='string'&&p.nomination.length)return 'Er is al iemand gekozen';
+  if(!validId(a.targetPlayerId)||!s.players.some(x=>x.id===a.targetPlayerId))return 'Speler niet gevonden';
+  p.nomination=a.targetPlayerId;
  }else if(a.type==='setAvatar'){
   const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(typeof a.avatar!=='string'||a.avatar.length>60000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.avatar))return 'Ongeldige profielfoto';p.avatar=a.avatar;
  }else if(a.type==='removePlayer'){
