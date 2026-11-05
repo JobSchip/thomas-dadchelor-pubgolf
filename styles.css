@@ -1060,3 +1060,6 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
  .ace-blast-layer span{display:none}
  .ace-score-chip,.ace-cta,.ace-title,.ace-boom,.ace-praise{opacity:1;transform:none}
 }
+
+/* Keep the full-screen jackpot completely clear of the floating Salmari shortcut. */
+#app[data-view="ace"] .salmari-quick{display:none!important}
