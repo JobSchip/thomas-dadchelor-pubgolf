@@ -1,16 +1,20 @@
 {
-  "name": "thomas-pubgolf-ios",
+  "name": "thomas-pubgolf-mobile",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Native iPhone shell for Thomas' Pub Golf",
+  "description": "Native iPhone and Android apps for Thomas' Pub Golf",
   "scripts": {
     "build:web": "node scripts/prepare-web.mjs && esbuild native/bridge.js --bundle --minify --format=iife --platform=browser --target=safari16 --outfile=www/native.js",
     "ios:init": "npm run build:web && node scripts/ensure-ios.mjs && npx cap sync ios && node scripts/configure-ios.mjs",
     "ios:sync": "npm run build:web && npx cap sync ios && node scripts/configure-ios.mjs",
     "ios:open": "npm run ios:sync && npx cap open ios",
     "ios:check": "npm run build:web && node scripts/check-package.mjs",
-    "ios:doctor": "npx cap doctor"
+    "ios:doctor": "npx cap doctor",
+    "android:init": "npm run build:web && node scripts/ensure-android.mjs && npx cap sync android && node scripts/configure-android.mjs",
+    "android:sync": "npm run build:web && npx cap sync android && node scripts/configure-android.mjs",
+    "android:open": "npm run android:sync && npx cap open android",
+    "android:check": "npm run build:web && node scripts/check-package.mjs"
   },
   "engines": {
     "node": ">=22"
@@ -19,7 +23,8 @@
     "@capacitor/core": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
     "@capacitor/camera": "^8.0.0",
-    "@capacitor/haptics": "^8.0.0"
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/android": "^8.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.0",
