@@ -32,6 +32,8 @@ jobs:
           test -n "$ASC_KEY_ID" || { echo "Missing ASC_KEY_ID"; exit 1; }
           test -n "$ASC_ISSUER_ID" || { echo "Missing ASC_ISSUER_ID"; exit 1; }
           test -n "$ASC_KEY_P8_BASE64" || { echo "Missing ASC_KEY_P8_BASE64"; exit 1; }
+      - name: Test shared game API and score rules
+        run: npm test
       - name: Install Capacitor and create the native iOS project
         run: |
           npm install --prefix ios-app --no-audit --no-fund
