@@ -1,0 +1,51 @@
+name: iOS native build check
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ios-app/**'
+      - 'app.js'
+      - 'index.html'
+      - 'styles.css'
+      - 'sw.js'
+      - 'assets/**'
+      - '.github/workflows/ios-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ios-build:
+    name: Compile iPhone simulator app
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Xcode version
+        run: xcodebuild -version
+      - name: Install Capacitor dependencies
+        run: npm install --prefix ios-app --no-audit --no-fund
+      - name: Create native Xcode project and bundle web app
+        run: npm run ios:init --prefix ios-app
+      - name: Validate bundled web game
+        run: npm run ios:check --prefix ios-app
+      - name: Compile without Apple signing
+        run: |
+          xcodebuild \
+            -project ios-app/ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Save generated Xcode project
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Thomas-PubGolf-Xcode-project
+          path: ios-app/ios/
+          retention-days: 14
+          if-no-files-found: warn
