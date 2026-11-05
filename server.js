@@ -40,7 +40,7 @@ const server=http.createServer((req,res)=>{
   }
   if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Methode niet toegestaan'});
   const pathname=decodeURIComponent(url.pathname);const requested=pathname==='/'?'index.html':pathname.replace(/^\/+/, '');const file=path.resolve(root,requested);
-  if(!file.startsWith(root+path.sep)||file.includes(path.sep+'data'+path.sep)||path.basename(file).startsWith('.')||!fs.existsSync(file)||!fs.statSync(file).isFile())return json(res,404,{error:'Niet gevonden'});
+  if(!file.startsWith(root+path.sep)||(file===dataDir||file.startsWith(dataDir+path.sep))||path.basename(file).startsWith('.')||!fs.existsSync(file)||!fs.statSync(file).isFile())return json(res,404,{error:'Niet gevonden'});
   res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':file.endsWith('index.html')?'no-cache':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
   if(req.method==='HEAD')return res.end();fs.createReadStream(file).pipe(res);
 });
