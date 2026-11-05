@@ -1,5 +1,5 @@
 const test=require('node:test');const assert=require('node:assert/strict');const {act,initial}=require('../server');
-test('add player, strokes, salmari and duplicate protection',()=>{const s=initial();const p={id:'p1',name:'Thomas'};assert.equal(act(s,{id:'a1',type:'addPlayer',player:p}),null);assert.equal(s.players.length,1);assert.equal(act(s,{id:'a2',type:'setScore',playerId:'p1',hole:3,value:1}),null);assert.equal(s.players[0].scores[3],1);assert.equal(act(s,{id:'a3',type:'setSalmari',playerId:'p1',value:2}),null);assert.equal(s.players[0].salmari,2);assert.equal(act(s,{id:'a3',type:'setSalmari',playerId:'p1',value:5}),null);assert.equal(s.players[0].salmari,2)});
+test('add player, strokes, salmari and duplicate protection',()=>{const s=initial();const p={id:'p1',name:'Thomas'};assert.equal(act(s,{id:'a1',type:'addPlayer',player:p}),null);assert.equal(s.players.length,1);assert.equal(act(s,{id:'a2',type:'setScore',playerId:'p1',hole:3,value:1}),null);assert.equal(s.players[0].scores[3],1);assert.equal(act(s,{id:'a3',type:'setSalmari',playerId:'p1',value:1}),null);assert.equal(s.players[0].salmari,1);assert.equal(act(s,{id:'a3',type:'setSalmari',playerId:'p1',value:5}),null);assert.equal(s.players[0].salmari,1)});
 test('reject invalid hole and score',()=>{const s=initial();act(s,{id:'a1',type:'addPlayer',player:{id:'p1',name:'Thomas'}});assert.equal(typeof act(s,{id:'a4',type:'setScore',playerId:'p1',hole:7,value:1}),'string');assert.equal(typeof act(s,{id:'a5',type:'setScore',playerId:'p1',hole:1,value:-2}),'string')});
 
 test('profile avatar uploads are accepted for known players and validated', () => {
@@ -56,4 +56,24 @@ test('Salmari telt per knopdruk op en mag niet teruggezet worden',()=>{
  assert.match(act(s,{id:'shot-skip',type:'setSalmari',playerId:'shots',value:3}),/één shot/);
  assert.equal(act(s,{id:'shot-two',type:'setSalmari',playerId:'shots',value:2}),null);
  assert.equal(s.players[0].salmari,2);
+});
+
+test('iOS Capacitor origin kan de gedeelde scores lezen en een preflight uitvoeren',async()=>{
+ const {server}=require('../server');
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{
+  const base='http://127.0.0.1:'+server.address().port;
+  const options=await fetch(base+'/api/action?room=IOS-CORS-TEST',{
+   method:'OPTIONS',
+   headers:{Origin:'capacitor://localhost','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type'}
+  });
+  assert.equal(options.status,204);
+  assert.equal(options.headers.get('access-control-allow-origin'),'capacitor://localhost');
+  const state=await fetch(base+'/api/state?room=IOS-CORS-TEST',{headers:{Origin:'capacitor://localhost'}});
+  assert.equal(state.status,200);
+  assert.equal(state.headers.get('access-control-allow-origin'),'capacitor://localhost');
+  assert.equal(Array.isArray((await state.json()).players),true);
+  const originNotAllowed=await fetch(base+'/api/state?room=IOS-CORS-TEST',{headers:{Origin:'https://untrusted.example'}});
+  assert.equal(originNotAllowed.headers.get('access-control-allow-origin'),null);
+ }finally{await new Promise(resolve=>server.close(resolve))}
 });
