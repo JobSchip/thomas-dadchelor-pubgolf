@@ -278,7 +278,7 @@ function giftResult(){
  <div class="grow"></div><button class="cta" data-action="continue">Naar de laatste kroeg <span>→</span></button>
  </div>`;
 }
-const RANK_ICONS=["👑","🥈","🥉","🏅","🎖️","🚀","🍻","🕺","🦆","🍆","🥨","🧦","🐌","🥴","🤡","🚽","🪠","🫠","🥀","🧻"];
+const RANK_ICONS=["👑","🥈","🥉","🏅","🎖️","🦚","🕺","🍻","🦆","🍆","🥨","🧦","🐌","🥴","🤡","🚽","🪠","🫠","🥀","🧻","🦠","🪳","🗑️","🫧","🪦","💩"];
 function rankIcon(index,total){
  if(index===0)return "👑";
  if(total>1&&index===total-1)return "💩";
@@ -289,7 +289,7 @@ function leaderboard(){
  return `<div class="page-card leader-page">
  <span class="overline">${done?"DE EINDSTAND":"LIVE KLASSEMENT"}</span>
  <h1 class="display">The <i>clubhouse.</i></h1>
- <p class="helper">Tik op een speler voor de scorekaart.</p>
+ <p class="helper">Tik op een naam voor alle slagen en Salmari-shotjes.</p>
  <div class="leader-list">${players.map((player,index)=>{
  const stat=score(player),last=index===players.length-1&&players.length>1,emblem=rankIcon(index,players.length);
  return `<button type="button" data-leader="${escapeHtml(player.id)}" aria-label="Bekijk de scorekaart van ${escapeHtml(player.name)}" class="leader-row ${index===0?'winner':''} ${player.id===myId?'selected':''}" style="--row:${Math.min(index,18)}">
@@ -310,12 +310,12 @@ function detail(){
  const signed=n=>n>0?`+${n}`:n<0?`−${Math.abs(n)}`:"0";
  return `<div class="page-card detail-page">
  <button class="back" data-action="board">← Terug naar klassement</button>
- <span class="overline">SPELERSPROFIEL · POSITIE ${rank}</span>
+ <span class="overline">SCOREKAART · PLEK ${rank}</span>
  <div class="detail-player-head">
   ${avatar(p,"detail-avatar")}
   <div><h1 class="detail-player-name">${escapeHtml(p.name)}</h1><p class="detail-rank">${rankIcon(rank-1,state.players.length)} Nummer ${rank} in het klassement</p></div>
  </div>
- <div class="detail-section-title">De zes biertjes</div>
+ <div class="detail-section-title">Slagen per drankje</div>
  <div class="detail-holes">
   ${HOLES.map((h,i)=>{
    const n=p.scores?.[i],done=Number.isInteger(n);
@@ -362,16 +362,9 @@ function menu(){
  <div class="grow"></div>${p?`<p class="menu-footer">Je speelt als ${escapeHtml(p.name)}</p>`:""}</div>`;
 }
 
-function bonus(){
- const p=me(),n=p?.salmari||0;
- return `<div class="page-card bonus-page"><button class="back" data-action="menu">← Terug</button><span class="overline">BONUS</span><h1 class="display">Salmari<br><i>bonus.</i></h1>
- <div class="bonus-visual">🥃</div><p class="helper centered">Iedere Salmari betekent één slag aftrek.</p>
- <div class="counter"><button data-action="bonusminus" type="button">−</button><strong>${n}</strong><button data-action="bonusplus" type="button">+</button></div>
- <div class="grow"></div><button class="cta" data-action="board">Klaar <span>→</span></button></div>`;
-}
 function render(){
- if(!me()&&["preview","hole","ace","board","detail","bonus","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules"].includes(view))view="choose";
- const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,detail,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu,bonus};
+ if(!me()&&["preview","hole","ace","board","detail","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules"].includes(view))view="choose";
+ const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,detail,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu};
  el("screen").innerHTML=`<section class="page page-${view}">${(pages[view]||landing)()}</section>`;
  header();
 }
@@ -379,21 +372,22 @@ function render(){
 function rainIcons(kind="general",amount=25){
  const overlay=el("effects");if(!overlay||window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
  const palettes={
-  welcome:["⛳","🍺","🍆","🎉","🤡","🪩"],
-  preview:["🍺","🍻","🍆","🥨","🕺","🤡","🍟","🍕"],
-  drink:["🍻","🍺","🍋","🍆","🍸","🍀"],
-  board:["🏆","👑","💩","⛳","🍻","🤡"],
-  good:["🏆","🍺","👑","🕺","🎉","🎯","🍆"],
-  bad:["💩","💩","🤡","🚽","🥴","🍆","🫠","🐌"],
-  ace:["🏆","🍺","🍺","⛳","🌟","🍆","🤡","🍻","🎉"],
-  baby:["👶","🍼","💙","🩷","🌈","🤡"],
-  calendar:["📆","⏰","👶","🥳","🍼"],
-  names:["👶","🤡","🍆","👨","💩"],
-  gift:["🎁","👑","🍻","🤝","🍆"],
-  mood:["🥴","🍺","🤡","🪩","🕺"],
-  finish:["🏆","👑","💩","🎊","⛳"],
-  result:["🎉","🤡","🍺","💩","🕺"],
-  general:["🍻","🍆","🤡","⛳","🕺"]
+  welcome:["⛳","🍺","🍆","🎉","🤡","🪩","🦩","🦄","🛟","🧀"],
+  preview:["🍺","🍻","🍆","🥨","🕺","🤡","🍟","🍕","🦖","🛒","🦩","🛸","🪿"],
+  drink:["🍻","🍺","🍋","🍆","🍸","🍀","🦄","🪇","🧀","🦆","🎺"],
+  board:["🏆","👑","💩","⛳","🍻","🤡","🪠","🦚","🧦","🦩","🧻"],
+  scorecard:["📋","🍺","🥃","🧮","🕵️","🍆","🏌️","🦆"],
+  good:["🏆","🍺","👑","🕺","🎉","🎯","🍆","🦄","🪩","🚀","🪇"],
+  bad:["💩","💩","🤡","🚽","🥴","🍆","🫠","🐌","🪠","🧻","🦠","🦨"],
+  ace:["🏆","🍺","🍺","⛳","🌟","🍆","🤡","🍻","🎉","🦄","🚀","🪩","🦖"],
+  baby:["👶","🍼","💙","🩷","🌈","🤡","🦄","🧸","🪿"],
+  calendar:["📆","⏰","👶","🥳","🍼","🧮","🎰","🦉"],
+  names:["👶","🤡","🍆","👨","💩","🧑‍🍼","🦆","🪇"],
+  gift:["🎁","👑","🍻","🤝","🍆","💌","🦄","🪿"],
+  mood:["🥴","🍺","🤡","🪩","🕺","🫠","🛸","🦖"],
+  finish:["🏆","👑","💩","🎊","⛳","🦚","🦄","🪩"],
+  result:["🎉","🤡","🍺","💩","🕺","🦩","🪇","🦖"],
+  general:["🍻","🍆","🤡","⛳","🕺","🦄","🪿","🪇"]
  };
  const emojis=palettes[kind]||palettes.general;
  for(let i=0;i<amount;i++){
@@ -403,7 +397,8 @@ function rainIcons(kind="general",amount=25){
   sp.style.animationDelay=Math.random()*1.55+"s";
   sp.style.animationDuration=(2.1+Math.random()*1.5)+"s";
   sp.style.fontSize=(19+Math.random()*25)+"px";
-  sp.style.setProperty("--spin",(-110+Math.random()*220)+"deg");
+  sp.style.setProperty("--spin",(-180+Math.random()*360)+"deg");
+  sp.style.setProperty("--sway",(-110+Math.random()*220)+"px");
   overlay.appendChild(sp);setTimeout(()=>sp.remove(),6000);
  }
 }
@@ -540,9 +535,9 @@ el("screen").addEventListener("click",e=>{
   case "finish":setView("finish");break;
   case "menu":setView("menu");break;
   case "return":nextHole();break;
-  case "bonus":setView("bonus");break;
-  case "bonusplus":if(me())update("setSalmari",{playerId:myId,value:Math.min(30,(me().salmari||0)+1)});break;
-  case "bonusminus":if(me())update("setSalmari",{playerId:myId,value:Math.max(0,(me().salmari||0)-1)});break;
+  
+
+
  }
 });
 if(state.epoch!==RESET_EPOCH){
