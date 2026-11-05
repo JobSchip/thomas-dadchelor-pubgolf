@@ -135,7 +135,7 @@ function setView(next){
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
  const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
- setTimeout(()=>rainIcons(kind,next==="ace"?56:next==="preview"?22:next==="board"?16:14),120);
+ setTimeout(()=>{if(view===next)rainIcons(kind,next==="ace"?18:next==="preview"?22:next==="board"?16:14)},120);
 }
 function nextHole(){
  const p=me();if(!p){setView("choose");return}
@@ -256,19 +256,39 @@ function holeView(){
  <div class="grow"></div><button class="cta" data-action="submit">Score vastleggen <span>→</span></button></div>`;
 }
 function ace(){
- return `<div class="ace-wrap page-card">
- <span class="ace-overline">HOLE 04 · BIERLOKAAL</span>
- <div class="ace-ball">⛳</div>
- <div class="ace-ring"></div>
- <p class="ace-small">DIT. IS. 'M.</p>
- <h1 class="ace-big">HOLE<br>IN ONE<span>!</span></h1>
- <p class="ace-wow">GE-WEL-DIG!</p>
- <p class="ace-copy">Dat fluitje zat in één keer. Legende.</p>
- <div class="grow"></div>
- <button class="cta ace-cta" data-action="board">Naar het klassement <span>→</span></button>
+ const icons=["💥","🍺","🏆","🔥","⚡","🍻","⭐","⛳","🥇","🎉","🚀","🎯"];
+ return `<div class="page-card ace-insane">
+   <div class="ace-sunburst" aria-hidden="true"></div>
+   <div class="ace-jackpot-ring" aria-hidden="true"><span>HOLE IN ONE · HOLE IN ONE ·</span></div>
+   <div class="ace-blast-layer" aria-hidden="true">
+     ${icons.map((icon,i)=>`<span style="--ace-i:${i}">${icon}</span>`).join("")}
+   </div>
+   <span class="ace-topline">⛳ HOLE 04 <span>•</span> BIERLOKAAL DE UIVER</span>
+   <div class="ace-main">
+     <div class="ace-boom"><span>💥</span> BOEM<span>!</span></div>
+     <div class="ace-slot"><span>🎰</span> JACKPOT <span>🎰</span></div>
+     <h1 class="ace-title">GE-WEL-<br>DIG!</h1>
+     <p class="ace-sub">HOLE IN ONE.<br><strong>Goed gedaan, maat!</strong></p>
+     <div class="ace-score-chip">
+       <strong>01</strong>
+       <div><span>SLAG</span><b>Fluitje. In één keer.</b><small>Dit is officieel legendestatus.</small></div>
+     </div>
+     <div class="ace-praise"><span>🏌️</span><p>Hier mag je echt onredelijk trots op zijn.</p></div>
+   </div>
+   <div class="ace-actions">
+     <button type="button" class="ace-replay" data-action="replayAce" aria-label="Speel de hole-in-one-viering opnieuw">↻ Nog een keer BOEM</button>
+     <button class="cta ace-cta" type="button" data-action="board">Naar het klassement <span>→</span></button>
+   </div>
  </div>`;
 }
-
+function aceBlast(){
+ if(view!=="ace"||window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
+ celebrate(75);
+ rainIcons("ace",55);
+ flyBeer(7);
+ setTimeout(()=>{if(view==="ace"){celebrate(38);rainIcons("ace",24)}},950);
+ setTimeout(()=>{if(view==="ace"){celebrate(25);flyBeer(4)}},1920);
+}
 function quiz1(){
  return `<div class="page-card question-page question-baby">
  <span class="overline">NA HOLE 1 · THOMAS TRIVIA</span>
@@ -517,10 +537,12 @@ function rainIcons(kind="general",amount=25){
  }
 }
 function celebrate(count=42){
+ if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
  const overlay=el("effects");if(!overlay)return;
  for(let i=0;i<count;i++){const piece=document.createElement("i");piece.className="confetti";piece.style.left=Math.random()*100+"%";piece.style.background=["#e8be59","#2e8f74","#ff8b76","#b9ed89","#faf6e9"][i%5];piece.style.animationDelay=Math.random()*.28+"s";piece.style.setProperty("--drift",(-90+Math.random()*180)+"px");overlay.appendChild(piece);setTimeout(()=>piece.remove(),2200)}
 }
 function flyBeer(count=3){
+ if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
  const overlay=el("effects");if(!overlay)return;
  for(let i=0;i<count;i++){const piece=document.createElement("span");piece.className="flying-beer";piece.textContent="🍺";piece.style.top=(12+(i%6)*12)+"%";piece.style.animationDelay=(i*.12)+"s";overlay.appendChild(piece);setTimeout(()=>piece.remove(),2600)}
 }
@@ -643,9 +665,7 @@ el("screen").addEventListener("click",e=>{
    nativeFeedback(holeInOne?"success":above?"error":"medium");
    if(holeInOne){
      setView("ace");
-     setTimeout(()=>{if(view==="ace"){celebrate(110);flyBeer(9);rainIcons("ace",90)}},70);
-     setTimeout(()=>{if(view==="ace")celebrate(75)},900);
-     aceTimer=setTimeout(()=>{if(view==="ace")setView("board")},4200);
+     aceBlast();
    }else{
      setView("board");
      if(under)setTimeout(()=>{celebrate(44);rainIcons("good",58)},65);
@@ -674,6 +694,9 @@ el("screen").addEventListener("click",e=>{
    if(view!=="preview"||!pourReady)break;
    nativeFeedback("light");
    setView("hole");
+   break;
+  case "replayAce":
+   if(view==="ace"){render();nativeFeedback("success");aceBlast()}
    break;
   case "board":setView("board");break;
   case "finish":setView("finish");break;
