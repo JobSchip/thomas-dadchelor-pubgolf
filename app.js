@@ -177,7 +177,7 @@ function refreshCounter(){
 }
 function landing(){
  return `<div class="landing page-card">
- <div class="intro-copy"><span class="overline">HAARLEM OPEN</span><h1 class="display">Golf. Bier.<br><i>Thomas.</i></h1><p>De ronde is begonnen.</p></div>
+ <div class="intro-copy"><h1 class="display">Pre Papa.<br><i>Pluim Pub Golf.</i></h1><p>De ronde is begonnen.</p></div>
  <div class="hero-photo"><img src="./assets/thomas-4.webp" alt="Thomas in feeststemming"><span class="hero-tag">THE DADCHELOR CUP</span></div>
  <div class="grow"></div><button class="cta" data-action="start">Ik speel mee <span>→</span></button>
  </div>`;
@@ -216,31 +216,31 @@ const BAR_LINES=[
 function preview(){
  const h=HOLES[hole],pic=[1,2,3,4,1,3][hole],ready=pourReady;
  return `<div class="page-card taproom ${ready?'is-served':'is-waiting'}" data-tap-hole="${hole+1}">
- <div class="taproom-photo" aria-hidden="true"><img src="./assets/thomas-${pic}.webp" alt=""></div>
- <div class="taproom-topline"><span class="taproom-onair"><span class="taproom-light"></span>DE VOLGENDE RONDE</span><span class="taproom-hole">0${hole+1}<small> / 06</small></span></div>
- <div class="taproom-heading"><span class="taproom-label">AAN DE BAR BIJ</span>
- <h1>${escapeHtml(h.venue)}</h1>
- <p class="taproom-order"><strong>${escapeHtml(h.drink)}</strong><span>${escapeHtml(h.details)}</span></p>
- </div>
- <div class="taproom-machine-area">
-  <div class="taproom-nudge" aria-live="polite">${ready?'VERS GETAPT. NETJES.':'TIK OP DE TAP OM IN TE SCHENKEN'}</div>
-  <button class="taproom-machine ${ready?'has-poured':''}" data-action="${ready?'gotDrink':'pourDrink'}" type="button" aria-label="${ready?'Je drankje is klaar, ga naar de score':'Tik op de tap om je glas te vullen'}">
+  <div class="taproom-photo" aria-hidden="true"><img src="./assets/thomas-${pic}.webp" alt=""></div>
+  <div class="taproom-heading">
+   <span class="taproom-label">AAN DE BAR BIJ</span>
+   <h1>${escapeHtml(h.venue)}</h1>
+   <p class="taproom-order"><strong>${escapeHtml(h.drink)}</strong><span>${escapeHtml(h.details)}</span></p>
+  </div>
+  <div class="taproom-machine-area">
+   <button class="taproom-machine ${ready?'has-poured':''}" data-action="${ready?'gotDrink':'pourDrink'}" type="button" aria-label="${ready?'Je drankje is klaar, ga naar de score':'Tik op de tap om je glas te vullen'}">
     <span class="taproom-tap" aria-hidden="true"><span class="taproom-tap-neck"></span><span class="taproom-tap-head"></span><span class="taproom-tap-handle"></span><span class="taproom-tap-spout"></span></span>
     <span class="taproom-stream" aria-hidden="true"></span>
     <span class="taproom-glass glass-${h.visual}" aria-hidden="true">
       <span class="taproom-beer"><i></i><i></i><i></i><i></i><i></i></span>
       <span class="taproom-foam"><i></i><i></i><i></i><i></i><i></i></span>
       <span class="taproom-glass-shine"></span>
-      <span class="taproom-glass-label">T<br>O</span>
     </span>
     <span class="taproom-driptray" aria-hidden="true"></span>
-  </button>
- </div>
- <div class="taproom-footer">
-  <div class="taproom-banter" aria-live="polite"><span>${ready?'🍻':'🗣️'}</span><p>${escapeHtml(BAR_LINES[hole][ready?1:0])}</p></div>
-  <button type="button" class="taproom-cta" data-action="${ready?'gotDrink':'pourDrink'}"><span class="taproom-cta-icon">${ready?'✓':'🍺'}</span><span class="taproom-cta-copy"><strong>${ready?"Ik heb m'n drankje!":"Tap dat biertje"}</strong><small>${ready?'Op naar de scorekaart':'Eén tik en hij staat klaar'}</small></span><span class="taproom-arrow">→</span></button>
-  <div class="taproom-bottomline"><span>⛳ PAR ${h.par}</span><span>THOMAS' OPEN · HOLE ${hole+1}</span></div>
- </div>
+   </button>
+  </div>
+  <div class="taproom-footer">
+    <button type="button" class="taproom-cta" data-action="${ready?'gotDrink':'pourDrink'}">
+      <span class="taproom-cta-icon">${ready?'✓':'🍺'}</span>
+      <span class="taproom-cta-copy"><strong>${ready?"Ik heb m'n drankje!":"Tap dat biertje"}</strong><small>${ready?'Op naar de scorekaart':'Eén tik en hij staat klaar'}</small></span>
+      <span class="taproom-arrow">→</span>
+    </button>
+  </div>
  </div>`;
 }
 function holeView(){
