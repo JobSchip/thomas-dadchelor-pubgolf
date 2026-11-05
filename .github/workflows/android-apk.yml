@@ -33,7 +33,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
       - name: Install Android SDK platform for Capacitor 8
         run: sdkmanager "platforms;android-36"
       - name: Run multiplayer server tests
