@@ -317,3 +317,13 @@ p{line-height:1.45}
 .detail-calculation .detail-total{font-weight:900;font-size:16px;color:#1a4e32}.detail-calculation .detail-total strong{font-size:30px}
 @media(max-width:365px){.leader-row{gap:6px}.leader-row .rank{width:30px;min-width:30px}.rank-emoji{font-size:20px}}
 @keyframes emojiDrop{0%{opacity:0;transform:translate3d(0,-30px,0) rotate(calc(var(--spin)*-.5)) scale(.7)}8%{opacity:1}78%{opacity:1}100%{opacity:0;transform:translate3d(var(--sway),115dvh,0) rotate(var(--spin)) scale(1.05)}}
+
+/* Keep the oversized Salmari shot beside the headings, safely above scrolling leaderboard entries. */
+.salmari-quick{top:126px!important;right:max(12px,calc(50vw - 265px))!important}
+@media(max-width:430px){.salmari-quick{top:121px!important;right:9px!important}}
+@media(max-height:700px){.salmari-quick{top:117px!important}}
+.leader-page>.overline,.leader-page>.display,.leader-page>.helper{max-width:calc(100% - 90px)}
+.leader-page>.display{font-size:clamp(34px,8vw,46px)}
+.detail-page>.overline{max-width:calc(100% - 85px)}
+.detail-player-head{margin-top:32px}
+@media(max-width:355px){.leader-page>.display{font-size:34px}}
