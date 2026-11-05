@@ -505,7 +505,7 @@ el("screen").addEventListener("click",e=>{
 });
 if(state.epoch!==RESET_EPOCH){state={players:[],revision:0,epoch:RESET_EPOCH};queue=[];myId="";localStorage.removeItem(meKey);save()}
 render();
-if(me())nextHole();
+if(me())nextHole();else setTimeout(()=>rainIcons("welcome",24),180);
 poll();setInterval(poll,3500);
 if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
 })();
