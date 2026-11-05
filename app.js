@@ -19,7 +19,7 @@ const parse=(raw,fallback)=>{try{return JSON.parse(raw)||fallback}catch{return f
 let state=parse(localStorage.getItem(storeKey),{players:[],revision:0,epoch:RESET_EPOCH});
 let queue=parse(localStorage.getItem(queueKey),[]);
 let myId=localStorage.getItem(meKey)||"",view="welcome",hole=0,strokes=8,fromEdit=false;
-let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null;
+let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={};
 const el=id=>document.getElementById(id);
 const escapeHtml=text=>String(text??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const newId=()=>globalThis.crypto?.randomUUID?.()||"x"+Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -29,8 +29,16 @@ function score(p){
  const arr=Array.isArray(p.scores)?p.scores:[];
  let total=0,par=0,completed=0;
  arr.forEach((val,i)=>{if(Number.isInteger(val)&&i<6){total+=val;par+=HOLES[i].par;completed++}});
- const bonus=(p.salmari||0)+(p.checkin===3?1:0);
- return {completed,total,net:total-bonus,relative:total-bonus-par,bonus};
+ const answer=p.answers||{};
+ let adjustment=-(p.salmari||0)-(p.checkin===3?1:0);
+ if(answer.one==='blue')adjustment-=1;
+ else if(answer.one==='pink')adjustment+=1;
+ else if(answer.one==='rainbow')adjustment+=2;
+ if(answer.two)adjustment+=answer.two==='18'?-1:1;
+ if(answer.four)adjustment-=1;
+ const gifts=state.players.filter(x=>x.nomination===p.id).length;
+ adjustment-=gifts;
+ return {completed,total,net:total+adjustment,relative:total+adjustment-par,bonus:-adjustment,gifts};
 }
 const leaders=()=>[...state.players].sort((a,b)=>score(b).completed-score(a).completed||score(a).relative-score(b).relative||a.name.localeCompare(b.name,"nl"));
 function notify(message){
@@ -45,6 +53,8 @@ function apply(s,a){
  else if(a.type==="setSalmari"&&p)p.salmari=a.value;
  else if(a.type==="setAvatar"&&p)p.avatar=a.avatar;
  else if(a.type==="setCheckin"&&p)p.checkin=a.value;
+ else if(a.type==="answerRound"&&p){p.answers=p.answers||{};p.answers[a.round]=a.choice;}
+ else if(a.type==="nominate"&&p)p.nomination=a.targetPlayerId;
 }
 function update(type,details,quiet=false){
  const a={id:newId(),epoch:RESET_EPOCH,type,...details};
@@ -72,7 +82,7 @@ async function poll(){
   const remote=await response.json();const oldRevision=state.revision;
   if(remote.epoch!==RESET_EPOCH){network=false;notify("Ververs de app om verder te spelen");return}
   queue.forEach(a=>apply(remote,a));state=remote;save();network=true;
-  if(remote.revision!==oldRevision&&!["profile","hole","checkin"].includes(view))render();
+  if(remote.revision!==oldRevision&&["board","choose","nominate"].includes(view))render();
   if(queue.length)flush();
  }catch{network=false}
  finally{polling=false;status()}
@@ -83,12 +93,9 @@ function avatar(p,extra=""){
  return `<span class="avatar ${extra}">${p.avatar?`<img alt="" src="${p.avatar}">`:name}</span>`;
 }
 function header(){
- const p=me(),h=el("header-avatar"),b=el("switcher");
- if(!h||!b)return;
- h.innerHTML=p?.avatar?`<img alt="" src="${p.avatar}">`:escapeHtml(p?.name?.[0]?.toUpperCase()||"↗");
- b.setAttribute("aria-label",p?"Wissel speler: "+p.name:"Kies een spelersprofiel");
+ const p=me();
  const quick=el("salmari-quick"),count=el("salmari-count");
- if(quick){quick.disabled=!p;quick.setAttribute("aria-label",p?"Salmari toevoegen: nu "+(p.salmari||0)+" bonus":"Registreer eerst een golfer")}
+ if(quick){quick.disabled=!p;quick.setAttribute("aria-label",p?"Salmari, "+(p.salmari||0)+" shotjes geteld":"Registreer eerst een golfer")}
  if(count)count.textContent=String(p?.salmari||0);
  status();
 }
@@ -96,14 +103,22 @@ function setView(next){
  if(aceTimer){clearTimeout(aceTimer);aceTimer=null}
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
+ const kind={preview:"preview",hole:"drink",board:"board",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
+ setTimeout(()=>rainIcons(kind,next==="ace"?75:next==="preview"?30:next==="board"?24:18),70);
 }
 function nextHole(){
  const p=me();if(!p){setView("choose");return}
- const first=p.scores.findIndex(n=>!Number.isInteger(n));
+ const done=p.scores||[];
+ const answers=p.answers||{};
+ if(Number.isInteger(done[0])&&!answers.one){setView("quiz1");return}
+ if(Number.isInteger(done[1])&&!answers.two){setView("quiz2");return}
+ if(Number.isInteger(done[2])&&!Number.isInteger(p.checkin)){setView("checkin");return}
+ if(Number.isInteger(done[3])&&!answers.four){setView("quiz4");return}
+ if(Number.isInteger(done[4])&&!p.nomination){setView("nominate");return}
+ const first=done.findIndex(n=>!Number.isInteger(n));
  if(first<0){setView("finish");return}
- if(first>=3&&Number.isInteger(p.scores[2])&&!Number.isInteger(p.checkin)){setView("checkin");return}
- hole=first;fromEdit=false;strokes=Number.isInteger(p.scores[hole])?p.scores[hole]:HOLES[hole].par;
- setView("hole");
+ hole=first;fromEdit=false;strokes=HOLES[hole].par;
+ setView("preview");
 }
 function svgDrink(kind){
  const start='<svg class="beer-svg" viewBox="0 0 230 252" role="img" aria-label="Illustratie van het drankje"><defs><linearGradient id="amber" x1="0" x2="1"><stop stop-color="#f4b940"/><stop offset=".6" stop-color="#cf7f1c"/><stop offset="1" stop-color="#f9ce6a"/></linearGradient><linearGradient id="lager" x1="0" x2="1"><stop stop-color="#fbd56d"/><stop offset="1" stop-color="#e9a328"/></linearGradient></defs>';
@@ -158,9 +173,26 @@ function rules(){
  <div class="rule"><span>04</span><p>Salmari: één slag aftrek per shot op de totaalscore.</p></div>
  <div class="grow"></div><button class="cta" data-action="rulesDone">Begrepen. Tee off! <span>→</span></button></div>`;
 }
+function preview(){
+ const h=HOLES[hole],pic=[1,2,3,4,1,3][hole];
+ return `<div class="page-card bar-preview" style="--haze:${hole*2.6}px;--haze-alpha:${0.09+hole*.045}">
+ <div class="progress">${HOLES.map((_,i)=>`<span class="${i<=hole?'active':''}"></span>`).join("")}</div>
+ <span class="overline">VOLGENDE STOP · HOLE ${hole+1}</span>
+ <h1 class="venue preview-venue">${escapeHtml(h.venue)}</h1>
+ <p class="drink-name">${escapeHtml(h.drink)} <span>· ${escapeHtml(h.details)}</span></p>
+ <div class="bar-scene">
+ <img class="bar-blur-bg" src="./assets/thomas-${pic}.webp" alt="">
+ <span class="bar-haze"></span>
+ <div class="bar-drink">${svgDrink(h.visual)}</div>
+ <div class="bar-par">PAR ${h.par}</div>
+ </div>
+ <p class="preview-hint">${hole===0?'De aftrap.':'Daar gaan we weer.'} Bestel je drankje en speel verder.</p>
+ <div class="grow"></div><button class="cta" data-action="gotDrink">Ik heb m'n drankje <span>→</span></button>
+ </div>`;
+}
 function holeView(){
  const h=HOLES[hole];const progress=HOLES.map((x,i)=>`<span class="${i<=hole?'active':''}"></span>`).join("");
- return `<div class="page-card hole-page"><div class="progress">${progress}</div>
+ return `<div class="page-card hole-page" style="--haze:${hole*2.6}px;--haze-alpha:${0.08+hole*.05}"><div class="progress">${progress}</div>
  <div class="hole-head"><span class="overline">HOLE ${hole+1} / 6</span><span class="par-badge">PAR ${h.par}</span></div>
  <h1 class="venue">${escapeHtml(h.venue)}</h1><p class="drink-name">${escapeHtml(h.drink)} <span>· ${escapeHtml(h.details)}</span></p>
  ${h.special?'<div class="hole-tag">⭐ HOLE-IN-ONE</div>':''}
@@ -181,6 +213,64 @@ function ace(){
  <p class="ace-copy">Dat fluitje zat in één keer. Legende.</p>
  <div class="grow"></div>
  <button class="cta ace-cta" data-action="board">Naar het klassement <span>→</span></button>
+ </div>`;
+}
+
+function quiz1(){
+ return `<div class="page-card question-page question-baby">
+ <span class="overline">NA HOLE 1 · THOMAS TRIVIA</span>
+ <h1 class="display">Jongen<br>of <i>meisje?</i></h1>
+ <p class="question-sub">Wat wordt het voor Thomas en Danique?</p>
+ <div class="answer-stack">
+ <button class="gender-answer boy" data-round="one" data-choice="blue"><span>💙</span> Een jongen <b>→</b></button>
+ <button class="gender-answer girl" data-round="one" data-choice="pink"><span>🩷</span> Een meisje <b>→</b></button>
+ <button class="gender-answer rainbow" data-round="one" data-choice="rainbow"><span>🌈</span> Alle kleuren <b>→</b></button>
+ </div><div class="grow"></div></div>`;
+}
+function quiz2(){
+ const days=['10','12','14','16','18','20','22','25'];
+ return `<div class="page-card question-page question-date"><span class="overline">NA HOLE 2 · THOMAS TRIVIA</span>
+ <h1 class="display">Wanneer<br>is <i>Danique</i><br>uitgerekend?</h1>
+ <p class="question-sub">Kies de juiste dag in januari.</p>
+ <div class="date-grid">${days.map(x=>`<button data-round="two" data-choice="${x}"><strong>${x}</strong><span>JAN</span></button>`).join("")}</div>
+ <div class="grow"></div></div>`;
+}
+function quiz4(){
+ const labels=['Thomas','Thomas','thomas','Misschien Thomas'];
+ const choice=['Thomas','THOMAS','thomas','misschien-thomas'];
+ return `<div class="page-card question-page question-name">
+ <div class="thomas-cloud" aria-hidden="true">${Array.from({length:35},(_,i)=>`<span style="--i:${i};--x:${(i*37)%92}%;--y:${(i*23)%82}%;--rotate:${(i*17)%42-21}deg">Thomas</span>`).join("")}</div>
+ <span class="overline">NA HOLE 4 · CRUCIALE VRAAG</span>
+ <h1 class="display">Hoe gaat<br>de zoon van<br><i>Thomas</i> heten?</h1>
+ <div class="name-choice">${labels.map((label,i)=>`<button data-round="four" data-choice="${choice[i]}">${label}<span>→</span></button>`).join("")}</div>
+ <div class="grow"></div></div>`;
+}
+function quizResult(){
+ const r=questionResult;
+ return `<div class="page-card quiz-result ${r.delta<0?'win':'loss'}">
+ <span class="overline">${r.title||'ANTWOORD BINNEN'}</span>
+ <div class="result-burst">${r.emoji||'🎉'}</div>
+ <h1 class="display">${r.heading||'Lekker'}<br><i>${r.subheading||'bezig!'}</i></h1>
+ <p class="question-result-text">${r.description||''}</p>
+ <div class="impact">${r.delta>0?'+':''}${r.delta} <small>${Math.abs(r.delta)===1?'SLAG':'SLAGEN'}</small></div>
+ <div class="grow"></div><button class="cta" data-action="continue">Volgende kroeg <span>→</span></button></div>`;
+}
+function nominate(){
+ const all=state.players;
+ return `<div class="page-card nominate-page">
+ <span class="overline">NA HOLE 5 · BONUS</span>
+ <h1 class="display">Hoperdop.<br><i>Vragen op.</i></h1>
+ <p class="question-sub">Wie gun jij −1 slag?</p>
+ <div class="player-list vote-list">${all.map(p=>`<button class="pick vote" data-nominate="${escapeHtml(p.id)}">${avatar(p)}<strong>${escapeHtml(p.name)}</strong><span class="chevron">−1 ↗</span></button>`).join("")}</div>
+ <div class="grow"></div></div>`;
+}
+function giftResult(){
+ const name=questionResult.friend||'je maat';
+ return `<div class="page-card quiz-result win">
+ <span class="overline">CADEAUTJE UITGEDEELD</span><div class="result-burst">🎁</div>
+ <h1 class="display">Dat is<br><i>lief zeg.</i></h1>
+ <p class="question-result-text">${escapeHtml(name)} krijgt 1 slag minder. Jij bent een goed mens. Waarschijnlijk.</p>
+ <div class="grow"></div><button class="cta" data-action="continue">Naar de laatste kroeg <span>→</span></button>
  </div>`;
 }
 function leaderboard(){
@@ -221,7 +311,7 @@ function finish(){
 }
 function menu(){
  const p=me();return `<div class="page-card menu-page"><button class="back" data-action="return">← Terug</button><span class="overline">HET CLUBHOUSE</span><h1 class="display">Jouw<br><i>menu.</i></h1>
- <div class="menu-list"><button data-action="board">Live klassement <span>↗</span></button><button data-action="edit">Scores aanpassen <span>↗</span></button><button data-action="photo">Profielfoto wijzigen <span>↗</span></button><button data-action="choose">Wissel speler <span>↗</span></button></div>
+ <div class="menu-list"><button data-action="board">Live klassement <span>↗</span></button><button data-action="edit">Scores aanpassen <span>↗</span></button><button data-action="photo">Profielfoto wijzigen <span>↗</span></button></div>
  <div class="grow"></div>${p?`<p class="menu-footer">Je speelt als ${escapeHtml(p.name)}</p>`:""}</div>`;
 }
 function editView(){
@@ -236,10 +326,42 @@ function bonus(){
  <div class="grow"></div><button class="cta" data-action="board">Klaar <span>→</span></button></div>`;
 }
 function render(){
- if(!me()&&["hole","ace","board","edit","bonus","finish","menu","checkin","checkinResult","rules"].includes(view))view="choose";
- const pages={welcome:landing,choose,profile,rules,hole:holeView,ace,board:leaderboard,checkin,checkinResult,finish,menu,edit:editView,bonus};
+ if(!me()&&["preview","hole","ace","board","edit","bonus","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules"].includes(view))view="choose";
+ const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu,edit:editView,bonus};
  el("screen").innerHTML=`<section class="page page-${view}">${(pages[view]||landing)()}</section>`;
  header();
+}
+
+function rainIcons(kind="general",amount=25){
+ const overlay=el("effects");if(!overlay||window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
+ const palettes={
+  welcome:["⛳","🍺","🍆","🎉","🤡","🪩"],
+  preview:["🍺","🍻","🍆","🥨","🕺","🤡","🍟","🍕"],
+  drink:["🍻","🍺","🍋","🍆","🍸","🍀"],
+  board:["🏆","👑","💩","⛳","🍻","🤡"],
+  good:["🏆","🍺","👑","🕺","🎉","🎯","🍆"],
+  bad:["💩","💩","🤡","🚽","🥴","🍆","🫠","🐌"],
+  ace:["🏆","🍺","🍺","⛳","🌟","🍆","🤡","🍻","🎉"],
+  baby:["👶","🍼","💙","🩷","🌈","🤡"],
+  calendar:["📆","⏰","👶","🥳","🍼"],
+  names:["👶","🤡","🍆","👨","💩"],
+  gift:["🎁","👑","🍻","🤝","🍆"],
+  mood:["🥴","🍺","🤡","🪩","🕺"],
+  finish:["🏆","👑","💩","🎊","⛳"],
+  result:["🎉","🤡","🍺","💩","🕺"],
+  general:["🍻","🍆","🤡","⛳","🕺"]
+ };
+ const emojis=palettes[kind]||palettes.general;
+ for(let i=0;i<amount;i++){
+  const sp=document.createElement("span");sp.className="rain-emoji";
+  sp.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+  sp.style.left=Math.random()*97+"%";
+  sp.style.animationDelay=Math.random()*1.55+"s";
+  sp.style.animationDuration=(2.1+Math.random()*1.5)+"s";
+  sp.style.fontSize=(19+Math.random()*25)+"px";
+  sp.style.setProperty("--spin",(-110+Math.random()*220)+"deg");
+  overlay.appendChild(sp);setTimeout(()=>sp.remove(),6000);
+ }
 }
 function celebrate(count=42){
  const overlay=el("effects");if(!overlay)return;
@@ -268,7 +390,7 @@ async function avatarFile(file){
  finally{URL.revokeObjectURL(url);el("photo-input").value=""}
 }
 el("photo-input").addEventListener("change",e=>avatarFile(e.target.files?.[0]));
-el("switcher").addEventListener("click",()=>setView("choose"));
+
 el("salmari-quick").addEventListener("click",()=>{
  const p=me();if(!p)return notify("Kies eerst je profiel");
  if((p.salmari||0)>=30)return notify("Maximum bereikt");
@@ -291,6 +413,42 @@ el("screen").addEventListener("click",e=>{
   checkinChoice=Number(mood.dataset.mood);
   update("setCheckin",{playerId:myId,value:checkinChoice},true);
   setView("checkinResult");return;
+ }
+ const answer=e.target.closest("[data-round]");
+ if(answer){
+  const round=answer.dataset.round,choice=answer.dataset.choice,p=me();
+  if(!p||p.answers?.[round])return;
+  let delta=0,title="",heading="",subheading="",description="",emoji="";
+  if(round==="one"){
+   delta=choice==="blue"?-1:choice==="pink"?1:2;
+   title="BABYVOORSPELLING";
+   heading=choice==="blue"?"Bingo!":choice==="pink"?"Helaas.":"Te woke,";
+   subheading=choice==="blue"?"It's a boy!":choice==="pink"?"Het is een jongen.":"vriend.";
+   description=choice==="blue"?"Goed geraden. Een slag cadeau.":choice==="pink"?"Roze was 'm niet. Een slag erbij.":"Alle kleuren? Twee slagen erbij.";
+   emoji=choice==="blue"?"💙":choice==="pink"?"🩷":"🌈";
+  }else if(round==="two"){
+   delta=choice==="18"?-1:1;title="BABY COUNTDOWN";
+   heading=delta<0?"BAM!":"Net mis.";
+   subheading=delta<0?"18 januari.":"18 januari!";
+   description=delta<0?"Helemaal goed. Pak die bonus.":"Het juiste antwoord was 18 januari.";
+   emoji=delta<0?"🎯":"🤡";
+  }else if(round==="four"){
+   delta=-1;title="NAAM VAN HET JAAR";heading="Thomas.";subheading="Uiteraard.";
+   description="Alle antwoorden waren correct. −1 slag voor je intellect.";
+   emoji="👶";
+  }
+  questionResult={delta,title,heading,subheading,description,emoji};
+  update("answerRound",{playerId:myId,round,choice},true);
+  setView("quizResult");if(delta<0)celebrate(36);
+  rainIcons(delta<0?"good":"bad",46);return;
+ }
+ const vote=e.target.closest("[data-nominate]");
+ if(vote){
+  const p=me(),chosen=state.players.find(x=>x.id===vote.dataset.nominate);
+  if(!p||p.nomination||!chosen)return;
+  questionResult={friend:chosen.name};
+  update("nominate",{playerId:myId,targetPlayerId:chosen.id},true);
+  setView("giftResult");celebrate(34);return;
  }
  const selectedHole=e.target.closest("[data-hole]");
  if(selectedHole){
@@ -317,21 +475,24 @@ el("screen").addEventListener("click",e=>{
   case "plus":strokes=Math.min(99,strokes+1);refreshCounter();break;
   case "submit":{
    const under=strokes<HOLES[hole].par;
+   const above=strokes>HOLES[hole].par;
    const holeInOne=hole===3&&strokes===1;
    update("setScore",{playerId:myId,hole,value:strokes},true);
    if(holeInOne){
      setView("ace");
-     setTimeout(()=>{if(view==="ace"){celebrate(110);flyBeer(9)}},70);
+     setTimeout(()=>{if(view==="ace"){celebrate(110);flyBeer(9);rainIcons("ace",90)}},70);
      setTimeout(()=>{if(view==="ace")celebrate(75)},900);
      aceTimer=setTimeout(()=>{if(view==="ace")setView("board")},4200);
    }else{
      setView("board");
-     if(under)setTimeout(()=>celebrate(44),65);
+     if(under)setTimeout(()=>{celebrate(44);rainIcons("good",58)},65);
+     if(above)setTimeout(()=>rainIcons("bad",72),90);
      setTimeout(()=>flyBeer(3),95);
    }
    break;
   }
   case "continue":nextHole();break;
+  case "gotDrink":setView("hole");break;
   case "board":setView("board");break;
   case "finish":setView("finish");break;
   case "menu":setView("menu");break;
