@@ -248,7 +248,7 @@ function holeView(){
  return `<div class="page-card hole-page" style="--haze:${hole*2.6}px;--haze-alpha:${0.08+hole*.05}"><div class="progress">${progress}</div>
  <div class="hole-head"><span class="overline">HOLE ${hole+1} / 6</span><span class="par-badge">PAR ${h.par}</span></div>
  <h1 class="venue">${escapeHtml(h.venue)}</h1><p class="drink-name">${escapeHtml(h.drink)} <span>· ${escapeHtml(h.details)}</span></p>
- ${h.special?'<div class="hole-tag">⭐ HOLE-IN-ONE</div>':''}
+ <div class="hole-tag">⭐ 1 SLAG = HOLE-IN-ONE</div>
  <div class="drink-frame">${svgDrink(h.visual)}</div>
  <div class="score-control"><div class="overline">JOUW SLAGEN</div>
  <div class="counter" role="group" aria-label="Aantal slagen"><button data-action="minus" aria-label="Minder slagen" type="button">−</button><strong id="stroke-value">${strokes}</strong><button data-action="plus" aria-label="Meer slagen" type="button">+</button></div>
@@ -256,6 +256,7 @@ function holeView(){
  <div class="grow"></div><button class="cta" data-action="submit">Score vastleggen <span>→</span></button></div>`;
 }
 function ace(){
+ const h=HOLES[hole];
  const icons=["💥","🍺","🏆","🔥","⚡","🍻","⭐","⛳","🥇","🎉","🚀","🎯"];
  return `<div class="page-card ace-insane">
    <div class="ace-sunburst" aria-hidden="true"></div>
@@ -263,7 +264,7 @@ function ace(){
    <div class="ace-blast-layer" aria-hidden="true">
      ${icons.map((icon,i)=>`<span style="--ace-i:${i}">${icon}</span>`).join("")}
    </div>
-   <span class="ace-topline">⛳ HOLE 04 <span>•</span> BIERLOKAAL DE UIVER</span>
+   <span class="ace-topline">⛳ HOLE ${String(hole+1).padStart(2,"0")} <span>•</span> ${escapeHtml(h.venue.toUpperCase())}</span>
    <div class="ace-main">
      <div class="ace-boom"><span>💥</span> BOEM<span>!</span></div>
      <div class="ace-slot"><span>🎰</span> JACKPOT <span>🎰</span></div>
@@ -271,7 +272,7 @@ function ace(){
      <p class="ace-sub">HOLE IN ONE.<br><strong>Goed gedaan, maat!</strong></p>
      <div class="ace-score-chip">
        <strong>01</strong>
-       <div><span>SLAG</span><b>Fluitje. In één keer.</b><small>Dit is officieel legendestatus.</small></div>
+       <div><span>1 SLAG · 1 SLOK</span><b>${escapeHtml(h.drink)}. In één keer.</b><small>${escapeHtml(h.venue)} · PAR ${h.par}</small></div>
      </div>
      <div class="ace-praise"><span>🏌️</span><p>Hier mag je echt onredelijk trots op zijn.</p></div>
    </div>
@@ -660,7 +661,7 @@ el("screen").addEventListener("click",e=>{
    if(Number.isInteger(me()?.scores?.[hole])){notify("Deze score staat al vast");break}
    const under=strokes<HOLES[hole].par;
    const above=strokes>HOLES[hole].par;
-   const holeInOne=hole===3&&strokes===1;
+   const holeInOne=strokes===1;
    update("setScore",{playerId:myId,hole,value:strokes},true);
    nativeFeedback(holeInOne?"success":above?"error":"medium");
    if(holeInOne){
