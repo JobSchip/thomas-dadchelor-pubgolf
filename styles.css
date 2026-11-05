@@ -840,3 +840,223 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
 
 /* Reserve room for the floating Salmari shot on small phones. */
 @media(max-width:375px){.taproom-topline{padding-right:68px;gap:7px}.taproom-onair{font-size:9px;letter-spacing:.08em}.taproom-hole{font-size:19px}}
+
+
+/* ============================================================
+   HOLE-IN-ONE JACKPOT v16 — massive BOEM, spinning prize wheel
+   and a scorecard that explodes into place. One-time animations,
+   reduced-motion support, no forced navigation.
+   ============================================================ */
+.page-ace{
+ position:relative;isolation:isolate;overflow:hidden;
+ padding:0!important;
+ background:radial-gradient(ellipse at 50% 34%,#ffc85c 0%,#f47c2d 36%,#953c25 66%,#231614 100%)!important;
+ color:#fffdf3;
+ min-height:calc(100dvh - 74px - env(safe-area-inset-top));
+ animation:none;
+}
+.ace-insane{
+ position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;
+ width:100%;min-height:calc(100dvh - 74px - env(safe-area-inset-top));
+ padding:24px clamp(15px,4.5vw,28px) calc(18px + env(safe-area-inset-bottom));
+ color:#fff9e7;text-align:center;
+ animation:jackpotImpact .68s cubic-bezier(.23,.81,.32,1) both;
+}
+.ace-sunburst{
+ position:absolute;z-index:-1;inset:-36%;pointer-events:none;opacity:.56;
+ background:conic-gradient(from 4deg,
+ #fff8d465 0deg 8deg,transparent 9deg 22deg,
+ #ffd4606c 24deg 31deg,transparent 34deg 45deg,
+ #fff7d461 47deg 54deg,transparent 56deg 69deg,
+ #e9c65f75 72deg 81deg,transparent 84deg 90deg);
+ background-size:100% 100%;
+ animation:jackpotSun 14s linear infinite;
+}
+.ace-jackpot-ring{
+ position:absolute;left:50%;top:33%;z-index:-1;pointer-events:none;
+ display:grid;place-items:center;width:min(110vw,510px);height:min(110vw,510px);
+ border:15px dashed #fff6b363;outline:3px solid #fff7cf4a;
+ border-radius:50%;box-shadow:0 0 0 18px #fff6ad0e,0 0 0 41px #ffdc7d13,inset 0 0 35px #ffe5a94f;
+ animation:jackpotWheel 8s linear infinite;
+}
+.ace-jackpot-ring span{
+ display:block;max-width:230px;transform:rotate(-15deg);
+ font-weight:1000;font-size:16px;letter-spacing:.13em;color:#ffedac60
+}
+.ace-blast-layer{position:absolute;z-index:0;inset:0;pointer-events:none;overflow:hidden}
+.ace-blast-layer span{
+ position:absolute;top:var(--ace-top);left:var(--ace-left);
+ font-size:clamp(24px,7.5vw,39px);line-height:1;
+ filter:drop-shadow(0 4px 5px #3b19064a);
+ animation:jackpotFly 2.9s ease-out both;
+ animation-delay:calc(var(--ace-i)*.065s);
+}
+.ace-blast-layer span:nth-child(1){--ace-top:9%;--ace-left:7%;--fly-x:-45px;--fly-y:-105px;--fly-rot:-44deg}
+.ace-blast-layer span:nth-child(2){--ace-top:16%;--ace-left:76%;--fly-x:43px;--fly-y:-94px;--fly-rot:48deg}
+.ace-blast-layer span:nth-child(3){--ace-top:32%;--ace-left:10%;--fly-x:-61px;--fly-y:-45px;--fly-rot:36deg}
+.ace-blast-layer span:nth-child(4){--ace-top:40%;--ace-left:83%;--fly-x:57px;--fly-y:-35px;--fly-rot:-75deg}
+.ace-blast-layer span:nth-child(5){--ace-top:54%;--ace-left:5%;--fly-x:-41px;--fly-y:65px;--fly-rot:88deg}
+.ace-blast-layer span:nth-child(6){--ace-top:64%;--ace-left:82%;--fly-x:65px;--fly-y:38px;--fly-rot:-53deg}
+.ace-blast-layer span:nth-child(7){--ace-top:75%;--ace-left:14%;--fly-x:-32px;--fly-y:75px;--fly-rot:105deg}
+.ace-blast-layer span:nth-child(8){--ace-top:86%;--ace-left:78%;--fly-x:52px;--fly-y:79px;--fly-rot:72deg}
+.ace-blast-layer span:nth-child(9){--ace-top:24%;--ace-left:84%;--fly-x:41px;--fly-y:-92px;--fly-rot:-48deg}
+.ace-blast-layer span:nth-child(10){--ace-top:10%;--ace-left:45%;--fly-x:0;--fly-y:-106px;--fly-rot:89deg}
+.ace-blast-layer span:nth-child(11){--ace-top:73%;--ace-left:64%;--fly-x:16px;--fly-y:75px;--fly-rot:140deg}
+.ace-blast-layer span:nth-child(12){--ace-top:48%;--ace-left:33%;--fly-x:-7px;--fly-y:-52px;--fly-rot:-73deg}
+.ace-topline{
+ position:relative;z-index:2;display:inline-flex;align-items:center;justify-content:center;
+ margin:0 auto;font-size:10px;font-weight:950;letter-spacing:.12em;
+ color:#fff3b9;background:#271a1570;border:1px solid #ffe8b95e;
+ padding:9px 12px;border-radius:100px;max-width:100%;
+}
+.ace-topline span{margin-inline:7px;color:#ffde79}
+.ace-main{
+ position:relative;z-index:2;display:flex;flex:1;flex-direction:column;
+ align-items:center;justify-content:center;gap:11px;
+ min-height:0;padding:12px 0 16px;
+ animation:jackpotEnter .52s cubic-bezier(.1,.88,.24,1.25) both;
+}
+.ace-boom{
+ font-size:clamp(50px,17vw,85px);font-weight:1000;letter-spacing:-.09em;line-height:1;
+ color:#fff16d;
+ text-shadow:0 4px 0 #ba4b22,0 12px 28px #5e25158c,0 0 35px #ffedacbb;
+ animation:jackpotBoom .85s cubic-bezier(.18,.87,.28,1.3) both;
+ white-space:nowrap;
+}
+.ace-boom>span:first-child{font-size:.69em;display:inline-block;vertical-align:12%}
+.ace-boom>span:last-child{color:#fff}
+.ace-slot{
+ display:flex;gap:8px;align-items:center;justify-content:center;
+ font-size:12px;font-weight:950;letter-spacing:.23em;color:#54241c;
+ padding:5px 13px;border-radius:999px;
+ background:linear-gradient(110deg,#ffe783,#fff9c1,#f5cc65);
+ box-shadow:0 4px 12px #4d29183d;
+ transform:rotate(-5deg);animation:jackpotTicket .5s .38s both;
+}
+.ace-slot span{font-size:20px;letter-spacing:normal}
+.ace-title{
+ margin:0;color:#fffdf1;font-weight:1000;font-size:clamp(48px,13vw,72px);
+ letter-spacing:-.09em;line-height:.87;text-shadow:0 7px 0 #a6402d76,0 14px 22px #37181877;
+ animation:jackpotTitle .68s .19s cubic-bezier(.13,.93,.22,1.15) both;
+}
+.ace-sub{
+ margin:3px 0 5px;max-width:320px;color:#fff7d9;
+ line-height:1.2;font-size:clamp(14px,3.9vw,18px);font-weight:800;
+ text-shadow:0 3px 9px #431a1680;
+}
+.ace-sub strong{color:#fff;font-size:1.18em;line-height:1.3}
+.ace-score-chip{
+ display:flex;align-items:center;justify-content:center;gap:14px;
+ width:min(310px,100%);padding:12px 19px;border:2px solid #fff6b9bf;
+ border-radius:23px;background:linear-gradient(135deg,#fff7e4ed,#fff0b9f0);
+ color:#502d19;box-shadow:0 11px 0 #b14c2e88,0 24px 35px #421b1268;
+ transform-origin:center center;
+ animation:jackpotScore .78s .55s cubic-bezier(.11,1.3,.23,1) both;
+}
+.ace-score-chip>strong{
+ font-size:clamp(59px,16vw,74px);font-weight:1000;line-height:.95;
+ letter-spacing:-.09em;color:#297044;text-shadow:0 3px #a6dc94;
+}
+.ace-score-chip>div{display:flex;flex:1;flex-direction:column;gap:3px;text-align:left}
+.ace-score-chip>div span{font-size:10px;font-weight:1000;letter-spacing:.16em;color:#7c653b}
+.ace-score-chip>div b{font-size:15px;line-height:1.12;letter-spacing:-.03em;font-weight:950}
+.ace-score-chip>div small{font-size:11px;color:#856b4c;font-weight:750;line-height:1.25}
+.ace-praise{
+ display:flex;align-items:center;justify-content:center;gap:9px;
+ margin-top:2px;padding:9px 12px;border:1px solid #fff6d75b;
+ background:#2d1f1b72;border-radius:15px;max-width:310px;
+ animation:jackpotEnter .6s .8s both;
+}
+.ace-praise span{font-size:25px;flex-shrink:0}
+.ace-praise p{margin:0;font-size:12px;line-height:1.25;text-align:left;font-weight:770;color:#fff8ea}
+.ace-actions{position:relative;z-index:3;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+.ace-replay{
+ border:1px solid #ffffff65;color:#fffde7;background:#2b171753;
+ padding:9px 17px;border-radius:100px;font-weight:800;font-size:12px;min-height:42px;
+ backdrop-filter:blur(5px);
+}
+.ace-replay:active{transform:scale(.97)}
+.ace-cta{
+ position:relative;z-index:3;
+ background:linear-gradient(115deg,#fffacb,#f2d96e)!important;
+ color:#55351d!important;box-shadow:0 10px 30px #3e160f84!important;
+ min-height:62px;width:100%;max-width:380px;border:1px solid #fffcdb;
+ animation:jackpotCTA .5s .9s both;
+}
+.ace-cta>span:last-child{background:#582b211f!important}
+.ace-cta:active{background:#fff4a2!important}
+@keyframes jackpotImpact{
+ 0%{opacity:.4;transform:translate(0,0) rotate(0)}
+ 10%{opacity:1;transform:translate(-5px,2px) rotate(-1.5deg)}
+ 22%{transform:translate(6px,-3px) rotate(1.3deg)}
+ 35%{transform:translate(-5px,4px) rotate(-1.1deg)}
+ 50%{transform:translate(4px,-2px) rotate(.9deg)}
+ 68%{transform:translate(-2px,2px) rotate(-.4deg)}
+ 100%{transform:translate(0,0) rotate(0)}
+}
+@keyframes jackpotWheel{from{transform:translateX(-50%) rotate(0deg)}to{transform:translateX(-50%) rotate(360deg)}}
+@keyframes jackpotSun{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+@keyframes jackpotFly{
+ 0%{opacity:0;transform:translate(0,20px) scale(.25) rotate(0deg)}
+ 22%{opacity:1}
+ 65%{opacity:1}
+ 100%{opacity:0;transform:translate(var(--fly-x),var(--fly-y)) scale(1.36) rotate(var(--fly-rot))}
+}
+@keyframes jackpotEnter{from{opacity:0;transform:scale(.88) rotate(-4deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes jackpotBoom{
+ 0%{opacity:0;transform:scale(2.3) rotate(-22deg)}
+ 55%{opacity:1;transform:scale(.89) rotate(5deg)}
+ 76%{transform:scale(1.12) rotate(-4deg)}
+ 100%{opacity:1;transform:scale(1) rotate(-5deg)}
+}
+@keyframes jackpotTitle{
+ 0%{opacity:0;transform:translateY(60px) scale(.22) rotate(-14deg)}
+ 70%{opacity:1;transform:translateY(-8px) scale(1.13) rotate(3deg)}
+ 100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}
+}
+@keyframes jackpotTicket{from{opacity:0;transform:rotate(19deg) scale(.3)}to{opacity:1;transform:rotate(-5deg) scale(1)}}
+@keyframes jackpotScore{
+ 0%{opacity:0;transform:translateY(80px) rotate(-13deg) scale(.38)}
+ 60%{opacity:1;transform:translateY(-12px) rotate(4deg) scale(1.16)}
+ 84%{transform:translateY(5px) rotate(-2deg) scale(.96)}
+ 100%{opacity:1;transform:translateY(0) rotate(0) scale(1)}
+}
+@keyframes jackpotCTA{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@media(max-height:760px){
+ .ace-insane{padding-top:13px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+ .ace-topline{font-size:9px;padding:7px 9px}
+ .ace-main{gap:8px;padding:8px 0}
+ .ace-boom{font-size:clamp(44px,14.5vw,69px)}
+ .ace-title{font-size:clamp(43px,11.5vw,58px)}
+ .ace-slot{font-size:10px}
+ .ace-score-chip{padding:8px 13px;gap:10px}
+ .ace-score-chip>strong{font-size:54px}
+ .ace-praise{padding:6px 10px}
+ .ace-cta{min-height:57px}
+ .ace-replay{min-height:36px;padding:6px 14px}
+}
+@media(max-height:610px){
+ .ace-insane{min-height:calc(100dvh - 74px - env(safe-area-inset-top))}
+ .ace-main{gap:5px}
+ .ace-boom{font-size:40px}
+ .ace-title{font-size:40px}
+ .ace-score-chip>strong{font-size:42px}
+ .ace-score-chip>div b{font-size:12px}
+ .ace-sub{font-size:13px}
+ .ace-praise{display:none}
+ .ace-actions{gap:4px}
+}
+@media(max-width:350px){
+ .ace-boom{font-size:47px}
+ .ace-title{font-size:47px}
+ .ace-topline{font-size:9px;letter-spacing:.05em}
+}
+@media(prefers-reduced-motion:reduce){
+ .page-ace,.ace-insane,.ace-insane *,
+ .ace-insane:before,.ace-insane:after{
+  animation:none!important;transition:none!important;
+ }
+ .ace-jackpot-ring,.ace-sunburst{opacity:.2}
+ .ace-blast-layer span{display:none}
+ .ace-score-chip,.ace-cta,.ace-title,.ace-boom,.ace-praise{opacity:1;transform:none}
+}
