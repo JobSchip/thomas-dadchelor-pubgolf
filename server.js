@@ -36,7 +36,7 @@ function save(room,s){const dest=roomFile(room);const tmp=dest+'.tmp';fs.writeFi
 function publicState(s){return {players:s.players,revision:s.revision,updatedAt:s.updatedAt,epoch:resetEpoch}}
 function json(res,code,obj,req){
  const raw=Buffer.from(JSON.stringify(obj));
- const headers={'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','vary':'Accept-Encoding'};
+ const headers={'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','vary':'Accept-Encoding, Origin'};
  const accept=String(req?.headers?.['accept-encoding']||'');
  if(raw.length>2048&&accept.includes('br')){headers['content-encoding']='br';res.writeHead(code,headers);return res.end(zlib.brotliCompressSync(raw,{params:{[zlib.constants.BROTLI_PARAM_QUALITY]:3}}))}
  if(raw.length>2048&&accept.includes('gzip')){headers['content-encoding']='gzip';res.writeHead(code,headers);return res.end(zlib.gzipSync(raw,{level:4}))}
@@ -85,8 +85,24 @@ function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeld
  }else return 'Onbekende wijziging';
  s.revision=(s.revision||0)+1;s.updatedAt=Date.now();s.seenActions.push(a.id);if(s.seenActions.length>600)s.seenActions=s.seenActions.slice(-450);return null;
 }
+const nativeOrigins=new Set(['capacitor://localhost','http://localhost','https://localhost']);
+function allowNativeOrigin(req,res){
+ const origin=String(req.headers.origin||'');
+ if(nativeOrigins.has(origin)){
+  res.setHeader('Access-Control-Allow-Origin',origin);
+  res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers','Content-Type');
+ }
+}
 const server=http.createServer((req,res)=>{
   let url;try{url=new URL(req.url,'http://localhost')}catch{return json(res,400,{error:'Ongeldige URL'})}
+  if(url.pathname.startsWith('/api/')){
+    allowNativeOrigin(req,res);
+    if(req.method==='OPTIONS'){
+      res.writeHead(204,{'Cache-Control':'no-store','Vary':'Origin'});
+      return res.end();
+    }
+  }
   if(url.pathname==='/api/state'&&req.method==='GET'){
     const current=load(roomName(url));
     const sinceRaw=url.searchParams.get('since');
