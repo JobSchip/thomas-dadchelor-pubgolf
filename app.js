@@ -13,12 +13,13 @@ const room=(q.get("room")||localStorage.getItem("golf-room")||"THOMAS-OPEN").toU
 q.set("room",room);
 history.replaceState(null,"",location.pathname+"?"+q.toString());
 localStorage.setItem("golf-room",room);
-const storeKey="golf-v3-"+room,meKey="golf-me-"+room,queueKey="golf-queue-"+room;
+const RESET_EPOCH="THOMAS-NOV05-RESET-2";
+const storeKey="golf-v4-"+room,meKey="golf-me-v4-"+room,queueKey="golf-queue-v4-"+room;
 const parse=(raw,fallback)=>{try{return JSON.parse(raw)||fallback}catch{return fallback}};
-let state=parse(localStorage.getItem(storeKey),{players:[],revision:0});
+let state=parse(localStorage.getItem(storeKey),{players:[],revision:0,epoch:RESET_EPOCH});
 let queue=parse(localStorage.getItem(queueKey),[]);
 let myId=localStorage.getItem(meKey)||"",view="welcome",hole=0,strokes=8,fromEdit=false;
-let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1;
+let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null;
 const el=id=>document.getElementById(id);
 const escapeHtml=text=>String(text??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const newId=()=>globalThis.crypto?.randomUUID?.()||"x"+Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -46,7 +47,7 @@ function apply(s,a){
  else if(a.type==="setCheckin"&&p)p.checkin=a.value;
 }
 function update(type,details,quiet=false){
- const a={id:newId(),type,...details};
+ const a={id:newId(),epoch:RESET_EPOCH,type,...details};
  apply(state,a);queue.push(a);save();
  if(!quiet)render();
  flush();
@@ -69,6 +70,7 @@ async function poll(){
   const response=await fetch("/api/state?room="+encodeURIComponent(room),{cache:"no-store"});
   if(!response.ok)throw Error("Geen verbinding");
   const remote=await response.json();const oldRevision=state.revision;
+  if(remote.epoch!==RESET_EPOCH){network=false;notify("Ververs de app om verder te spelen");return}
   queue.forEach(a=>apply(remote,a));state=remote;save();network=true;
   if(remote.revision!==oldRevision&&!["profile","hole","checkin"].includes(view))render();
   if(queue.length)flush();
@@ -85,9 +87,13 @@ function header(){
  if(!h||!b)return;
  h.innerHTML=p?.avatar?`<img alt="" src="${p.avatar}">`:escapeHtml(p?.name?.[0]?.toUpperCase()||"↗");
  b.setAttribute("aria-label",p?"Wissel speler: "+p.name:"Kies een spelersprofiel");
+ const quick=el("salmari-quick"),count=el("salmari-count");
+ if(quick){quick.disabled=!p;quick.setAttribute("aria-label",p?"Salmari toevoegen: nu "+(p.salmari||0)+" bonus":"Registreer eerst een golfer")}
+ if(count)count.textContent=String(p?.salmari||0);
  status();
 }
 function setView(next){
+ if(aceTimer){clearTimeout(aceTimer);aceTimer=null}
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
 }
@@ -149,7 +155,7 @@ function rules(){
  <div class="rule"><span>01</span><p>Elke kroeg is één hole, met een eigen drankje en PAR.</p></div>
  <div class="rule"><span>02</span><p>Tel je slokken en vul je score in. Er is geen tijdslimiet.</p></div>
  <div class="rule"><span>03</span><p>Na iedere hole verschijnt het live klassement.</p></div>
- <div class="rule"><span>04</span><p>Salmari telt als één slag aftrek. Meedoen is vrijwillig en alcoholvrij kan ook.</p></div>
+ <div class="rule"><span>04</span><p>Salmari: één slag aftrek per shot op de totaalscore.</p></div>
  <div class="grow"></div><button class="cta" data-action="rulesDone">Begrepen. Tee off! <span>→</span></button></div>`;
 }
 function holeView(){
@@ -163,6 +169,19 @@ function holeView(){
  <div class="counter" role="group" aria-label="Aantal slagen"><button data-action="minus" aria-label="Minder slagen" type="button">−</button><strong id="stroke-value">${strokes}</strong><button data-action="plus" aria-label="Meer slagen" type="button">+</button></div>
  <p class="counter-note">${strokes<h.par?`${h.par-strokes} onder par`:strokes===h.par?"Precies op par":`${strokes-h.par} boven par`}</p></div>
  <div class="grow"></div><button class="cta" data-action="submit">Score vastleggen <span>→</span></button></div>`;
+}
+function ace(){
+ return `<div class="ace-wrap page-card">
+ <span class="ace-overline">HOLE 04 · BIERLOKAAL</span>
+ <div class="ace-ball">⛳</div>
+ <div class="ace-ring"></div>
+ <p class="ace-small">DIT. IS. 'M.</p>
+ <h1 class="ace-big">HOLE<br>IN ONE<span>!</span></h1>
+ <p class="ace-wow">GE-WEL-DIG!</p>
+ <p class="ace-copy">Dat fluitje zat in één keer. Legende.</p>
+ <div class="grow"></div>
+ <button class="cta ace-cta" data-action="board">Naar het klassement <span>→</span></button>
+ </div>`;
 }
 function leaderboard(){
  const players=leaders(),p=me(),s=p?score(p):null,done=s?.completed===6;
@@ -202,7 +221,7 @@ function finish(){
 }
 function menu(){
  const p=me();return `<div class="page-card menu-page"><button class="back" data-action="return">← Terug</button><span class="overline">HET CLUBHOUSE</span><h1 class="display">Jouw<br><i>menu.</i></h1>
- <div class="menu-list"><button data-action="board">Live klassement <span>↗</span></button><button data-action="edit">Scores aanpassen <span>↗</span></button><button data-action="bonus">Salmari <span>↗</span></button><button data-action="photo">Profielfoto wijzigen <span>↗</span></button><button data-action="choose">Wissel speler <span>↗</span></button></div>
+ <div class="menu-list"><button data-action="board">Live klassement <span>↗</span></button><button data-action="edit">Scores aanpassen <span>↗</span></button><button data-action="photo">Profielfoto wijzigen <span>↗</span></button><button data-action="choose">Wissel speler <span>↗</span></button></div>
  <div class="grow"></div>${p?`<p class="menu-footer">Je speelt als ${escapeHtml(p.name)}</p>`:""}</div>`;
 }
 function editView(){
@@ -217,18 +236,18 @@ function bonus(){
  <div class="grow"></div><button class="cta" data-action="board">Klaar <span>→</span></button></div>`;
 }
 function render(){
- if(!me()&&["hole","board","edit","bonus","finish","menu","checkin","checkinResult","rules"].includes(view))view="choose";
- const pages={welcome:landing,choose,profile,rules,hole:holeView,board:leaderboard,checkin,checkinResult,finish,menu,edit:editView,bonus};
+ if(!me()&&["hole","ace","board","edit","bonus","finish","menu","checkin","checkinResult","rules"].includes(view))view="choose";
+ const pages={welcome:landing,choose,profile,rules,hole:holeView,ace,board:leaderboard,checkin,checkinResult,finish,menu,edit:editView,bonus};
  el("screen").innerHTML=`<section class="page page-${view}">${(pages[view]||landing)()}</section>`;
  header();
 }
-function celebrate(){
+function celebrate(count=42){
  const overlay=el("effects");if(!overlay)return;
- for(let i=0;i<42;i++){const piece=document.createElement("i");piece.className="confetti";piece.style.left=Math.random()*100+"%";piece.style.background=["#e8be59","#2e8f74","#ff8b76","#b9ed89","#faf6e9"][i%5];piece.style.animationDelay=Math.random()*.28+"s";piece.style.setProperty("--drift",(-90+Math.random()*180)+"px");overlay.appendChild(piece);setTimeout(()=>piece.remove(),2200)}
+ for(let i=0;i<count;i++){const piece=document.createElement("i");piece.className="confetti";piece.style.left=Math.random()*100+"%";piece.style.background=["#e8be59","#2e8f74","#ff8b76","#b9ed89","#faf6e9"][i%5];piece.style.animationDelay=Math.random()*.28+"s";piece.style.setProperty("--drift",(-90+Math.random()*180)+"px");overlay.appendChild(piece);setTimeout(()=>piece.remove(),2200)}
 }
-function flyBeer(){
+function flyBeer(count=3){
  const overlay=el("effects");if(!overlay)return;
- for(let i=0;i<3;i++){const piece=document.createElement("span");piece.className="flying-beer";piece.textContent="🍺";piece.style.top=(25+i*20)+"%";piece.style.animationDelay=(i*.12)+"s";overlay.appendChild(piece);setTimeout(()=>piece.remove(),1400)}
+ for(let i=0;i<count;i++){const piece=document.createElement("span");piece.className="flying-beer";piece.textContent="🍺";piece.style.top=(12+(i%6)*12)+"%";piece.style.animationDelay=(i*.12)+"s";overlay.appendChild(piece);setTimeout(()=>piece.remove(),2600)}
 }
 async function avatarFile(file){
  if(!file||!file.type.startsWith("image/"))return notify("Kies een foto");
@@ -250,6 +269,14 @@ async function avatarFile(file){
 }
 el("photo-input").addEventListener("change",e=>avatarFile(e.target.files?.[0]));
 el("switcher").addEventListener("click",()=>setView("choose"));
+el("salmari-quick").addEventListener("click",()=>{
+ const p=me();if(!p)return notify("Kies eerst je profiel");
+ if((p.salmari||0)>=30)return notify("Maximum bereikt");
+ update("setSalmari",{playerId:myId,value:(p.salmari||0)+1},true);
+ header();
+ if(["board","finish"].includes(view))render();
+ notify("🥃 Salmari! −1 slag");
+});
 el("menu").addEventListener("click",()=>setView("menu"));
 el("screen").addEventListener("dblclick",e=>{if(e.target.closest(".counter"))e.preventDefault()});
 el("screen").addEventListener("click",e=>{
@@ -290,10 +317,18 @@ el("screen").addEventListener("click",e=>{
   case "plus":strokes=Math.min(99,strokes+1);refreshCounter();break;
   case "submit":{
    const under=strokes<HOLES[hole].par;
+   const holeInOne=hole===3&&strokes===1;
    update("setScore",{playerId:myId,hole,value:strokes},true);
-   setView("board");
-   if(under)setTimeout(celebrate,65);
-   setTimeout(flyBeer,95);
+   if(holeInOne){
+     setView("ace");
+     setTimeout(()=>{if(view==="ace"){celebrate(110);flyBeer(9)}},70);
+     setTimeout(()=>{if(view==="ace")celebrate(75)},900);
+     aceTimer=setTimeout(()=>{if(view==="ace")setView("board")},4200);
+   }else{
+     setView("board");
+     if(under)setTimeout(()=>celebrate(44),65);
+     setTimeout(()=>flyBeer(3),95);
+   }
    break;
   }
   case "continue":nextHole();break;
@@ -307,6 +342,7 @@ el("screen").addEventListener("click",e=>{
   case "bonusminus":if(me())update("setSalmari",{playerId:myId,value:Math.max(0,(me().salmari||0)-1)});break;
  }
 });
+if(state.epoch!==RESET_EPOCH){state={players:[],revision:0,epoch:RESET_EPOCH};queue=[];myId="";localStorage.removeItem(meKey);save()}
 render();
 if(me())nextHole();
 poll();setInterval(poll,3500);
