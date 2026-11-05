@@ -1,5 +1,5 @@
-const CACHE='thomas-pubgolf-v18';
-const SHELL=['./index.html','./styles.css?v=18','./app.js?v=18','./manifest.webmanifest'];
+const CACHE='thomas-pubgolf-v19';
+const SHELL=['./index.html','./styles.css?v=19','./app.js?v=19','./manifest.webmanifest'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).catch(error=>console.warn('Offline-cache:',error)));
  self.skipWaiting();
