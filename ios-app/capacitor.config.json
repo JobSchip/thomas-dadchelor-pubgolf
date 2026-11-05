@@ -1,0 +1,11 @@
+{
+  "appId": "nl.jobschipper.thomaspubgolf",
+  "appName": "Thomas' Pub Golf",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always"
+  },
+  "server": {
+    "iosScheme": "capacitor"
+  }
+}
