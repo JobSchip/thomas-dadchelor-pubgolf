@@ -8,7 +8,7 @@ Mobile-first PWA in het Nederlands voor de Haarlem Open. Geen framework of npm-d
 2. Upload optioneel een eigen profielfoto. Foto's worden lokaal bijgesneden, verkleind naar 160×160 JPEG en samen met de spelersgegevens gesynchroniseerd.
 3. Bekijk één hole per scherm, stel je aantal slagen in en bevestig met één knop.
 4. **Na iedere score** verschijnt automatisch het live klassement. De leider krijgt 👑, de laatste speler 💩. Daarna ga je met één knop door naar de volgende nog niet voltooide hole.
-5. Via het menu kun je scores corrigeren, de Salmari-bonus aanpassen, je foto wijzigen en de link delen.
+5. De Salmari-knop is bovenin op elk scherm beschikbaar. Via het menu kun je scores corrigeren en je foto wijzigen.
 
 ## Spelregels
 
@@ -21,7 +21,7 @@ Mobile-first PWA in het Nederlands voor de Haarlem Open. Geen framework of npm-d
 | 5 | Café De Lift | Brugse Zot 33 cl | 7 |
 | 6 | Café Studio | Vaasje 25 cl | 9 |
 
-Totaal PAR 43. Iedere Salmari is één slag aftrek. Alcoholvrije deelname is mogelijk en er is geen tijdslimiet.
+Totaal PAR 43. Iedere Salmari is één slag aftrek. Er is geen tijdslimiet.
 
 ## Testen
 
