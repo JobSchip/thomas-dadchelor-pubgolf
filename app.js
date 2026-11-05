@@ -13,8 +13,12 @@ const room=(q.get("room")||localStorage.getItem("golf-room")||"THOMAS-OPEN").toU
 q.set("room",room);
 history.replaceState(null,"",location.pathname+"?"+q.toString());
 localStorage.setItem("golf-room",room);
-const RESET_EPOCH="THOMAS-NOV05-PROGRESS-RESET-3";
-const storeKey="golf-v4-"+room,meKey="golf-me-v4-"+room,queueKey="golf-queue-v4-"+room;
+const RESET_EPOCH="THOMAS-NOV05-FULL-RESET-4";
+const storeKey="golf-v5-"+room,meKey="golf-me-v5-"+room,queueKey="golf-queue-v5-"+room;
+// Clear test data and profile photos saved by older app versions on this device.
+for(const prefix of ["golf-v3-","golf-v4-","golf-me-","golf-me-v4-","golf-queue-","golf-queue-v4-"]){
+ try{localStorage.removeItem(prefix+room)}catch{}
+}
 const parse=(raw,fallback)=>{try{return JSON.parse(raw)||fallback}catch{return fallback}};
 let state=parse(localStorage.getItem(storeKey),{players:[],revision:0,epoch:RESET_EPOCH});
 let queue=parse(localStorage.getItem(queueKey),[]);
@@ -549,8 +553,8 @@ el("screen").addEventListener("click",e=>{
  }
 });
 if(state.epoch!==RESET_EPOCH){
- state={players:(state.players||[]).map(p=>({...p,scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null})),revision:0,epoch:RESET_EPOCH};
- queue=[];save();
+ state={players:[],revision:0,epoch:RESET_EPOCH};
+ queue=[];myId="";localStorage.removeItem(meKey);save();
 }
 render();
 if(me())nextHole();else setTimeout(()=>rainIcons("welcome",24),180);
