@@ -389,7 +389,15 @@ function rainIcons(kind="general",amount=25){
   result:["🎉","🤡","🍺","💩","🕺","🦩","🪇","🦖"],
   general:["🍻","🍆","🤡","⛳","🕺","🦄","🪿","🪇"]
  };
- const emojis=palettes[kind]||palettes.general;
+ const barEmojis=[
+  ["🍺","🎺","🎩","🍆","🐔","🧄","🦄","🎳","🍟","🥨","🤡","🪩"],
+  ["🍀","🍻","🦆","🪗","🦖","🐸","🧦","🌈","🥔","🍆","🫠","🛸"],
+  ["🫒","🥒","🧀","🍺","🐐","🍄","🥖","👑","🤡","🦄","🦩","🪇"],
+  ["⛳","🏆","🎯","🍺","🤡","🪠","🚀","🥁","🍆","🦖","🌟","🦆"],
+  ["🍻","🧦","🐙","🍕","🍆","🛼","🦄","🤹","🥨","🍌","🎷","🫠"],
+  ["🪩","🍺","🕺","🍆","🎉","🍕","🦖","🦋","🐸","💃","🪅","👑"]
+ ];
+ const emojis=(kind==="preview"||kind==="drink")?barEmojis[hole%6]:(palettes[kind]||palettes.general);
  for(let i=0;i<amount;i++){
   const sp=document.createElement("span");sp.className="rain-emoji";
   sp.textContent=emojis[Math.floor(Math.random()*emojis.length)];
