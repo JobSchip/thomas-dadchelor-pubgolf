@@ -29,7 +29,7 @@ const parse=(raw,fallback)=>{try{return JSON.parse(raw)||fallback}catch{return f
 let state=parse(localStorage.getItem(storeKey),{players:[],revision:0,epoch:RESET_EPOCH});
 let queue=parse(localStorage.getItem(queueKey),[]);
 let myId=localStorage.getItem(meKey)||"",view="welcome",hole=0,strokes=8,selectedPlayerId="";
-let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={},nomineeDraft="",pourReady=false,thomolRound=null,thomolPopTimer=null,thomolTickTimer=null;
+let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={},nomineeDraft="",pourReady=false,thomolRound=null,thomolPopTimer=null,thomolTickTimer=null,pluimRound=null,pluimTickTimer=null,pluimNextTimer=null;
 const el=id=>document.getElementById(id);
 const escapeHtml=text=>String(text??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const newId=()=>globalThis.crypto?.randomUUID?.()||"x"+Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -40,7 +40,7 @@ function score(p){
  let total=0,par=0,completed=0;
  arr.forEach((val,i)=>{if(Number.isInteger(val)&&i<6){total+=val;par+=HOLES[i].par;completed++}});
  const answer=p.answers||{};
- let adjustment=-(p.salmari||0)-(p.checkin===3?1:0)-(p.thomolHits||0);
+ let adjustment=-(p.salmari||0)-(p.checkin===3?1:0)-(p.thomolHits||0)-(p.pluimHits||0);
  if(answer.one==='blue')adjustment-=1;
  else if(answer.one==='pink')adjustment+=1;
  else if(answer.one==='rainbow')adjustment+=2;
@@ -62,7 +62,7 @@ function notify(message){
 function apply(s,a){
  const p=s.players.find(p=>p.id===a.playerId);
  if(a.type==="addPlayer"&&!s.players.some(x=>x.id===a.player.id)){
-  s.players.push({...a.player,scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null,thomolHits:null});
+  s.players.push({...a.player,scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null,thomolHits:null,pluimHits:null});
  }else if(a.type==="setScore"&&p&&!Number.isInteger(p.scores[a.hole]))p.scores[a.hole]=a.value;
  else if(a.type==="setSalmari"&&p)p.salmari=a.value;
  else if(a.type==="setAvatar"&&p)p.avatar=a.avatar;
@@ -70,6 +70,7 @@ function apply(s,a){
  else if(a.type==="answerRound"&&p){p.answers=p.answers||{};p.answers[a.round]=a.choice;}
  else if(a.type==="nominate"&&p)p.nomination=a.targetPlayerId;
  else if(a.type==="finishThomol"&&p&&!Number.isInteger(p.thomolHits))p.thomolHits=a.hits;
+ else if(a.type==="finishPluim"&&p&&!Number.isInteger(p.pluimHits))p.pluimHits=a.hits;
 }
 function update(type,details,quiet=false){
  const a={id:newId(),epoch:RESET_EPOCH,type,...details};
@@ -304,12 +305,13 @@ function header(){
 }
 function setView(next){
  if(aceTimer){clearTimeout(aceTimer);aceTimer=null}
+ if(view==="pluimPlay"&&next!=="pluimPlay")pluimClearTimers();
  if(next==="preview"&&me())localStorage.setItem("golf-firstdrink-"+room+"-"+myId,"1");
  if(next==="nominate")nomineeDraft="";
  if(next==="preview")pourReady=false;
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
- const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",thomolIntro:"general",thomolPlay:"general",thomolResult:"good",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
+ const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",thomolIntro:"general",thomolPlay:"general",thomolResult:"good",pluimIntro:"general",pluimPlay:"general",pluimResult:"good",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
  setTimeout(()=>{if(view===next)rainIcons(kind,next==="ace"?18:next==="preview"?22:next==="board"?16:14)},120);
 }
 
@@ -446,6 +448,7 @@ function nextHole(){
  if(Number.isInteger(done[1])&&answers.two&&!Number.isInteger(p.thomolHits)){setView("thomolIntro");return}
  if(Number.isInteger(done[2])&&!Number.isInteger(p.checkin)){setView("checkin");return}
  if(Number.isInteger(done[3])&&!answers.four){setView("quiz4");return}
+ if(Number.isInteger(done[3])&&answers.four&&!Number.isInteger(p.pluimHits)){setView("pluimIntro");return}
  if(Number.isInteger(done[4])&&!p.nomination){setView("nominate");return}
  const first=done.findIndex(n=>!Number.isInteger(n));
  if(first<0){setView("finish");return}
@@ -752,7 +755,7 @@ function detail(){
  const p=state.players.find(x=>x.id===selectedPlayerId);
  if(!p)return `<div class="page-card"><button class="back" data-action="board">← Klassement</button><p>Deze golfer is niet gevonden.</p></div>`;
  const st=score(p),rank=leaders().findIndex(x=>x.id===p.id)+1;
- const otherAdjustment=st.net-st.total+(p.salmari||0)+(p.thomolHits||0);
+ const otherAdjustment=st.net-st.total+(p.salmari||0)+(p.thomolHits||0)+(p.pluimHits||0);
  const signed=n=>n>0?`+${n}`:n<0?`−${Math.abs(n)}`:"0";
  return `<div class="page-card detail-page">
  <button class="back" data-action="board">← Terug naar klassement</button>
@@ -776,6 +779,7 @@ function detail(){
   <div><span>Totaal aantal slagen</span><strong>${st.completed?st.total:"–"}</strong></div>
   <div><span>🥃 Salmari-shotjes</span><strong>${p.salmari||0} <small>× −1</small></strong></div>
   <div><span>🔨 Hit the Thomol</span><strong>${Number.isInteger(p.thomolHits)?p.thomolHits:"–"} <small>× −1</small></strong></div>
+  <div><span>🎯 Stop de Pluim</span><strong>${Number.isInteger(p.pluimHits)?p.pluimHits:"–"} <small>× −1</small></strong></div>
   <div><span>Quizzen, check-in en cadeaus</span><strong>${signed(otherAdjustment)}</strong></div>
   <div class="detail-total"><span>Netto slagen</span><strong>${st.completed?st.net:"–"}</strong></div>
  </div>
@@ -826,8 +830,8 @@ function menu(){
 }
 
 function render(){
- if(!me()&&["preview","hole","ace","board","detail","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules","thomolIntro","thomolPlay","thomolResult"].includes(view))view="choose";
- const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,detail,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu,thomolIntro,thomolPlay,thomolResult};
+ if(!me()&&["preview","hole","ace","board","detail","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules","thomolIntro","thomolPlay","thomolResult","pluimIntro","pluimPlay","pluimResult"].includes(view))view="choose";
+ const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,detail,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu,thomolIntro,thomolPlay,thomolResult,pluimIntro,pluimPlay,pluimResult};
  const screen=el("screen");
  screen.innerHTML=`<section class="page page-${view}">${(pages[view]||landing)()}</section>`;
  el("app").dataset.view=view;
@@ -1044,6 +1048,9 @@ el("screen").addEventListener("click",e=>{
   }
   case "thomolStart":if(view==="thomolIntro")thomolStart();break;
   case "thomolSkip":thomolSkip();break;
+  case "pluimStart":if(view==="pluimIntro")pluimStart();break;
+  case "pluimStop":pluimStop();break;
+  case "pluimSkip":pluimSkip();break;
   case "continue":nextHole();break;
   case "pourDrink":
    if(view!=="preview"||pourReady)break;
