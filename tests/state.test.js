@@ -89,3 +89,31 @@ test('cadeau aan jezelf mag alleen als je de enige golfer bent',()=>{
  act(solo,{id:'join-solo',type:'addPlayer',player:{id:'solo',name:'Solo'}});
  assert.equal(act(solo,{id:'self-solo',type:'nominate',playerId:'solo',targetPlayerId:'solo'}),null);
 });
+
+
+test('mobiele videos ondersteunen video/mp4, iPhone byte ranges en HEAD',async()=>{
+ const {server}=require('../server');
+ const fs=require('node:fs');
+ const path=require('node:path');
+ const file=path.resolve(__dirname,'../assets/scare-clip-1.mp4');
+ const fileSize=fs.statSync(file).size;
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{
+  const base='http://127.0.0.1:'+server.address().port+'/assets/scare-clip-1.mp4';
+  const full=await fetch(base,{method:'HEAD'});
+  assert.equal(full.status,200);
+  assert.equal(full.headers.get('content-type'),'video/mp4');
+  assert.equal(full.headers.get('accept-ranges'),'bytes');
+  assert.equal(Number(full.headers.get('content-length')),fileSize);
+  const partial=await fetch(base,{headers:{Range:'bytes=0-99'}});
+  assert.equal(partial.status,206);
+  assert.equal(partial.headers.get('content-range'),'bytes 0-99/'+fileSize);
+  assert.equal(partial.headers.get('content-type'),'video/mp4');
+  assert.equal((await partial.arrayBuffer()).byteLength,100);
+  const partialTail=await fetch(base,{headers:{Range:'bytes=100-'}});
+  assert.equal(partialTail.status,206);
+  assert.equal((await partialTail.arrayBuffer()).byteLength,fileSize-100);
+  const invalid=await fetch(base,{headers:{Range:'bytes=9999999-'}});
+  assert.equal(invalid.status,416);
+ }finally{await new Promise(resolve=>server.close(resolve))}
+});
