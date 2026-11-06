@@ -8,8 +8,8 @@ const source=fs.readFileSync(path.resolve(__dirname,'../app.js'),'utf8');
 const styles=fs.readFileSync(path.resolve(__dirname,'../styles.css'),'utf8');
 const EPOCH='THOMAS-NOV05-FULL-RESET-4';
 
-function player(name,id,scores,checkin,answers,nomination=null){
- return {id,name,avatar:'',scores,salmari:0,checkin,answers,nomination};
+function player(name,id,scores,checkin,answers,nomination=null,thomolHits=0){
+ return {id,name,avatar:'',scores,salmari:0,checkin,answers,nomination,thomolHits};
 }
 function boot(players,myId='p1',options={}){
  const storage=new Map([
@@ -27,10 +27,13 @@ function boot(players,myId='p1',options={}){
   });
   return elements.get(id);
  }
+ const intervals=[];
+ const clock={now:Date.now()};
+ class FakeDate extends Date{static now(){return clock.now}}
  const fakeMath=Object.create(Math);
  if(typeof options.random==='number')fakeMath.random=()=>options.random;
  const ctx={
-  console,URLSearchParams,Math:fakeMath,Date,
+  console,URLSearchParams,Math:fakeMath,Date:options.clock?FakeDate:Date,
   location:{search:'?room=THOMAS-OPEN',pathname:'/',protocol:'https:'},
   history:{replaceState(){}},
   localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},
@@ -40,7 +43,7 @@ function boot(players,myId='p1',options={}){
   window:{scrollTo(){},addEventListener(){},matchMedia(){return{matches:options.reducedMotion??true}}},
   navigator:{},
   fetch:()=>new Promise(()=>{}),
-  setTimeout:()=>1,clearTimeout(){},setInterval:()=>1
+  setTimeout:()=>1,clearTimeout(){},clearInterval(){},setInterval:fn=>{if(options.clock)intervals.push(fn);return 1}
  };
  vm.runInNewContext(source,ctx,{timeout:2500,filename:'app.js'});
  function click(kind,value){
@@ -49,13 +52,15 @@ function boot(players,myId='p1',options={}){
    if(kind==='mood'&&selector==='[data-mood]')return {dataset:{mood:value}};
    if(kind==='action'&&selector==='[data-action]')return {dataset:{action:value}};
    if(kind==='leader'&&selector==='[data-leader]')return {dataset:{leader:value}};
+   if(kind==='thomol'&&selector==='[data-thomol-cell]')return {dataset:{thomolCell:value}};
    return null;
   }}});
  }
  return {
   click,view:()=>get('app').dataset.view,html:()=>get('screen').innerHTML,
   state:()=>JSON.parse(storage.get('golf-v5-THOMAS-OPEN')),queue:()=>JSON.parse(storage.get('golf-queue-v5-THOMAS-OPEN')||'[]'),
-  element:get,storage
+  element:get,storage,
+  advance(ms){clock.now+=ms;for(const fn of intervals.slice())fn()}
  };
 }
 
@@ -409,4 +414,62 @@ test('verminderde beweging onderdrukt automatisch alle foto- en videopopups',()=
  ui.click('action','sip');
  assert.equal(ui.storage.get('golf-sip-media-v1-THOMAS-OPEN-p1'),undefined);
  assert.equal(ui.element('stroke-value').textContent,'1');
+});
+
+
+test('HIT THE THOMOL is een lastige eenmalige tussenronde na quiz 2, met -1 slag per echte tik',()=>{
+ const p=player('Thomas','p1',[8,10,null,null,null,null],null,{one:'blue',two:'18'},null,null);
+ const ui=boot([p],'p1',{random:.999,clock:true});
+ assert.equal(ui.view(),'thomolIntro');
+ assert.match(ui.html(),/HIT THE/);
+ assert.match(ui.html(),/THOMOL/);
+ assert.match(ui.html(),/13 seconden/);
+ assert.match(ui.html(),/1 hit = −1 slag/);
+ ui.click('action','thomolStart');
+ assert.equal(ui.view(),'thomolPlay');
+ assert.equal((ui.html().match(/data-thomol-cell="/g)||[]).length,9);
+ assert.match(ui.html(),/mole-active/);
+ assert.equal(ui.queue().length,0,'geen bonus voordat de tijd verstreken is');
+ ui.click('thomol','7');
+ assert.equal(ui.queue().length,0,'foute tik geeft geen bonus');
+ ui.click('thomol','8');
+ assert.match(ui.html(),/RAAK/);
+ assert.equal(ui.state().players[0].thomolHits,null);
+ ui.advance(14000);
+ assert.equal(ui.view(),'thomolResult');
+ assert.equal(ui.state().players[0].thomolHits,1);
+ assert.equal(ui.queue().filter(a=>a.type==='finishThomol').length,1);
+ assert.match(ui.html(),/−1/);
+ ui.click('action','continue');
+ assert.equal(ui.view(),'preview','na de bonus speel je door naar hole 3');
+});
+
+test('HIT THE THOMOL kan worden overgeslagen, maar dan is de bonus definitief nul',()=>{
+ const p=player('Thomas','p1',[8,10,null,null,null,null],null,{one:'blue',two:'18'},null,null);
+ const ui=boot([p]);
+ assert.equal(ui.view(),'thomolIntro');
+ ui.click('action','thomolSkip');
+ assert.equal(ui.view(),'thomolResult');
+ assert.equal(ui.state().players[0].thomolHits,0);
+ assert.equal(ui.queue().filter(a=>a.type==='finishThomol').length,1);
+ ui.click('action','continue');
+ assert.equal(ui.view(),'preview');
+ assert.doesNotMatch(ui.html(),/thomol-intro/);
+});
+
+test('Thomas-citaten uit de export verschijnen in willekeurige jumpscares',()=>{
+ for(const quote of [
+  'Big man, hoezo geef je op?',
+  'Maatje wie hou je voor de gek',
+  'Opeens ben je vet goed?',
+  'Met of zonder clownspak aan?',
+  'Hahahh wat een fucking legend',
+  'Ik ben nooit de verkeerde Thomas'
+ ])assert.ok(source.includes(quote),'chat-citaat ontbreekt: '+quote);
+ assert.match(source,/const THOMAS_QUOTES=/);
+ assert.match(source,/thomasQuote\(\)/);
+ assert.match(source,/sip-media-scare-caption/);
+ assert.match(styles,/\.thomol-grid/);
+ assert.match(styles,/\.thomol-mole/);
+ assert.match(styles,/\.thomol-decoy/);
 });
