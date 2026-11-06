@@ -164,6 +164,94 @@ function maybeJumpScare(event){
   setTimeout(()=>wrap.remove(),duration);
  },55);
 }
+
+const SIP_SCARE_MEDIA=[
+ {type:"photo",src:"./assets/scare-photo-1.webp",label:"DE CHEF IS NIET ONDER DE INDRUK"},
+ {type:"photo",src:"./assets/scare-photo-2.webp",label:"HET TEAM KEURT HET GOED"},
+ {type:"photo",src:"./assets/scare-photo-3.webp",label:"JE WORDT IN DE GATEN GEHOUDEN"},
+ {type:"photo",src:"./assets/scare-photo-4.webp",label:"WAT IS DIT NOU WEER?"},
+ {type:"photo",src:"./assets/scare-photo-5.webp",label:"RAT! RAT! RAT!"},
+ {type:"video",src:"./assets/scare-clip-1.mp4",label:"HO, WAT GEBEURT HIER?!",duration:4100},
+ {type:"video",src:"./assets/scare-clip-2.mp4",label:"PROFESSIONEEL WERK, CHEF",duration:4100},
+ {type:"video",src:"./assets/scare-clip-3.mp4",label:"KOEK KOEK!",duration:4250},
+ {type:"video",src:"./assets/scare-clip-4.mp4",label:"KIJK HEM ZITTEN DAN",duration:4050},
+ {type:"video",src:"./assets/scare-clip-5.mp4",label:"HOPPAAAA!",duration:4100}
+];
+let sipScareVisible=false;
+function showSipScare(media){
+ if(sipScareVisible||!document.body?.appendChild)return;
+ sipScareVisible=true;
+ const wrap=document.createElement("div");
+ const isVideo=media.type==="video";
+ wrap.className="sip-media-scare "+(isVideo?"sip-media-scare--video":"sip-media-scare--photo");
+ wrap.setAttribute("role","dialog");
+ wrap.setAttribute("aria-modal","true");
+ wrap.setAttribute("aria-label","Onverwachte Pub Golf-verrassing. Tik op Verder om door te spelen.");
+ const content=isVideo?
+  `<video class="sip-media-scare-media" autoplay muted playsinline preload="auto" disablepictureinpicture><source src="${media.src}" type="video/mp4"></video>`:
+  `<img class="sip-media-scare-media" src="${media.src}" alt="" decoding="async">`;
+ wrap.innerHTML=`<div class="sip-media-scare-inner">
+  <span class="sip-media-scare-kicker">💥 PUB GOLF SURPRISE</span>
+  <div class="sip-media-scare-frame">${content}</div>
+  <div class="sip-media-scare-caption">${escapeHtml(media.label)}</div>
+  <button class="sip-media-scare-close" type="button" aria-label="Sluit verrassing">✕ VERDER</button>
+ </div>`;
+ let finished=false;
+ let timeout;
+ const onKey=e=>{if(e.key==="Escape")close()};
+ function close(){
+  if(finished)return;
+  finished=true;
+  clearTimeout(timeout);
+  document.removeEventListener?.("keydown",onKey);
+  wrap.remove();
+  sipScareVisible=false;
+ }
+ wrap.querySelector(".sip-media-scare-close")?.addEventListener("click",e=>{e.stopPropagation();close()});
+ document.body.appendChild(wrap);
+ document.addEventListener?.("keydown",onKey);
+ wrap.querySelector(".sip-media-scare-close")?.focus?.();
+ const video=isVideo?wrap.querySelector("video"):null;
+ if(video){
+  video?.addEventListener("ended",close,{once:true});
+  video?.play?.()?.catch?.(()=>{});
+ }
+ nativeFeedback("medium");
+ timeout=setTimeout(close,isVideo?media.duration:1400);
+}
+function maybeSipMediaScare(){
+ if(view!=="hole"||!me()||sipScareVisible||document.hidden)return;
+ if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
+ if(!document.body?.appendChild)return;
+ const key="golf-sip-media-v1-"+room+"-"+myId;
+ let record=parse(localStorage.getItem(key),null);
+ if(!record||!Array.isArray(record.plan)||!Array.isArray(record.seen)||!Array.isArray(record.used)){
+  const shuffled=[0,1,2,3,4,5];
+  for(let i=shuffled.length-1;i>0;i--){
+   const j=Math.floor(Math.random()*(i+1));
+   [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+  }
+  const target=2+Math.floor(Math.random()*3);
+  record={plan:shuffled.slice(0,target).sort((a,b)=>a-b),seen:[],used:[],attempts:{},lastAt:0};
+ }
+ if(!record.plan.includes(hole)||record.seen.includes(hole))return;
+ if(Date.now()-record.lastAt<6500)return;
+ record.attempts??={};
+ record.attempts[hole]=(record.attempts[hole]||0)+1;
+ // Not every sip: a random pop on the first, guaranteed on the second.
+ if(record.attempts[hole]===1&&Math.random()<.48){
+  localStorage.setItem(key,JSON.stringify(record));
+  return;
+ }
+ const available=SIP_SCARE_MEDIA.map((_,i)=>i).filter(i=>!record.used.includes(i));
+ const selected=available[Math.floor(Math.random()*available.length)]??0;
+ record.seen.push(hole);
+ record.used.push(selected);
+ record.lastAt=Date.now();
+ localStorage.setItem(key,JSON.stringify(record));
+ showSipScare(SIP_SCARE_MEDIA[selected]);
+}
+
 function avatar(p,extra=""){
  const name=escapeHtml(p.name?.slice(0,1)?.toUpperCase()||"?");
  return `<span class="avatar ${extra}">${p.avatar?`<img alt="" src="${p.avatar}">`:name}</span>`;
@@ -735,7 +823,7 @@ el("screen").addEventListener("click",e=>{
  if(!button){
   // The whole score screen counts a tap, except buttons and interactive controls.
   if(view==="hole"&&e.target.closest(".hole-page")&&!e.target.closest("button,a,input,select,textarea,[role=button]")){
-   strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");
+   strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");maybeSipMediaScare();
   }
   return;
  }
@@ -764,7 +852,7 @@ el("screen").addEventListener("click",e=>{
   case "sip":
   case "plus":
    if(view!=="hole")break;
-   strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");break;
+   strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");maybeSipMediaScare();break;
   case "submit":{
    if(view!=="hole")break;
    if(strokes<1){notify("Tel eerst minstens één slok");break}
