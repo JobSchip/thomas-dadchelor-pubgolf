@@ -761,14 +761,17 @@ function holeView(){
  const h=HOLES[hole];
  return `<div class="page-card hole-page sip-minimal">
   <div class="sip-minimal-par" aria-label="PAR ${h.par}">PAR <strong>${h.par}</strong></div>
-  <button id="sip-pad" class="sip-hold-button" type="button" data-action="sip"
-   aria-label="${strokes} ${strokes===1?'slok':'slokken'} geteld. Tik voor één extra slok; houd 0,85 seconde ingedrukt om de score te bevestigen.">
-   <svg class="sip-hold-ring" aria-hidden="true" viewBox="0 0 260 260">
-    <circle cx="130" cy="130" r="114" pathLength="100"></circle>
-   </svg>
-   <strong id="stroke-value" class="sip-minimal-number" aria-live="polite" aria-atomic="true">${strokes}</strong>
-   <span id="sip-unit" class="sip-minimal-unit">${strokes===1?'SLOK':'SLOKKEN'}</span>
-  </button>
+  <div class="sip-counter-stack">
+   <button id="sip-pad" class="sip-hold-button" type="button" data-action="sip"
+    aria-label="${strokes} ${strokes===1?'slok':'slokken'} geteld. Tik voor één extra slok; houd 0,85 seconde ingedrukt om de score te bevestigen." aria-describedby="sip-hold-help">
+    <svg class="sip-hold-ring" aria-hidden="true" viewBox="0 0 260 260">
+     <circle cx="130" cy="130" r="114" pathLength="100"></circle>
+    </svg>
+    <strong id="stroke-value" class="sip-minimal-number" aria-live="polite" aria-atomic="true">${strokes}</strong>
+    <span id="sip-unit" class="sip-minimal-unit">${strokes===1?'SLOK':'SLOKKEN'}</span>
+   </button>
+   <p id="sip-hold-help" class="sip-hold-help">Houd de knop ingedrukt als je glas leeg is.</p>
+  </div>
  </div>`;
 }
 function ace(){
