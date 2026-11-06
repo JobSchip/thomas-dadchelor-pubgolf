@@ -2147,3 +2147,358 @@ button:focus-visible{outline:3px solid #ffb800;outline-offset:3px}
  .thomol-hole .thomol-mole,
  .thomol-hole .thomol-decoy{animation:none!important}
 }
+
+
+/* ==========================================================
+   STOP DE PLUIM! v26 — fast reflex timer, three escalating
+   attempts and a live moving marker over the golden zone.
+   ========================================================== */
+.page-pluimIntro,.page-pluimPlay,.page-pluimResult{
+ background:#0f2460!important;padding:0!important;
+}
+.pluim-intro,.pluim-play,.pluim-result{
+ min-height:calc(100dvh - 74px - env(safe-area-inset-top));
+ display:flex;flex-direction:column;align-items:center;
+ overflow:hidden;isolation:isolate;position:relative;
+ padding:22px clamp(17px,5vw,26px) calc(20px + env(safe-area-inset-bottom));
+ color:white;
+}
+.pluim-intro{
+ background:
+  radial-gradient(ellipse at 17% 17%,#ee3b51dd,transparent 45%),
+  radial-gradient(ellipse at 90% 70%,#ffcd3799,transparent 48%),
+  #1452d3;
+}
+.pluim-kicker{
+ font-size:10px;letter-spacing:.15em;font-weight:950;
+ padding:9px 13px;border-radius:100px;
+ border:2px solid #fff2ad;
+ background:#0a2d82;color:#ffdf4a;
+ align-self:center;text-align:center;
+}
+.pluim-hero-art{
+ position:relative;display:grid;place-items:center;
+ width:min(62vw,265px);aspect-ratio:1;margin:14px auto 6px;
+}
+.pluim-target-rings{
+ position:absolute;inset:4%;border-radius:50%;
+ background:
+  radial-gradient(circle,#ffed7f11 0 30%,transparent 31%),
+  repeating-conic-gradient(#ffe274aa 0deg 17deg,transparent 17deg 35deg);
+ border:7px dashed #ffe98ddd;
+ box-shadow:0 0 0 15px #ffd86120,0 0 0 35px #ffb75b12;
+ animation:pluimSpin 10s linear infinite;
+}
+.pluim-hero-sticker{
+ position:relative;z-index:2;width:85%;height:85%;
+ transform:rotate(-8deg);
+ filter:drop-shadow(0 12px 6px #071c6e8f);
+}
+.pluim-hero-stamp{
+ position:absolute;z-index:3;bottom:9%;right:-12%;
+ color:#fff;background:#f03f49;
+ border:3px solid #fff;border-radius:12px;
+ padding:7px 13px;transform:rotate(10deg);
+ box-shadow:0 6px 0 #ab2038;
+ font-size:clamp(24px,7vw,37px);font-weight:1000;
+ letter-spacing:-.065em;
+}
+.pluim-title{
+ font-size:clamp(48px,13vw,75px);line-height:.9;
+ font-weight:1000;letter-spacing:-.085em;
+ text-align:center;color:white;
+ text-shadow:0 7px 0 #0a3379;
+ margin:12px 0 15px;
+}
+.pluim-title em{font-style:normal;color:#ffe044}
+.pluim-description{
+ max-width:340px;margin:3px auto 15px;
+ font-weight:820;font-size:17px;line-height:1.35;
+ text-align:center;color:#f7f8ff;
+}
+.pluim-description strong{color:#ffe54d}
+.pluim-rules{
+ width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:7px;margin:8px 0 12px;
+}
+.pluim-rules span{
+ display:grid;place-items:center;min-height:62px;
+ text-align:center;border-radius:14px;
+ padding:9px 6px;border:2px solid #fff7a1;
+ background:#ffdf46;color:#153e92;
+ font-weight:970;font-size:clamp(10px,2.65vw,12px);line-height:1.25;
+ box-shadow:0 6px 0 #0d35885e;
+}
+.pluim-warning{
+ font-size:12px;line-height:1.35;
+ font-weight:720;color:#e7efff;text-align:center;
+ max-width:336px;margin:3px auto 17px;
+}
+.pluim-start{
+ background:#f1434b!important;color:#fff!important;
+ border:2px solid #ffdad9;min-height:64px;
+ box-shadow:0 7px 0 #a3273b,0 16px 25px #121e5588!important;
+ margin-top:auto;
+}
+.pluim-start>span:last-child{background:#fff3!important}
+.pluim-skip{
+ min-height:40px;font-size:12px;
+ padding:10px 12px;margin:12px auto 0;
+ background:transparent;color:#eef1ff;
+ text-decoration:underline;text-underline-offset:3px;
+ font-weight:780;
+}
+
+/* Arcade timing screen */
+.pluim-play{
+ background:
+ radial-gradient(ellipse at 80% 23%,#f1455750,transparent 50%),
+ radial-gradient(ellipse at 12% 86%,#1463e568,transparent 50%),
+ linear-gradient(165deg,#0c2158,#183d91);
+}
+.pluim-top,.pluim-top-score{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:8px;width:100%;
+}
+.pluim-top{
+ font-size:12px;letter-spacing:.1em;font-weight:950;color:#e8f1ff;
+}
+.pluim-top strong{
+ background:#ffe149;color:#123b8c;border-radius:999px;
+ padding:10px 12px;font-size:12px;
+ white-space:nowrap;
+}
+.pluim-progress-dots{
+ width:100%;display:flex;justify-content:center;
+ gap:12px;margin:20px auto 13px;
+}
+.pluim-progress-dots span{
+ width:37px;height:37px;border-radius:50%;
+ display:grid;place-items:center;font-size:16px;font-weight:1000;
+ background:#ffffff18;border:2px solid #a1b8ed71;color:#d6e5ff;
+}
+.pluim-progress-dots span.current{
+ background:#ffdf46;color:#152f79;border-color:white;
+ box-shadow:0 0 0 5px #ffdb3936;
+}
+.pluim-progress-dots span.hit{background:#20bc83;color:#fff;border-color:#a4fbd8}
+.pluim-progress-dots span.miss{background:#e94551;color:#fff;border-color:#ffb0b1}
+.pluim-top-score{
+ padding:10px 13px;background:#ffffff16;border:1px solid #ffffff3f;
+ border-radius:14px;font-weight:860;font-size:11px;
+}
+.pluim-top-score strong{font-size:19px;color:#ffe34f;margin-inline:5px}
+.pluim-countdown{
+ font-variant-numeric:tabular-nums;min-width:66px;text-align:center;
+ font-size:22px;color:#ffe14b;font-weight:950;letter-spacing:-.035em;
+}
+.pluim-stage{
+ position:relative;display:flex;flex:1;
+ flex-direction:column;align-items:center;justify-content:center;
+ width:100%;padding:22px 1px 10px;min-height:265px;
+}
+.pluim-stage:before{
+ content:"";position:absolute;width:90%;height:200px;
+ border-radius:50%;background:#2770f442;filter:blur(50px);
+ z-index:-1;
+}
+.pluim-distraction{
+ position:absolute;z-index:1;right:-12px;top:3%;
+ width:clamp(90px,27vw,126px);height:clamp(90px,27vw,126px);
+ transform:rotate(12deg);
+ opacity:.85;filter:drop-shadow(0 7px 8px #0007);
+ animation:pluimDistract 2.7s ease-in-out infinite;
+}
+.pluim-stage-label{
+ color:#ffe044;font-size:clamp(14px,3.9vw,18px);
+ font-weight:1000;letter-spacing:.12em;
+ position:relative;z-index:3;
+ margin-bottom:38px;transform:rotate(-2deg);
+}
+.pluim-meter-wrap{width:100%;position:relative;z-index:4}
+.pluim-meter{
+ position:relative;height:92px;
+ border-radius:18px;border:4px solid #fff;
+ background:linear-gradient(#ff6876,#eb344d);
+ box-shadow:0 9px 0 #861c45,0 20px 23px #03164f78;
+ overflow:visible;isolation:isolate;
+}
+.pluim-meter:before{
+ content:"";position:absolute;inset:0;
+ z-index:0;pointer-events:none;
+ background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),#ffffff38 calc(10% - 1px),#ffffff38 10%);
+}
+.pluim-zone{
+ position:absolute;z-index:2;top:0;bottom:0;
+ border-left:3px solid #fff4a1;border-right:3px solid #fff4a1;
+ background:linear-gradient(#fff49b,#ffdf43 58%,#ffbf1a);
+ box-shadow:0 0 22px #ffde4b9e,inset 0 0 16px #fff6b7;
+}
+.pluim-zone:after{
+ content:"🎯";position:absolute;top:50%;left:50%;
+ transform:translate(-50%,-50%);font-size:24px;
+ filter:drop-shadow(0 2px 2px #8065106d);
+}
+.pluim-needle{
+ position:absolute;z-index:5;top:-14px;bottom:-12px;
+ width:5px;transform:translateX(-50%);
+ background:#fff;box-shadow:0 0 0 2px #173a82,0 0 12px #fff8d2;
+ border-radius:3px;
+ will-change:left;pointer-events:none;
+}
+.pluim-needle i{
+ position:absolute;top:-30px;left:50%;transform:translateX(-50%);
+ color:#fff;font-size:28px;font-style:normal;
+ text-shadow:0 3px 0 #0a3586;
+}
+.pluim-meter-markers{
+ display:flex;justify-content:space-between;
+ color:#c5d9ff;font-weight:920;font-size:11px;
+ padding:19px 2px 0;letter-spacing:.07em;
+}
+.pluim-attempt-info{
+ display:flex;justify-content:space-between;
+ gap:10px;width:100%;font-size:10px;
+ color:#d3e5ff;font-weight:870;margin-top:27px;
+}
+.pluim-attempt-info strong{color:#ffe34a}
+.pluim-feedback{
+ min-height:61px;width:100%;margin-top:20px;
+ display:grid;place-items:center;
+ color:#e1ecff;font-weight:1000;
+ text-align:center;letter-spacing:-.035em;
+ font-size:clamp(17px,5vw,25px);
+}
+.pluim-feedback.pluim-good{color:#ffe04e;animation:pluimFlash .33s ease-out}
+.pluim-feedback.pluim-bad{color:#ff9aaf}
+.pluim-stop-button{
+ width:100%;border-radius:22px;
+ background:#ffdf43;color:#11367a;
+ border:3px solid #fff8c9;
+ min-height:92px;
+ box-shadow:0 9px 0 #d2a021,0 23px 31px #011d5a6f;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:8px;text-align:center;
+ touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.pluim-stop-button strong{
+ font-size:clamp(24px,8vw,36px);
+ line-height:1;letter-spacing:-.075em;font-weight:1000;
+}
+.pluim-stop-button span{
+ font-size:10px;font-weight:950;letter-spacing:.1em;
+}
+.pluim-stop-button:active:not(:disabled){
+ transform:translateY(5px);box-shadow:0 4px 0 #d2a021,0 10px 18px #011d5a4a;
+}
+.pluim-stop-button:disabled{opacity:.88;background:#d1e4ff;color:#153d87;box-shadow:none}
+.pluim-footer-tip{margin:17px 0 1px;color:#d8e7ff;font-weight:730;font-size:12px;text-align:center}
+#app[data-view="pluimPlay"] .menu-button,
+#app[data-view="pluimPlay"] .salmari-quick{display:none!important}
+
+/* Reward */
+.pluim-result{
+ background:
+ radial-gradient(circle at 50% 35%,#ffdd5e,#ed774e 45%,#154ed3 100%);
+}
+.pluim-result-art{
+ width:min(68vw,260px);aspect-ratio:1;
+ position:relative;display:grid;place-items:center;
+ margin:6vh auto 5px;
+}
+.pluim-result-art:before{
+ content:"";position:absolute;inset:6%;border-radius:50%;
+ background:#ffe349;outline:8px dashed #fff6b5;
+ box-shadow:0 0 0 19px #ffffff2a;
+}
+.pluim-result-sticker{
+ width:86%;height:86%;position:relative;z-index:2;
+ filter:drop-shadow(0 12px 9px #542b4588);
+}
+.pluim-result-stamp{
+ position:absolute;bottom:7%;right:-11%;z-index:3;
+ padding:9px 11px;border-radius:10px;
+ background:#175be5;color:#fff;border:2px solid #ffeda5;
+ box-shadow:0 5px 0 #0c3b9a;
+ transform:rotate(11deg);font-size:15px;font-weight:980;
+}
+.pluim-result .pluim-title{
+ font-size:clamp(35px,9.5vw,53px);margin-top:14px;
+ max-width:350px;
+}
+.pluim-result-sub{
+ margin:8px 0 17px;font-size:16px;font-weight:800;
+ color:#fff4e3;text-align:center;
+}
+.pluim-result-ticket{
+ display:flex;align-items:center;justify-content:center;
+ gap:17px;padding:13px 23px;
+ background:#fff6c4;color:#123b83;
+ border-radius:22px;border:3px solid #1456e3;
+ box-shadow:0 9px 0 #0a3691,0 18px 29px #081e5680;
+}
+.pluim-result-ticket strong{
+ font-size:clamp(57px,17vw,78px);letter-spacing:-.12em;line-height:.95;
+}
+.pluim-result-ticket span{font-size:13px;line-height:1.15;font-weight:970;text-align:left}
+.pluim-result-ticket small{display:block;font-size:9px;margin-top:5px;letter-spacing:.08em}
+.pluim-result-quote{
+ margin:22px 0 10px;max-width:300px;
+ font-size:13px;font-weight:750;text-align:center;
+ line-height:1.35;color:#fff9ef;
+}
+.pluim-continue{
+ margin-top:auto;
+ background:#ffe14e!important;color:#103a7a!important;
+ min-height:62px;
+}
+.pluim-continue>span:last-child{background:#103a7a20!important}
+@keyframes pluimSpin{to{transform:rotate(360deg)}}
+@keyframes pluimDistract{
+ 0%,100%{transform:rotate(11deg) translateY(0)}
+ 50%{transform:rotate(-13deg) translateY(-16px)}
+}
+@keyframes pluimFlash{
+ 0%{opacity:.1;transform:scale(.85)}65%{opacity:1;transform:scale(1.08)}
+ 100%{opacity:1;transform:scale(1)}
+}
+@media(max-height:755px){
+ .pluim-intro,.pluim-play,.pluim-result{padding-top:13px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+ .pluim-hero-art{width:min(48vw,190px);margin:4px auto}
+ .pluim-intro .pluim-title{font-size:clamp(41px,11vw,59px);margin:8px 0}
+ .pluim-rules span{min-height:45px}
+ .pluim-description{font-size:14px;margin:0 auto 7px}
+ .pluim-warning{font-size:11px;margin:1px auto 9px}
+ .pluim-start{min-height:55px}
+ .pluim-progress-dots{margin:8px auto}
+ .pluim-stage{padding:8px 0;min-height:235px}
+ .pluim-stage-label{margin-bottom:25px}
+ .pluim-meter{height:70px}
+ .pluim-attempt-info{margin-top:15px}
+ .pluim-feedback{min-height:41px;margin-top:8px}
+ .pluim-stop-button{min-height:77px}
+ .pluim-footer-tip{margin:10px 0 0}
+ .pluim-result-art{width:min(44vw,190px);margin:2vh auto 4px}
+ .pluim-result .pluim-title{font-size:clamp(33px,9vw,47px)}
+}
+@media(max-height:595px){
+ .pluim-hero-art{width:min(33vw,126px)}
+ .pluim-intro .pluim-title{font-size:37px}
+ .pluim-rules span{min-height:39px}
+ .pluim-stage{min-height:190px}
+ .pluim-meter{height:61px}
+ .pluim-stop-button{min-height:63px}
+ .pluim-result-art{width:min(33vw,142px)}
+}
+@media(max-width:365px){
+ .pluim-kicker{font-size:9px}
+ .pluim-rules span{font-size:9px;padding-inline:3px}
+ .pluim-title{font-size:46px}
+ .pluim-stage-label{font-size:13px}
+ .pluim-meter{height:77px}
+ .pluim-distraction{width:88px;height:88px}
+ .pluim-stop-button strong{font-size:25px}
+}
+@media(prefers-reduced-motion:reduce){
+ .pluim-target-rings,.pluim-distraction,.pluim-feedback{animation:none!important}
+}
