@@ -1,5 +1,5 @@
-const CACHE='thomas-pubgolf-v24';
-const SHELL=['./index.html','./styles.css?v=24','./app.js?v=24','./manifest.webmanifest','./assets/thomas-stickers.webp','./assets/scare-photo-1.webp','./assets/scare-photo-2.webp','./assets/scare-photo-3.webp','./assets/scare-photo-4.webp','./assets/scare-photo-5.webp'];
+const CACHE='thomas-pubgolf-v25';
+const SHELL=['./index.html','./styles.css?v=25','./app.js?v=25','./manifest.webmanifest','./assets/thomas-stickers.webp','./assets/scare-photo-1.webp','./assets/scare-photo-2.webp','./assets/scare-photo-3.webp','./assets/scare-photo-4.webp','./assets/scare-photo-5.webp'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).catch(error=>console.warn('Offline-cache:',error)));
  self.skipWaiting();
