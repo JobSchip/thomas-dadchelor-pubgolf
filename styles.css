@@ -3186,3 +3186,166 @@ button:focus-visible{outline:3px solid #ffb800;outline-offset:3px}
  .tavern-glass.is-filled .tavern-glass-beer,
  .tavern-glass.is-filled .tavern-glass-foam{animation:none!important}
 }
+
+
+/* ===========================================================
+   v32 — JUST THE BROWN BAR: six glasses, Thomas and tap.
+   Clear out duplicate labels, round badges and inventory boxes.
+   Preserve menu and optional Salmari control on the right.
+   =========================================================== */
+#app[data-view="preview"] .topbar{
+ position:absolute!important;
+ left:0;right:0;top:0;
+ height:0!important;min-height:0!important;
+ padding:0!important;margin:0!important;
+ border:0!important;background:transparent!important;
+ box-shadow:none!important;z-index:90;
+ pointer-events:none;
+}
+#app[data-view="preview"] .topbar .brand{
+ display:none!important;
+}
+#app[data-view="preview"] .topbar .top-actions{
+ position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;
+ display:flex;align-items:flex-start;gap:7px;
+ pointer-events:auto;
+}
+#app[data-view="preview"] .topbar .connection-dot{display:none}
+#app[data-view="preview"] .topbar .menu-button{
+ display:flex;justify-content:center;align-items:center;
+ height:42px;width:42px;padding:11px;
+ border:1px solid #f4d899a6;border-radius:14px;
+ background:#392013dc;box-shadow:0 5px 13px #1209058c;
+}
+#app[data-view="preview"] .topbar .menu-button span{background:#ffe1a5}
+#app[data-view="preview"] .salmari-quick:not([hidden]){
+ max-width:68px;
+ transform:scale(.86);transform-origin:top right;
+}
+#app[data-view="preview"] ~ #effects{display:none!important}
+#app[data-view="preview"] #screen,
+#app[data-view="preview"] .page-preview{
+ min-height:100dvh!important;
+ background:#30190f!important;
+}
+#app[data-view="preview"] .page-preview{padding:0!important;animation:none}
+.taproom.tavern.tavern-clean{
+ min-height:100dvh;
+ padding:calc(60px + env(safe-area-inset-top)) clamp(14px,4vw,26px)
+ calc(28px + env(safe-area-inset-bottom));
+ justify-content:space-between;gap:0;
+}
+.tavern-clean .tavern-host{
+ flex:1;max-height:none;min-height:210px;
+ padding:20px 4px 0;
+ justify-content:space-around;
+}
+.tavern-clean .tavern-speech{
+ font-size:clamp(28px,8.5vw,45px);
+ line-height:1.04;max-width:57%;
+ padding:clamp(15px,4vw,23px);
+ transform:rotate(-5deg);
+}
+.tavern-clean .tavern-thomas{
+ min-height:160px;
+ width:48%;max-width:230px;
+ align-self:center;
+}
+.tavern-clean .tavern-thomas-face{
+ width:clamp(145px,44vw,210px)!important;
+ height:clamp(145px,44vw,210px)!important;
+}
+.tavern-clean .tavern-stage{
+ min-height:205px;
+ height:clamp(200px,32dvh,286px);
+ padding-bottom:49px;
+}
+.tavern-clean .tavern-bar-counter{height:69px;border-top-width:12px}
+.tavern-clean .tavern-glass-lineup{max-width:540px;gap:clamp(3px,1.7vw,9px)}
+.tavern-clean .tavern-glass-slot{gap:0}
+.tavern-clean .tavern-glass{
+ height:clamp(88px,16dvh,146px);
+ width:min(100%,65px);
+}
+.tavern-clean .tavern-glass.is-current{
+ height:clamp(117px,21dvh,171px);
+ width:min(100%,75px);
+ filter:drop-shadow(0 0 14px #ffce63a8);
+}
+.tavern-clean .tavern-current-glass{
+ padding-top:8px;
+ border-radius:10px;
+}
+.tavern-clean .tavern-current-glass:before{
+ top:-1px;
+ height:12px;
+ background:#ffcb52;
+ box-shadow:0 -9px 0 2px #503013,0 -21px 0 4px #e2c28e;
+}
+.tavern-clean .tavern-action{
+ min-height:72px;
+ max-width:530px;margin:25px auto 0;
+ padding:15px 19px;border-radius:20px;
+ background:#ffdd84!important;color:#45291b!important;
+}
+.tavern-clean .tavern-action>strong{
+ flex:1;font-size:clamp(19px,6vw,24px);
+ letter-spacing:-.035em;font-weight:1000;
+}
+.tavern-clean .tavern-action-icon{font-size:27px}
+.tavern-clean .tavern-action-arrow{
+ width:38px;height:38px;font-size:24px;
+}
+/* Different physical beer shades; labels never appear in the UI.
+   1 blond, 2 stout, 3 amber, 4 pils, 5 gold/blond, 6 dark amber. */
+.tavern-clean .beer-blond .tavern-glass-beer{
+ background:linear-gradient(90deg,#b77815,#e9ab2c 25%,#ffdd72 60%,#bd801d);
+}
+.tavern-clean .beer-dark .tavern-glass-beer{
+ background:linear-gradient(90deg,#130b08,#2a150e 27%,#4b3022 59%,#100807);
+ box-shadow:inset 3px 0 9px #9e6b384d;
+}
+.tavern-clean .beer-dark .tavern-glass-foam{background:#eee1c7}
+.tavern-clean .beer-amber .tavern-glass-beer{
+ background:linear-gradient(90deg,#843107,#bd5915 28%,#e58c2f 60%,#8e3808);
+}
+.tavern-clean .beer-amber .tavern-glass-foam{background:#f4dfbd}
+.tavern-clean .beer-pils .tavern-glass-beer{
+ background:linear-gradient(90deg,#c29826,#f3c841 33%,#ffe88b 65%,#b38b1d);
+}
+.tavern-clean .beer-gold .tavern-glass-beer{
+ background:linear-gradient(90deg,#b96808,#edaa1c 33%,#ffd052 65%,#a85b09);
+}
+.tavern-clean .beer-dark-amber .tavern-glass-beer{
+ background:linear-gradient(90deg,#4b190d,#773318 32%,#a4542b 60%,#42150a);
+}
+.tavern-clean .beer-dark-amber .tavern-glass-foam{background:#e9d1b2}
+@media(max-height:720px){
+ .taproom.tavern.tavern-clean{
+  padding-top:calc(52px + env(safe-area-inset-top));
+  padding-bottom:calc(15px + env(safe-area-inset-bottom));
+ }
+ .tavern-clean .tavern-host{min-height:120px;padding-top:5px}
+ .tavern-clean .tavern-thomas{min-height:120px}
+ .tavern-clean .tavern-thomas-face{width:clamp(105px,32vw,165px)!important;height:clamp(105px,32vw,165px)!important}
+ .tavern-clean .tavern-speech{font-size:clamp(25px,6.5vw,35px)}
+ .tavern-clean .tavern-stage{height:clamp(158px,27dvh,210px);min-height:158px;padding-bottom:37px}
+ .tavern-clean .tavern-glass{height:clamp(64px,12dvh,98px)}
+ .tavern-clean .tavern-glass.is-current{height:clamp(85px,15dvh,122px)}
+ .tavern-clean .tavern-action{margin-top:12px;min-height:60px}
+}
+@media(max-height:600px){
+ .tavern-clean .tavern-host{min-height:95px}
+ .tavern-clean .tavern-thomas{min-height:90px}
+ .tavern-clean .tavern-thomas-face{width:96px!important;height:96px!important}
+ .tavern-clean .tavern-speech{font-size:25px;padding:12px}
+ .tavern-clean .tavern-stage{height:132px;min-height:132px;padding-bottom:25px}
+ .tavern-clean .tavern-glass{height:62px}
+ .tavern-clean .tavern-glass.is-current{height:79px}
+ .tavern-clean .tavern-action{margin-top:10px;min-height:54px}
+}
+@media(max-width:350px){
+ .tavern-clean .tavern-speech{font-size:25px;padding:12px}
+ .tavern-clean .tavern-glass{height:76px}
+ .tavern-clean .tavern-glass.is-current{height:99px}
+}
