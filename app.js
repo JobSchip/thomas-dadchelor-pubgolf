@@ -309,6 +309,8 @@ function setView(next){
  if(next==="preview"&&me())localStorage.setItem("golf-firstdrink-"+room+"-"+myId,"1");
  if(next==="nominate")nomineeDraft="";
  if(next==="preview")pourReady=false;
+ if(next!=="hole")cancelSipHold();
+ if(next==="hole")ignoreSipClick=false;
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
  const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",thomolIntro:"general",thomolPlay:"general",thomolResult:"good",pluimIntro:"general",pluimPlay:"general",pluimResult:"good",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
@@ -614,35 +616,74 @@ function svgDrink(kind){
  }
  return start+content+"</svg>";
 }
-function sipStatus(){
- const par=HOLES[hole].par;
- if(strokes===0)return "Tik om je eerste slok te tellen.";
- if(strokes<par)return "Nog "+(par-strokes)+" "+(par-strokes===1?"slok":"slokken")+" tot PAR.";
- if(strokes===par)return "Precies op PAR. Netjes!";
- return (strokes-par)+" "+(strokes-par===1?"slok":"slokken")+" boven PAR.";
-}
+const SIP_HOLD_MS=850;
+let sipHoldTimer=null,sipHoldTarget=null,sipHoldStartedAt=0,sipHoldPosition=null,sipHoldDone=false,ignoreSipClick=false;
 function refreshCounter(){
- const number=el("stroke-value");
- if(number)number.textContent=String(strokes);
+ const counter=el("stroke-value");
+ if(counter)counter.textContent=String(strokes);
  const unit=el("sip-unit");
  if(unit)unit.textContent=strokes===1?"SLOK":"SLOKKEN";
- const hint=el("sip-hint");
- if(hint)hint.textContent=sipStatus();
- const count=el("sip-progress");
- if(count)count.textContent=strokes+" / PAR "+HOLES[hole].par;
- const undo=el("sip-undo");
- if(undo)undo.disabled=strokes===0;
- const submit=el("sip-submit");
- if(submit)submit.disabled=strokes===0;
- const label=el("sip-submit-label");
- if(label)label.textContent=strokes===0?"Tel eerst je slokken":"Bevestig "+strokes+" "+(strokes===1?"slok":"slokken");
  const pad=el("sip-pad");
- if(pad?.style?.setProperty)pad.style.setProperty("--sip-fill",Math.min(100,strokes/HOLES[hole].par*100)+"%");
- if(pad?.classList?.add&&pad?.classList?.remove){
-  pad.classList.remove("sip-pulse");
-  void pad.offsetWidth;
-  pad.classList.add("sip-pulse");
+ if(pad)pad.setAttribute("aria-label",strokes+" "+(strokes===1?"slok":"slokken")+" geteld. Tik voor één extra slok; houd 0,85 seconde ingedrukt om de score te bevestigen.");
+}
+function addSip(){
+ if(view!=="hole")return;
+ strokes=Math.min(99,strokes+1);
+ refreshCounter();
+ nativeFeedback("light");
+ maybeSipMediaScare();
+}
+function confirmSipScore(){
+ if(view!=="hole")return;
+ if(strokes<1){notify("Tik eerst minstens één slok");return}
+ if(Number.isInteger(me()?.scores?.[hole])){notify("Deze score staat al vast");return}
+ const under=strokes<HOLES[hole].par;
+ const above=strokes>HOLES[hole].par;
+ const holeInOne=strokes===1;
+ update("setScore",{playerId:myId,hole,value:strokes},true);
+ nativeFeedback(holeInOne?"success":above?"error":"medium");
+ if(holeInOne){
+  setView("ace");
+  aceBlast();
+ }else{
+  setView("board");
+  if(under)setTimeout(()=>{celebrate(44);rainIcons("good",58)},65);
+  if(above)setTimeout(()=>rainIcons("bad",72),90);
+  setTimeout(()=>flyBeer(3),95);
  }
+}
+function cancelSipHold(){
+ if(sipHoldTimer!==null){clearTimeout(sipHoldTimer);sipHoldTimer=null}
+ if(sipHoldTarget?.classList?.remove)sipHoldTarget.classList.remove("is-holding");
+ sipHoldTarget=null;
+ sipHoldPosition=null;
+}
+function completeSipHold(){
+ if(view!=="hole"||sipHoldDone)return;
+ sipHoldDone=true;
+ ignoreSipClick=true;
+ cancelSipHold();
+ confirmSipScore();
+}
+function beginSipHold(target,event){
+ if(view!=="hole"||!target)return;
+ if(event.button!==undefined&&event.button!==0)return;
+ if(event.isPrimary===false)return;
+ cancelSipHold();
+ sipHoldDone=false;
+ sipHoldTarget=target;
+ sipHoldStartedAt=Date.now();
+ sipHoldPosition={x:event.clientX||0,y:event.clientY||0};
+ target.classList?.add?.("is-holding");
+ sipHoldTimer=setTimeout(completeSipHold,SIP_HOLD_MS);
+}
+function releaseSipHold(){
+ if(!sipHoldTarget)return;
+ if(!sipHoldDone&&Date.now()-sipHoldStartedAt>=SIP_HOLD_MS){
+  completeSipHold();
+  return;
+ }
+ cancelSipHold();
 }
 function landing(){
  return `<div class="landing page-card">
@@ -714,31 +755,16 @@ function preview(){
  </div>`;
 }
 function holeView(){
- const h=HOLES[hole],progress=HOLES.map((x,i)=>`<span class="${i<=hole?'active':''}"></span>`).join("");
- return `<div class="page-card hole-page sip-page" style="--haze:${hole*2.6}px;--haze-alpha:${0.08+hole*.05}">
-  <div class="progress">${progress}</div>
-  <div class="hole-head"><span class="overline">HOLE ${hole+1} / 6</span><span class="par-badge">PAR ${h.par} SLOKKEN</span></div>
-  <h1 class="venue">${escapeHtml(h.venue)}</h1>
-  <p class="drink-name">${escapeHtml(h.drink)} <span>· ${escapeHtml(h.details)}</span></p>
-  <div class="sip-stage">
-   ${sticker([0,5,4,2,7,3][hole],"sip-sticker")}
-   <p class="sip-stage-overline">HOEVEEL SLOKKEN HEB JE NODIG?</p>
-   <button id="sip-pad" data-action="sip" class="sip-pad" type="button" aria-label="Tel één slok" style="--sip-fill:${Math.min(100,strokes/h.par*100)}%">
-    <span class="sip-pad-accent" aria-hidden="true">✦</span>
-    <span class="sip-pad-caption">ELKE TIK = +1 SLOK</span>
-    <strong id="stroke-value" class="sip-number" aria-live="polite" aria-atomic="true">${strokes}</strong>
-    <span id="sip-unit" class="sip-unit">${strokes===1?'SLOK':'SLOKKEN'}</span>
-    <span class="sip-pad-hint" aria-hidden="true">👆 TIK OM TE TELLEN</span>
-   </button>
-   <div class="sip-stage-bottom">
-    <span id="sip-progress" class="sip-par-progress">${strokes} / PAR ${h.par}</span>
-    <p id="sip-hint" class="sip-hint" aria-live="polite">${sipStatus()}</p>
-   </div>
-   <button id="sip-undo" data-action="minus" type="button" class="sip-undo" ${strokes===0?'disabled':''}>↶ Laatste slok ongedaan maken</button>
-  </div>
-  <div class="grow"></div>
-  <button id="sip-submit" class="cta sip-submit" data-action="submit" type="button" ${strokes===0?'disabled':''}>
-   <span id="sip-submit-label">${strokes===0?'Tel eerst je slokken':'Bevestig '+strokes+' '+(strokes===1?'slok':'slokken')}</span><span>→</span>
+ const h=HOLES[hole];
+ return `<div class="page-card hole-page sip-minimal">
+  <div class="sip-minimal-par" aria-label="PAR ${h.par}">PAR <strong>${h.par}</strong></div>
+  <button id="sip-pad" class="sip-hold-button" type="button" data-action="sip"
+   aria-label="${strokes} ${strokes===1?'slok':'slokken'} geteld. Tik voor één extra slok; houd 0,85 seconde ingedrukt om de score te bevestigen.">
+   <svg class="sip-hold-ring" aria-hidden="true" viewBox="0 0 260 260">
+    <circle cx="130" cy="130" r="114" pathLength="100"></circle>
+   </svg>
+   <strong id="stroke-value" class="sip-minimal-number" aria-live="polite" aria-atomic="true">${strokes}</strong>
+   <span id="sip-unit" class="sip-minimal-unit">${strokes===1?'SLOK':'SLOKKEN'}</span>
   </button>
  </div>`;
 }
@@ -1063,6 +1089,37 @@ el("salmari-quick").addEventListener("click",()=>{
 });
 el("menu").addEventListener("click",()=>setView("menu"));
 el("screen").addEventListener("dblclick",e=>{if(e.target.closest(".counter"))e.preventDefault()});
+// Native pointer gestures: a quick tap counts one; an 850 ms hold confirms.
+el("screen").addEventListener("pointerdown",e=>{
+ const pad=e.target.closest("#sip-pad");
+ if(pad&&view==="hole")beginSipHold(pad,e);
+});
+el("screen").addEventListener("pointerup",e=>{
+ if(sipHoldTarget)releaseSipHold();
+});
+el("screen").addEventListener("pointercancel",cancelSipHold);
+el("screen").addEventListener("pointerleave",e=>{
+ if(sipHoldTarget)cancelSipHold();
+});
+el("screen").addEventListener("pointermove",e=>{
+ if(!sipHoldTarget||!sipHoldPosition)return;
+ if(Math.hypot((e.clientX||0)-sipHoldPosition.x,(e.clientY||0)-sipHoldPosition.y)>24)cancelSipHold();
+});
+el("screen").addEventListener("contextmenu",e=>{
+ if(e.target.closest("#sip-pad"))e.preventDefault();
+});
+el("screen").addEventListener("keydown",e=>{
+ if(!e.target.closest("#sip-pad")||![" ","Enter"].includes(e.key))return;
+ e.preventDefault();
+ if(e.repeat)return;
+ beginSipHold(e.target,{button:0,isPrimary:true,clientX:0,clientY:0});
+});
+el("screen").addEventListener("keyup",e=>{
+ if(!e.target.closest("#sip-pad")||![" ","Enter"].includes(e.key))return;
+ e.preventDefault();
+ if(!sipHoldDone&&sipHoldTarget){releaseSipHold();addSip();}
+ else cancelSipHold();
+});
 el("screen").addEventListener("click",e=>{
  maybeJumpScare(e);
  const thomol=e.target.closest("[data-thomol-cell]");
@@ -1125,10 +1182,6 @@ el("screen").addEventListener("click",e=>{
  if(golfer){selectedPlayerId=golfer.dataset.leader;setView("detail");return;}
  const button=e.target.closest("[data-action]");
  if(!button){
-  // The whole score screen counts a tap, except buttons and interactive controls.
-  if(view==="hole"&&e.target.closest(".hole-page")&&!e.target.closest("button,a,input,select,textarea,[role=button]")){
-   strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");maybeSipMediaScare();
-  }
   return;
  }
  switch(button.dataset.action){
@@ -1155,28 +1208,10 @@ el("screen").addEventListener("click",e=>{
    strokes=Math.max(0,strokes-1);refreshCounter();nativeFeedback("light");break;
   case "sip":
   case "plus":
-   if(view!=="hole")break;
-   strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");maybeSipMediaScare();break;
-  case "submit":{
-   if(view!=="hole")break;
-   if(strokes<1){notify("Tel eerst minstens één slok");break}
-   if(Number.isInteger(me()?.scores?.[hole])){notify("Deze score staat al vast");break}
-   const under=strokes<HOLES[hole].par;
-   const above=strokes>HOLES[hole].par;
-   const holeInOne=strokes===1;
-   update("setScore",{playerId:myId,hole,value:strokes},true);
-   nativeFeedback(holeInOne?"success":above?"error":"medium");
-   if(holeInOne){
-     setView("ace");
-     aceBlast();
-   }else{
-     setView("board");
-     if(under)setTimeout(()=>{celebrate(44);rainIcons("good",58)},65);
-     if(above)setTimeout(()=>rainIcons("bad",72),90);
-     setTimeout(()=>flyBeer(3),95);
-   }
-   break;
-  }
+   if(ignoreSipClick){ignoreSipClick=false;break}
+   addSip();break;
+  case "submit":
+   confirmSipScore();break;
   case "confirmNominate":{
    if(view!=="nominate"||me()?.nomination)return;
    const chosen=state.players.find(p=>p.id===nomineeDraft);
