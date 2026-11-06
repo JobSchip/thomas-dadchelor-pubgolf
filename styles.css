@@ -2636,3 +2636,206 @@ button:focus-visible{outline:3px solid #ffb800;outline-offset:3px}
  }
  .sip-minimal .sip-hold-help{font-size:12px}
 }
+
+
+/* ==============================================================
+   SIP SCORE & ANDROID VIDEO v30
+   Simple +/- tap targets, live PAR difference, one clear confirm.
+   =============================================================== */
+#app[data-view="hole"] #screen{
+ background:#eef4ff;
+ min-height:100dvh;
+}
+#app[data-view="hole"] .page.page-hole.sip-score-page{
+ display:flex;flex-direction:column;align-items:center;
+ min-height:100dvh;min-height:100svh;
+ padding:calc(24px + env(safe-area-inset-top)) clamp(16px,5vw,28px) calc(24px + env(safe-area-inset-bottom))!important;
+ background:radial-gradient(ellipse at 88% 2%,#ffe783a8,transparent 38%),#eef4ff!important;
+ color:#143d87;overflow-x:hidden;
+}
+.sip-score-top{
+ width:100%;display:flex;flex-direction:column;
+ align-items:center;gap:9px;text-align:center;
+ flex:0 0 auto;
+}
+.sip-score-eyebrow{font-size:11px;letter-spacing:.16em;font-weight:950;color:#6c84ad}
+.sip-score-venue{
+ max-width:320px;line-height:1.15;font-weight:870;
+ color:#224886;font-size:clamp(16px,4.3vw,20px);
+}
+.sip-score-par{
+ display:flex;align-items:center;justify-content:center;gap:9px;
+ background:#ffdf48;border:2px solid #195bf2;
+ border-radius:999px;box-shadow:0 5px 0 #165cff1c;
+ color:#123982;font-size:21px;font-weight:940;letter-spacing:.05em;
+ padding:10px 20px;margin:4px auto 0;
+}
+.sip-score-par strong{font-variant-numeric:tabular-nums;font-size:27px;line-height:1}
+.sip-score-main{
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ width:100%;max-width:420px;gap:23px;
+ flex:1 1 auto;min-height:330px;
+ padding:26px 0 21px;
+}
+.sip-score-question{
+ font-size:clamp(25px,7.8vw,36px);font-weight:980;
+ text-align:center;letter-spacing:-.055em;
+ line-height:1.04;color:#153e85;margin:0;
+}
+.sip-count-row{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ width:100%;max-width:378px;
+}
+.sip-adjust{
+ display:grid;place-items:center;flex-shrink:0;
+ width:clamp(74px,23vw,96px);height:clamp(74px,23vw,96px);
+ border:0;border-radius:26px;
+ font-size:clamp(43px,13vw,56px);font-weight:650;line-height:1;
+ -webkit-tap-highlight-color:transparent;
+ touch-action:manipulation;
+ user-select:none;
+ transition:transform .1s ease,box-shadow .1s ease;
+}
+.sip-adjust:active:not(:disabled){transform:translateY(3px) scale(.97)}
+.sip-adjust-minus{
+ background:#fff;color:#1544a3;
+ border:2px solid #b9cffa;
+ box-shadow:0 7px 0 #bfd0e6;
+}
+.sip-adjust-minus:disabled{opacity:.38;box-shadow:none}
+.sip-adjust-plus{
+ background:#185cff;color:#fff;
+ box-shadow:0 8px 0 #0c3a9a,0 15px 20px #164ba348;
+}
+.sip-adjust-plus:disabled{opacity:.4}
+.sip-count{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ min-width:0;flex:1;
+}
+.sip-count strong{
+ font-size:clamp(76px,23vw,120px);line-height:.91;
+ font-variant-numeric:tabular-nums;
+ font-weight:1000;letter-spacing:-.085em;
+ color:#153e8a;
+}
+.sip-count span{
+ font-size:11px;font-weight:950;letter-spacing:.19em;
+ margin-top:11px;color:#647da9;
+}
+.sip-score-comparison{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ width:100%;max-width:358px;gap:7px;
+ padding:18px 18px 20px;
+ background:#fff;border-radius:21px;
+ border:2px solid #d3dff3;
+ box-shadow:0 11px 25px #1a427c15;
+ text-align:center;
+}
+.sip-score-difference{
+ font-size:clamp(46px,12vw,61px);line-height:.9;
+ font-weight:1000;letter-spacing:-.07em;
+ font-variant-numeric:tabular-nums;color:#8b9db9;
+}
+.sip-score-diff-label{
+ color:#62789a;font-size:14px;
+ font-weight:860;line-height:1.25;
+}
+.sip-score-comparison.is-under{background:#eafbf4;border-color:#7bd6b3}
+.sip-score-comparison.is-under .sip-score-difference,
+.sip-score-comparison.is-under .sip-score-diff-label{color:#12744e}
+.sip-score-comparison.is-even{background:#eef4ff;border-color:#83adf3}
+.sip-score-comparison.is-even .sip-score-difference,
+.sip-score-comparison.is-even .sip-score-diff-label{color:#1557cb}
+.sip-score-comparison.is-over{background:#fff0ee;border-color:#ffbab2}
+.sip-score-comparison.is-over .sip-score-difference,
+.sip-score-comparison.is-over .sip-score-diff-label{color:#bd3e34}
+.sip-score-submit{
+ flex:0 0 auto;width:100%;max-width:420px;
+ min-height:64px;
+ background:#ffdf48!important;color:#143f84!important;
+ border:2px solid #1b60e4;border-radius:19px;
+ box-shadow:0 7px 0 #d4ad24,0 12px 19px #1d4c8e14!important;
+ font-size:16px;
+}
+.sip-score-submit>span:last-child{background:#123b8221!important}
+.sip-score-submit:disabled{
+ background:#cddbf0!important;
+ color:#7085a7!important;
+ border-color:#b5c8e5;box-shadow:none!important;
+ opacity:.8;
+}
+.sip-score-submit:active:not(:disabled){transform:translateY(4px);box-shadow:0 3px 0 #d4ad24!important}
+@media(max-height:710px){
+ #app[data-view="hole"] .page.page-hole.sip-score-page{
+  padding-top:calc(13px + env(safe-area-inset-top))!important;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom))!important;
+ }
+ .sip-score-top{gap:5px}
+ .sip-score-par{padding:7px 15px;margin-top:3px;font-size:18px}
+ .sip-score-par strong{font-size:24px}
+ .sip-score-main{gap:16px;min-height:270px;padding:15px 0}
+ .sip-score-question{font-size:26px}
+ .sip-adjust{width:78px;height:78px;border-radius:20px}
+ .sip-count strong{font-size:84px}
+ .sip-score-comparison{padding:10px 14px;gap:4px}
+ .sip-score-difference{font-size:47px}
+ .sip-score-submit{min-height:56px}
+}
+@media(max-width:360px){
+ .sip-count-row{gap:7px}
+ .sip-adjust{width:71px;height:74px;border-radius:19px}
+ .sip-count strong{font-size:77px}
+ .sip-score-question{font-size:25px}
+ .sip-score-comparison{padding:14px 10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .sip-adjust{transition:none!important}
+}
+
+/* Android-compatible video: show a real photo until a decoded frame is playing. */
+.sip-media-scare--video .sip-media-scare-frame{
+ display:block;position:relative;isolation:isolate;
+ background:#0b1736;
+}
+.sip-media-scare--video .sip-media-scare-video-poster,
+.sip-media-scare--video .sip-media-scare-media{
+ position:absolute;inset:0;
+ width:100%;height:100%;object-fit:contain;
+}
+.sip-media-scare--video .sip-media-scare-video-poster{z-index:1}
+.sip-media-scare--video .sip-media-scare-media{
+ z-index:2;opacity:0;
+ background:transparent;
+}
+.sip-media-scare--video.is-playing .sip-media-scare-media{opacity:1}
+.sip-media-scare--video .sip-media-scare-play{
+ display:none;position:absolute;z-index:3;
+ left:50%;bottom:9%;transform:translateX(-50%);
+ min-width:80%;min-height:49px;
+ border-radius:99px;border:2px solid #fff3ba;
+ background:#ffdf42;color:#123d83;
+ font-weight:940;font-size:14px;
+ padding:10px 13px;
+ box-shadow:0 8px 20px #010d285a;
+ cursor:pointer;
+}
+.sip-media-scare--video.needs-play:not(.is-playing) .sip-media-scare-play{
+ display:block;
+}
+.sip-media-scare--video.video-error .sip-media-scare-play{background:#fce5bf}
+.sip-media-scare--video .sip-media-scare-play:active{
+ transform:translateX(-50%) scale(.97);
+}
+.sip-media-scare--video .sip-media-scare-close{position:relative;z-index:4}
+/* Extended photo and sticker moments; animations span the entire visibility. */
+.thomas-jumpscare--mini .thomas-jumpscare-card{
+ animation:partyMiniPeek 1.02s cubic-bezier(.14,.88,.22,1) both;
+}
+.thomas-jumpscare--medium,
+.thomas-jumpscare--medium .thomas-jumpscare-card{
+ animation-duration:1.35s;
+}
+.thomas-jumpscare--full,
+.thomas-jumpscare--full .thomas-jumpscare-card{
+ animation-duration:1.65s;
+}
