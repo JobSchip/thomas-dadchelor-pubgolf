@@ -439,6 +439,146 @@ function thomolSkip(){
  setView("thomolResult");
 }
 
+
+const PLUIM_ZONES=[18,13,9],PLUIM_SPEEDS=[120,170,230],PLUIM_LIMIT=4500;
+function pluimClearTimers(){
+ if(pluimTickTimer){clearInterval(pluimTickTimer);pluimTickTimer=null}
+ if(pluimNextTimer){clearTimeout(pluimNextTimer);pluimNextTimer=null}
+}
+function pluimPosition(g,now=Date.now()){
+ if(g.locked)return g.stopAt;
+ const traveled=Math.max(0,(now-g.startedAt)*g.speed/1000)%200;
+ return traveled<=100?traveled:200-traveled;
+}
+function pluimPrepareAttempt(g){
+ g.target=[28,41,55,70][Math.floor(Math.random()*4)];
+ g.width=PLUIM_ZONES[g.attempt];
+ g.speed=PLUIM_SPEEDS[g.attempt];
+ g.startedAt=Date.now();
+ g.locked=false;g.stopAt=0;g.message="";
+}
+function pluimIntro(){
+ return `<div class="page-card pluim-intro">
+   <span class="pluim-kicker">🎰 DE TWEEDE BONUSRONDE</span>
+   <div class="pluim-hero-art" aria-hidden="true"><div class="pluim-target-rings"></div>${sticker(6,"pluim-hero-sticker")}<span class="pluim-hero-stamp">STOP!</span></div>
+   <h1 class="pluim-title">STOP DE<br><em>PLUIM!</em></h1>
+   <p class="pluim-description">Die wijzer gaat als een malle. Stop 'm precies in het <strong>gele vak.</strong></p>
+   <div class="pluim-rules"><span>🎯 3 POGINGEN</span><span>⏱️ 4,5 SEC PER KANS</span><span>🏆 HIT = −1 SLAG</span></div>
+   <p class="pluim-warning">Elke beurt sneller. De gele zone wordt steeds kleiner. Maximaal −3 slagen. Eén poging per golfer.</p>
+   <div class="grow"></div>
+   <button class="cta pluim-start" type="button" data-action="pluimStart">START DE METER <span>→</span></button>
+   <button class="pluim-skip" type="button" data-action="pluimSkip">Bonusronde overslaan</button>
+ </div>`;
+}
+function pluimPlay(){
+ const g=pluimRound||{attempt:0,hits:0,history:[],target:50,width:18,speed:120,startedAt:Date.now(),locked:false,stopAt:0};
+ const pos=pluimPosition(g);
+ const left=g.target-g.width/2;
+ const timeLeft=g.locked?0:Math.max(0,(PLUIM_LIMIT-(Date.now()-g.startedAt))/1000);
+ return `<div class="page-card pluim-play">
+   <div class="pluim-top"><span>🎰 STOP DE PLUIM!</span><strong>RONDE ${g.attempt+1}/3</strong></div>
+   <div class="pluim-progress-dots">${Array.from({length:3},(_,i)=>`<span class="${i<g.history.length?(g.history[i]?'hit':'miss'):i===g.attempt?'current':''}">${i<g.history.length?(g.history[i]?'✓':'✕'):i+1}</span>`).join("")}</div>
+   <div class="pluim-top-score"><span>VERDIEND <strong>−${g.hits}</strong> SLAGEN</span><span class="pluim-countdown" id="pluim-countdown">${timeLeft.toFixed(1)}s</span></div>
+   <div class="pluim-stage">
+     ${sticker(7,"pluim-distraction")}
+     <span class="pluim-stage-label">MIK OP GEEL, MAAT.</span>
+     <div class="pluim-meter-wrap">
+       <div class="pluim-meter" role="img" aria-label="Bewegende meter: stop de wijzer in de gele trefzone">
+        <span class="pluim-zone" style="left:${left}%;width:${g.width}%"></span>
+        <span class="pluim-needle" id="pluim-needle" style="left:${pos}%"><i>▼</i></span>
+       </div>
+       <div class="pluim-meter-markers"><span>0</span><span>50</span><span>100</span></div>
+     </div>
+     <div class="pluim-attempt-info"><span>SNELHEID <strong>${g.attempt===0?'SNEL':g.attempt===1?'BLOEDSNEL':'ABSURD'}</strong></span><span>TREFZONE <strong>${g.width}%</strong></span></div>
+     <div class="pluim-feedback ${g.locked?(g.history[g.history.length-1]?'pluim-good':'pluim-bad'):''}" aria-live="polite">${g.locked?escapeHtml(g.message):'WACHT... EN... STOP!'}</div>
+   </div>
+   <div class="grow"></div>
+   <button type="button" class="pluim-stop-button" data-action="pluimStop" ${g.locked?'disabled':''}>
+     <strong>${g.locked?(g.history[g.history.length-1]?'RAAK!':'MIS!'):'STOP DIE PLUIM!'}</strong>
+     <span>${g.locked?'VOLGENDE POGING KOMT ERAAN':"TIK OM DE WIJZER TE STOPPEN"}</span>
+   </button>
+   <p class="pluim-footer-tip">Geen herkansingen. Goed mikken, chef.</p>
+ </div>`;
+}
+function pluimResult(){
+ const hits=me()?.pluimHits||0;
+ const reaction=hits===3?'ON-GE-LO-FELIJK!':hits===2?'LEKKER GEDAAN!':hits===1?'NETJES, MAAT!':'FANTASTISCH MIS.';
+ return `<div class="page-card pluim-result">
+   <span class="pluim-kicker">🏆 DE METER IS GESTOPT</span>
+   <div class="pluim-result-art">${sticker(hits>0?6:3,"pluim-result-sticker")}<span class="pluim-result-stamp">${hits}/3 RAAK!</span></div>
+   <h1 class="pluim-title">${reaction.replace(' ','<br>')}</h1>
+   <p class="pluim-result-sub">${hits?'Die vingers zijn nog verrassend scherp.':'Thomas is je te snel af geweest.'}</p>
+   <div class="pluim-result-ticket"><strong>−${hits}</strong><span>${hits===1?'SLAG':'SLAGEN'}<small>CADEAU VOOR DE RANGLIJST</small></span></div>
+   <p class="pluim-result-quote">“${escapeHtml(hits>1?'Opeens ben je vet goed?':hits===1?'Goed geprobeerd':'Maatje wie hou je voor de gek')}” — Thomas</p>
+   <div class="grow"></div>
+   <button class="cta pluim-continue" type="button" data-action="continue">Volgende kroeg <span>→</span></button>
+ </div>`;
+}
+function pluimRefreshNeedle(){
+ const g=pluimRound;
+ if(!g||view!=="pluimPlay"||g.locked)return;
+ const time=Date.now()-g.startedAt;
+ if(time>=PLUIM_LIMIT){pluimStop(true);return}
+ const needle=el("pluim-needle"),counter=el("pluim-countdown");
+ if(needle)needle.style.left=pluimPosition(g)+"%";
+ if(counter)counter.textContent=Math.max(0,(PLUIM_LIMIT-time)/1000).toFixed(1)+"s";
+}
+function pluimStartTicker(){
+ if(pluimTickTimer){clearInterval(pluimTickTimer);pluimTickTimer=null}
+ pluimTickTimer=setInterval(pluimRefreshNeedle,22);
+}
+function pluimStart(){
+ const p=me();
+ if(view!=="pluimIntro"||!p||Number.isInteger(p.pluimHits))return;
+ if(!Number.isInteger(p.scores?.[3])||!p.answers?.four)return nextHole();
+ pluimClearTimers();
+ const g={attempt:0,hits:0,history:[],locked:false,stopAt:0};
+ pluimRound=g;
+ pluimPrepareAttempt(g);
+ setView("pluimPlay");
+ pluimStartTicker();
+}
+function pluimStop(expired=false){
+ const g=pluimRound;
+ if(view!=="pluimPlay"||!g||g.locked)return;
+ const elapsed=Date.now()-g.startedAt;
+ const position=pluimPosition(g);
+ const hit=!expired&&elapsed<PLUIM_LIMIT&&Math.abs(position-g.target)<=g.width/2;
+ g.stopAt=position;
+ g.locked=true;
+ g.history.push(hit);
+ if(hit)g.hits++;
+ g.message=hit?'BOEM! −1 SLAG!':expired?'TE LAAT, OUWE!':'NET MIS, MAAT!';
+ if(pluimTickTimer){clearInterval(pluimTickTimer);pluimTickTimer=null}
+ nativeFeedback(hit?'success':'light');
+ render();
+ if(hit){celebrate(19);rainIcons("good",14)}
+ pluimNextTimer=setTimeout(()=>{
+  pluimNextTimer=null;
+  if(view!=="pluimPlay"||pluimRound!==g)return;
+  if(g.attempt>=2){pluimFinish();return}
+  g.attempt++;
+  pluimPrepareAttempt(g);
+  render();
+  pluimStartTicker();
+ },920);
+}
+function pluimFinish(){
+ const g=pluimRound;
+ if(!g||view!=="pluimPlay")return;
+ const hits=g.hits;
+ pluimClearTimers();pluimRound=null;
+ if(!Number.isInteger(me()?.pluimHits))update("finishPluim",{playerId:myId,hits},true);
+ setView("pluimResult");
+ if(hits>0)celebrate(30+hits*16);
+}
+function pluimSkip(){
+ if(view!=="pluimIntro"||Number.isInteger(me()?.pluimHits))return;
+ pluimClearTimers();pluimRound=null;
+ update("finishPluim",{playerId:myId,hits:0},true);
+ setView("pluimResult");
+}
+
 function nextHole(){
  const p=me();if(!p){setView("choose");return}
  const done=p.scores||[];
