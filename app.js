@@ -336,6 +336,7 @@ function holeView(){
   <h1 class="venue">${escapeHtml(h.venue)}</h1>
   <p class="drink-name">${escapeHtml(h.drink)} <span>· ${escapeHtml(h.details)}</span></p>
   <div class="sip-stage">
+   ${sticker([0,5,4,2,7,3][hole],"sip-sticker")}
    <p class="sip-stage-overline">HOEVEEL SLOKKEN HEB JE NODIG?</p>
    <button id="sip-pad" data-action="sip" class="sip-pad" type="button" aria-label="Tel één slok" style="--sip-fill:${Math.min(100,strokes/h.par*100)}%">
     <span class="sip-pad-accent" aria-hidden="true">✦</span>
