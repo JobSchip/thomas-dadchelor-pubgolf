@@ -1263,3 +1263,282 @@ button,.pick,.leader-row,.mood,.vote-card{ -webkit-tap-highlight-color:transpare
  .taproom-peeker,.ace-sticker-fly,.thomas-jumpscare,.thomas-jumpscare-card{animation:none!important}
  .thomas-jumpscare{display:none!important}
 }
+
+
+/* ===========================================================
+   PRIMARY-COLOR PARTY v22
+   Cobalt blue / tomato red / punchy yellow: each stage has a
+   distinct game-show personality; all game rules unchanged.
+   =========================================================== */
+:root{
+ --party-blue:#165cff;
+ --party-red:#f04449;
+ --party-yellow:#ffdb42;
+ --party-navy:#102c65;
+ --party-dark:#102d22;
+}
+button:focus-visible{outline:3px solid #ffb800;outline-offset:3px}
+.page-welcome{
+ background:
+  radial-gradient(circle at 108% 10%,#ffc83d88,transparent 40%),
+  linear-gradient(151deg,#e9f3ff 0%,#fff8da 72%,#fff7ec);
+}
+.landing .intro-copy .display{color:#112a59}
+.landing .intro-copy .display i{color:#e94345}
+.landing .intro-copy p{color:#31528d}
+.landing .hero-photo{
+ border-color:#fff;
+ outline:3px solid #175cff;
+ box-shadow:12px 13px 0 #ffd640,0 23px 36px #092f5e1c;
+}
+.landing .cta{background:#175cff;color:#fff;box-shadow:0 10px 24px #165cff40}
+.page-choose,.page-profile,.page-rules,.page-menu{
+ background:radial-gradient(circle at 100% 0%,#ffdc4a69,transparent 47%),#f3f7ff;
+}
+.page-choose .display i,.page-profile .display i,.page-rules .display i{color:#f04449}
+.page-choose .cta,.page-profile .cta,.page-rules .cta{background:#165cff}
+.page-choose .pick{border:2px solid #d5e1ff;background:#fff}
+.page-choose .pick:active{background:#e5efff}
+.page-rules .rule>span{color:#165cff}
+
+/* Pub tap screens: alternating colored stage lights, not labels. */
+.taproom[data-tap-hole="1"],.taproom[data-tap-hole="4"]{--party-spot:#256dff}
+.taproom[data-tap-hole="2"],.taproom[data-tap-hole="5"]{--party-spot:#f04449}
+.taproom[data-tap-hole="3"],.taproom[data-tap-hole="6"]{--party-spot:#ffcc30}
+.taproom{
+ background:
+  radial-gradient(circle at 78% 36%,var(--party-spot) 0%,transparent 55%),
+  #0b1c29;
+}
+.taproom:before{
+ background:
+  radial-gradient(circle at 72% 40%,color-mix(in srgb,var(--party-spot) 34%,transparent),transparent 49%),
+  linear-gradient(180deg,#06101fb2 0%,#0c162d48 46%,#06131ce8 100%);
+}
+.taproom-label{color:#ffdd50}
+.taproom-heading h1{text-shadow:0 4px 25px #07111a}
+.taproom-order span{border-color:#ffe37f8a;color:#ffedb4;background:#ffd5371f}
+.taproom[data-tap-hole="1"] .taproom-cta,
+.taproom[data-tap-hole="3"] .taproom-cta,
+.taproom[data-tap-hole="5"] .taproom-cta{
+ background:var(--party-yellow);color:#17284d;border-color:#fff3ae;
+ box-shadow:0 12px 26px #ffcd3155;
+}
+.taproom[data-tap-hole="2"] .taproom-cta,
+.taproom[data-tap-hole="4"] .taproom-cta,
+.taproom[data-tap-hole="6"] .taproom-cta{
+ background:var(--party-blue);color:#fff;border-color:#a5baff;
+ box-shadow:0 12px 26px #1748f04a;
+}
+.taproom[data-tap-hole="2"] .taproom-cta-copy small,
+.taproom[data-tap-hole="4"] .taproom-cta-copy small,
+.taproom[data-tap-hole="6"] .taproom-cta-copy small{color:#e1eaff}
+.taproom[data-tap-hole="2"] .taproom-arrow,
+.taproom[data-tap-hole="4"] .taproom-arrow,
+.taproom[data-tap-hole="6"] .taproom-arrow{background:#ffffff26}
+.taproom[data-tap-hole="2"] .taproom-cta-icon,
+.taproom[data-tap-hole="4"] .taproom-cta-icon,
+.taproom[data-tap-hole="6"] .taproom-cta-icon{background:#ffffff23;color:#fff}
+.taproom[data-tap-hole="1"] .taproom-cta:active,
+.taproom[data-tap-hole="3"] .taproom-cta:active,
+.taproom[data-tap-hole="5"] .taproom-cta:active{background:#ffe985}
+.taproom[data-tap-hole="2"] .taproom-cta:active,
+.taproom[data-tap-hole="4"] .taproom-cta:active,
+.taproom[data-tap-hole="6"] .taproom-cta:active{background:#2b74ff}
+
+/* Score entry: cheerful arcade counter but still legible. */
+.page-hole{
+ background:
+  radial-gradient(circle at 100% 10%,#ffde45a8,transparent 39%),
+  radial-gradient(circle at 0 60%,#4ca2ff26,transparent 55%),#f6f8ff;
+}
+.hole-page .venue{color:#123575}
+.hole-page .drink-name{color:#36577f}
+.hole-page .hole-head .par-badge{background:#ffdc42;color:#183368;border-color:#ffc73c}
+.hole-page .progress .active{background:#165cff}
+.hole-page .hole-tag{
+ background:#ffdb42;color:#153775;border:2px solid #154ed8;
+ box-shadow:4px 4px 0 #165cff29;
+}
+.hole-page .counter{gap:clamp(9px,5vw,23px)}
+.hole-page .counter strong{color:#e84147;text-shadow:0 4px 0 #ffda4455}
+.hole-page .counter button{
+ background:#165cff;border-color:#165cff;color:#fff;
+ box-shadow:0 7px 0 #0b3ba8;
+}
+.hole-page .counter button:active{background:#3575ff;box-shadow:0 2px 0 #0b3ba8}
+.hole-page .cta{background:#165cff;box-shadow:0 9px 22px #165cff37}
+.hole-page .counter-note{color:#244d88}
+
+/* Check-in as four loud party stickers, never generic muted emojis. */
+.page-checkin{
+ background:radial-gradient(circle at 96% 8%,#ffce4380,transparent 42%),#f3f6ff;
+}
+.checkin-pill{background:#165cff;color:#fff}
+.checkin-hero .display{color:#15356b}
+.checkin-hero .display i{color:#f04449}
+.checkin-hero p{color:#36598c;font-weight:650}
+.mood{
+ border:3px solid transparent;
+ box-shadow:0 7px 0 #18316c16,0 16px 24px #0c204512;
+}
+.mood-0{background:#175aff;color:#fff;border-color:#083fb4}
+.mood-1{background:#ffb93f;color:#342209;border-color:#fa9133}
+.mood-2{background:#ef404b;color:#fff;border-color:#c22230}
+.mood-3{background:#ffdf43;color:#152c65;border-color:#1456ef;box-shadow:0 6px 0 #1456ef,0 16px 25px #1848a926}
+.mood-0 .mood-copy small,.mood-2 .mood-copy small{color:#fff;opacity:.85}
+.mood-1 .mood-copy small,.mood-3 .mood-copy small{opacity:.83}
+.mood-0 .mood-arrow,.mood-2 .mood-arrow{color:#fff;opacity:.8}
+.mood-3 .mood-arrow{color:#165cff;opacity:1}
+.mood .mood-sticker{filter:drop-shadow(0 7px 2px #0b183d50)}
+.page-checkin .small-message{color:#244e86}
+.page-checkinResult{background:linear-gradient(154deg,#ffeb7d,#e9f1ff 68%,#ffdddb)}
+.checkin-result .checkin-reward{background:#ffdb42;border:2px solid #165cff}
+
+/* Three quiz mini-games, three distinct visual moods. */
+.page-quiz1{background:linear-gradient(155deg,#deeaff,#c8ddff 43%,#fff2c6)}
+.question-baby .display{color:#10439c}
+.question-baby .display i{color:#f04449}
+.question-baby .overline{color:#165cff}
+.question-baby .question-sub{color:#31568b}
+.question-baby .gender-answer{
+ border:2px solid transparent;box-shadow:0 7px 0 #1a3c701c;
+}
+.question-baby .gender-answer.boy{background:#165cff;color:#fff;border-color:#073da7}
+.question-baby .gender-answer.girl{background:#f04449;color:#fff;border-color:#cb2d3a}
+.question-baby .gender-answer.rainbow{
+ background:linear-gradient(100deg,#ffe05a,#ffd041,#ffc85a);
+ color:#1a3569;border-color:#f4af20;
+}
+.page-quiz2{background:linear-gradient(153deg,#fff3b9,#fffbe7 54%,#d4e2ff)}
+.question-date .display{color:#12429b}
+.question-date .display i{color:#ed3d49}
+.question-date .overline{color:#b03d22}
+.question-date .date-grid button{
+ background:#165cff;border:2px solid #0a40bd;color:#fff;
+ box-shadow:0 6px 0 #1341a735;min-height:92px;
+}
+.question-date .date-grid button:nth-child(3n + 2){background:#f04449;border-color:#cb2834}
+.question-date .date-grid button:nth-child(3n){background:#ffdc42;border-color:#e7b72c;color:#143471}
+.question-date .date-grid span{color:inherit;opacity:.79}
+.page-quiz4{background:#ffe6de}
+.question-name{
+ background:radial-gradient(circle at 100% 12%,#ffdd45a2,transparent 44%),#ffe9df;
+}
+.question-name .display{color:#123f95}
+.question-name .display i{color:#e73a49}
+.question-name .thomas-cloud span{color:#e54a4154}
+.question-name .name-choice button{
+ background:#165cff;color:#fff;border-color:#0a3fb8;
+ box-shadow:0 6px 0 #1142a63d;
+}
+.question-name .name-choice button:nth-child(2){background:#f04449;border-color:#bf2e3d}
+.question-name .name-choice button:nth-child(3){background:#ffdd42;color:#15356c;border-color:#ecbd25}
+.question-name .name-choice button:nth-child(4){background:#164df2;border-color:#103cb9}
+.page-quizResult{background:radial-gradient(circle at 20% 15%,#ffe268,transparent 35%),#e5f0ff}
+.quiz-result.win .impact{color:#125aff}
+.quiz-result.loss .impact{color:#e13d46}
+.quiz-result .cta{background:#165cff}
+
+/* Award and leaderboard keep the calmer structure with loud accents. */
+.page-board{background:radial-gradient(circle at 94% 4%,#ffdf6775,transparent 38%),#ecf4ff}
+.leader-heading .display{color:#103577}
+.leader-heading .display i{color:#f04449}
+.leader-live{background:#ffdd42;color:#183570}
+.leader-live-dot{background:#165cff;box-shadow:0 0 0 3px #165cff30}
+.podium-card.place-1{background:linear-gradient(145deg,#1445be,#092d86);border-color:#598bff}
+.podium-card.place-2{background:#fff7d6;border:2px solid #f5c93e}
+.podium-card.place-3{background:#ffebe8;border:2px solid #f5b9b5}
+.leader-row{border-left:5px solid #165cff}
+.leader-row:nth-child(3n + 2){border-left-color:#f04449}
+.leader-row:nth-child(3n){border-left-color:#ffcc32}
+.leader-bottom .cta{background:#165cff}
+.page-detail{background:#f1f7ff}
+.page-detail .display i{color:#f04449}
+.page-nominate,.nominate-page{
+ background:radial-gradient(circle at 90% 15%,#f0444940,transparent 45%),
+ radial-gradient(circle at 12% 70%,#286aff43,transparent 46%),#111c36;
+}
+.gift-kicker{background:#165cff;border-color:#83a9ff}
+.gift-kicker-icon{background:#ffde45}
+.gift-hero .display i{color:#ffde45}
+.vote-card{background:linear-gradient(143deg,#133d91,#1c2e5b);border-color:#477cf1}
+.vote-card.is-picked{background:linear-gradient(142deg,#ffea8a,#ffc948);border-color:#fff;color:#1b2d51}
+.vote-card.is-picked .vote-check{background:#165cff}
+.vote-confirm{background:linear-gradient(#111c3600,#111c36 20%)}
+.gift-cta{background:#ffdf42;color:#152c5b}
+.gift-cta:active:not(:disabled){background:#ffe76f;color:#152c5b}
+.page-giftResult{background:radial-gradient(circle at 60% 24%,#fff391,#ffe1b4 50%,#e2eeff 100%)}
+
+/* More surprises: mini side-peek, medium middle-pop, rare full. */
+.thomas-jumpscare{
+ animation:stickerScareBackdrop .92s both;
+ will-change:transform,opacity;
+}
+.thomas-jumpscare--mini{
+ background:transparent;
+ place-items:end start;
+ padding:0 0 calc(108px + env(safe-area-inset-bottom)) 0;
+ animation:none;
+}
+.thomas-jumpscare--mini .thomas-jumpscare-card{
+ width:180px;gap:0;
+ animation:partyMiniPeek .52s cubic-bezier(.14,.88,.22,1) both;
+}
+.thomas-jumpscare--mini .jumpscare-sticker{height:160px;width:160px}
+.thomas-jumpscare--mini .thomas-jumpscare-card>span:last-child{
+ font-size:25px;padding:7px 12px;border-radius:0 12px 12px 0;
+ background:#ffda42;color:#0f3680;
+}
+.thomas-jumpscare--medium{
+ background:#0a27629c;
+ animation:partyDim .69s both;
+}
+.thomas-jumpscare--medium .thomas-jumpscare-card{
+ width:min(72vw,295px);
+ animation:partyMediumPop .69s cubic-bezier(.18,.83,.26,1) both;
+}
+.thomas-jumpscare--medium .jumpscare-sticker{width:min(63vw,240px);height:min(63vw,240px)}
+.thomas-jumpscare--medium .thomas-jumpscare-card>span:last-child{
+ font-size:clamp(26px,9vw,42px);
+ background:#f04449;color:#fff;
+}
+.thomas-jumpscare--full{
+ background:#0b1b3fe6;
+ animation:partyDim .92s both;
+}
+.thomas-jumpscare--full .thomas-jumpscare-card{
+ animation:partyFullPop .92s cubic-bezier(.13,.84,.2,1) both;
+}
+.thomas-jumpscare--full .thomas-jumpscare-card>span:last-child{
+ background:#ffdc42;color:#153574;
+}
+@keyframes partyMiniPeek{
+ 0%{opacity:0;transform:translate(-160px,65px) rotate(-27deg)}
+ 28%,72%{opacity:1;transform:translate(-8px,0) rotate(-8deg)}
+ 100%{opacity:0;transform:translate(-150px,45px) rotate(-20deg)}
+}
+@keyframes partyMediumPop{
+ 0%{opacity:0;transform:translateY(60px) scale(.52) rotate(-12deg)}
+ 30%{opacity:1;transform:translateY(-6px) scale(1.08) rotate(6deg)}
+ 67%{opacity:1;transform:scale(1) rotate(0)}
+ 100%{opacity:0;transform:translateY(26px) scale(.82)}
+}
+@keyframes partyFullPop{
+ 0%{opacity:0;transform:rotate(-15deg) scale(.35)}
+ 28%{opacity:1;transform:rotate(7deg) scale(1.13)}
+ 70%{opacity:1;transform:rotate(-3deg) scale(1)}
+ 100%{opacity:0;transform:scale(.83)}
+}
+@keyframes partyDim{0%,100%{opacity:0}20%,75%{opacity:1}}
+@media(max-width:350px){
+ .mood-0,.mood-1,.mood-2,.mood-3{padding:8px}
+ .mood .mood-sticker{width:78px;height:78px}
+ .question-date .date-grid{gap:7px}
+ .question-date .date-grid button{min-height:78px;padding:12px 2px}
+}
+@media(prefers-reduced-motion:reduce){
+ .thomas-jumpscare,.thomas-jumpscare *{display:none!important;animation:none!important}
+ .taproom-peeker,.ace-sticker-fly{animation:none!important}
+ .mood,.cta,.gender-answer,.date-grid button{transition:none!important}
+}
