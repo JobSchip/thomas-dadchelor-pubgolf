@@ -40,7 +40,7 @@ function boot(players,myId='p1',options={}){
   localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},
   document:{getElementById:get,hidden:false,addEventListener(){},
    body:options.allowScares?{appendChild(){}}:undefined,
-   createElement:()=>({style:{setProperty(){}},remove(){},className:'',textContent:'',setAttribute(){},querySelector(){return null}})},
+   createElement:()=>({style:{setProperty(){}},remove(){},className:'',classList:{add(){},remove(){}},textContent:'',setAttribute(){},querySelector(){return null}})},
   window:{scrollTo(){},addEventListener(){},matchMedia(){return{matches:options.reducedMotion??true}}},
   navigator:{},
   fetch:()=>new Promise(()=>{}),
@@ -171,10 +171,13 @@ test('tap-to-pour is een aparte kroegervaring, zonder score of bonus weg te schr
  ui.click('action','gotDrink');
  assert.equal(ui.view(),'hole');
  assert.match(ui.html(),/PAR <strong>8<\/strong>/);
- assert.match(ui.html(),/id="stroke-value"[^>]*>0<\/strong>/);
- assert.doesNotMatch(ui.html(),/sip-stage-overline|sip-sticker|sip-submit|sip-undo|drink-name|hole-head|sip-hint/);
- assert.equal((ui.html().match(/<button /g)||[]).length,1);
- assert.match(ui.html(),/data-action="sip"/);
+ assert.match(ui.html(),/id="stroke-value">0<\/strong>/);
+ assert.match(ui.html(),/Hoeveel slokken\?/);
+ assert.match(ui.html(),/id="sip-comparison"/);
+ assert.equal((ui.html().match(/<button /g)||[]).length,3);
+ assert.match(ui.html(),/data-action="minus"/);
+ assert.match(ui.html(),/data-action="plus"/);
+ assert.match(ui.html(),/data-action="submit"/);
  assert.equal(ui.queue().length,0);
 });
 
@@ -340,35 +343,43 @@ test('primaire kleuren maken check-in, quiz, kroeg en score visueel uniek',()=>{
  assert.match(styles,/prefers-reduced-motion:reduce/);
 });
 
-test('minimalistische slokkenteller toont uitsluitend PAR en één ronde knop; alleen ingedrukt houden bevestigt',()=>{
- const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{clock:true});
- ui.click('action','pourDrink');
- ui.click('action','gotDrink');
+test('slokkenscherm heeft grote +/- knoppen, PAR en live verschil plus bevestiging',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})]);
+ ui.click('action','pourDrink');ui.click('action','gotDrink');
  assert.equal(ui.view(),'hole');
  assert.match(ui.html(),/PAR <strong>8<\/strong>/);
- assert.match(ui.html(),/Houd de knop ingedrukt als je glas leeg is\./);
- assert.match(ui.html(),/aria-describedby="sip-hold-help"/);
- assert.equal((ui.html().match(/<button /g)||[]).length,1);
- assert.doesNotMatch(ui.html(),/HOLE 1|Jopen|Mooie Nel|sip-submit|sip-undo|sip-stage|sip-sticker|sip-hint|Volgende hole/);
- assert.match(ui.html(),/id="stroke-value"[^>]*>0<\/strong>/);
+ assert.match(ui.html(),/Hoeveel slokken\?/);
+ assert.match(ui.html(),/sip-score-comparison is-waiting/);
+ assert.match(ui.html(),/id="sip-confirm"[^>]*disabled/);
+ assert.equal((ui.html().match(/<button /g)||[]).length,3);
  assert.equal(ui.queue().length,0);
- ui.holdStart();
- ui.advance(130);
- ui.holdStop();
- ui.click('action','sip');
- assert.equal(ui.element('stroke-value').textContent,'1','korte tik is precies +1');
- ui.click('action','sip');
- ui.click('action','sip');
- assert.equal(ui.element('stroke-value').textContent,'3');
- assert.equal(ui.queue().length,0,'geen score opgeslagen door kort tikken');
- ui.holdStart();
- ui.advance(900);
- ui.holdStop();
- assert.equal(ui.view(),'board','lange druk bevestigt en opent klassement');
- assert.equal(ui.state().players[0].scores[0],3);
- assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1);
- ui.click('action','sip');
- assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1,'loslaatklik mag nooit nogmaals een score opslaan');
+ for(let i=0;i<5;i++)ui.click('action','plus');
+ assert.equal(ui.element('stroke-value').textContent,'5');
+ assert.equal(ui.element('sip-diff-number').textContent,'-3');
+ assert.equal(ui.element('sip-diff-label').textContent,'3 slokken onder PAR');
+ assert.equal(ui.element('sip-confirm').disabled,false);
+ ui.click('action','minus');
+ assert.equal(ui.element('sip-diff-number').textContent,'-4');
+ ui.click('action','plus');
+ assert.equal(ui.queue().length,0,'tikken sparen de score pas bij bevestiging op');
+ ui.click('action','submit');
+ assert.equal(ui.view(),'board');
+ assert.equal(ui.state().players[0].scores[0],5);
+ assert.equal(ui.queue().filter(a=>a.type==='setScore').length,1);
+});
+
+test('exact PAR en boven PAR krijgen een andere duidelijke status',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})]);
+ ui.click('action','pourDrink');ui.click('action','gotDrink');
+ for(let i=0;i<8;i++)ui.click('action','plus');
+ assert.equal(ui.element('sip-diff-number').textContent,'0');
+ assert.equal(ui.element('sip-diff-label').textContent,'Precies op PAR');
+ ui.click('action','plus');
+ ui.click('action','plus');
+ assert.equal(ui.element('sip-diff-number').textContent,'+2');
+ assert.equal(ui.element('sip-diff-label').textContent,'2 slokken boven PAR');
+ ui.click('action','minus');
+ assert.equal(ui.element('sip-diff-label').textContent,'1 slok boven PAR');
 });
 
 test('ranglijst toont minstens 16 deelnemers, met beste eerst en gelijke stand op aanmeldvolgorde',()=>{
@@ -452,7 +463,7 @@ test('HIT THE THOMOL is een lastige eenmalige tussenronde na quiz 2, met -1 slag
  assert.equal(ui.view(),'thomolIntro');
  assert.match(ui.html(),/HIT THE/);
  assert.match(ui.html(),/THOMOL/);
- assert.match(ui.html(),/13 seconden/);
+ assert.match(ui.html(),/16 seconden/);
  assert.match(ui.html(),/1 hit = −1 slag/);
  ui.click('action','thomolStart');
  assert.equal(ui.view(),'thomolPlay');
@@ -464,7 +475,7 @@ test('HIT THE THOMOL is een lastige eenmalige tussenronde na quiz 2, met -1 slag
  ui.click('thomol','8');
  assert.match(ui.html(),/RAAK/);
  assert.equal(ui.state().players[0].thomolHits,null);
- ui.advance(14000);
+ ui.advance(17000);
  assert.equal(ui.view(),'thomolResult');
  assert.equal(ui.state().players[0].thomolHits,1);
  assert.equal(ui.queue().filter(a=>a.type==='finishThomol').length,1);
@@ -580,45 +591,27 @@ test('STOP DE PLUIM heeft live wijzer, kleurzone, tijdlimiet en veilige stopacti
  assert.match(styles,/prefers-reduced-motion:reduce/);
 });
 
-test('lange druk bij nul slokken mag geen score vastleggen',()=>{
- const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{clock:true});
- ui.click('action','pourDrink');
- ui.click('action','gotDrink');
- ui.holdStart();
- ui.runHoldTimer();
- ui.holdStop();
+test('bevestigen bij nul slokken doet niets en de min knop gaat niet onder nul',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})]);
+ ui.click('action','pourDrink');ui.click('action','gotDrink');
+ ui.click('action','submit');
  assert.equal(ui.view(),'hole');
  assert.equal(ui.queue().length,0);
- ui.click('action','sip'); // Een touchrelease na long press wordt genegeerd.
- assert.match(ui.html(),/id="stroke-value"[^>]*>0<\/strong>/);
- ui.click('action','sip');
+ ui.click('action','minus');
+ assert.equal(ui.element('stroke-value').textContent,'0');
+ ui.click('action','plus');
  assert.equal(ui.element('stroke-value').textContent,'1');
+ assert.equal(ui.element('sip-diff-label').textContent,'7 slokken onder PAR');
+ ui.click('action','submit');
+ assert.equal(ui.view(),'ace','één slok blijft een hole-in-one');
 });
 
-test('een korte toetsenborddruk telt slokken en een lange toetsenborddruk bevestigt',()=>{
- const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{clock:true});
- ui.click('action','pourDrink');
- ui.click('action','gotDrink');
- ui.keyboardSip(' ','keydown');
- ui.advance(110);
- ui.keyboardSip(' ','keyup');
- assert.equal(ui.element('stroke-value').textContent,'1');
- assert.equal(ui.queue().length,0);
- ui.keyboardSip('Enter','keydown');
- ui.runHoldTimer();
- assert.equal(ui.view(),'ace','één slok bevestigen blijft een hole-in-one jackpot');
- assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1);
-});
-
-test('een geannuleerde hold mag nooit de score bewaren',()=>{
- const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{clock:true});
- ui.click('action','pourDrink');
- ui.click('action','gotDrink');
- ui.click('action','sip');
- ui.holdStart();
- ui.advance(450);
- ui.holdCancel();
- ui.advance(600);
- assert.equal(ui.view(),'hole');
- assert.equal(ui.queue().length,0);
+test('slokkenknoppen zijn duidelijk toegankelijk en tonen verschil op het scherm',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})]);
+ ui.click('action','pourDrink');ui.click('action','gotDrink');
+ assert.match(ui.html(),/aria-label="Eén slok minder"/);
+ assert.match(ui.html(),/aria-label="Eén slok erbij"/);
+ assert.match(ui.html(),/role="status" aria-live="polite"/);
+ assert.match(ui.html(),/id="sip-confirm"/);
+ assert.doesNotMatch(ui.html(),/sip-hold-button|Houd de knop ingedrukt/);
 });
