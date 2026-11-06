@@ -1,9 +1,10 @@
-name: Pub Golf web and mobile preflight
+name: Pub Golf — Webapp checks
+
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
-      - 'ios-app/**'
       - 'app.js'
       - 'index.html'
       - 'styles.css'
@@ -18,24 +19,19 @@ permissions:
   contents: read
 
 jobs:
-  preflight:
-    name: Validate Node API and Capacitor web bundle
+  test-web:
+    name: Verify gameplay, API and web assets
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify multiplayer game and CORS
+      - name: Check web JavaScript syntax
+        run: |
+          node --check app.js
+          node --check server.js
+          node --check sw.js
+      - name: Run complete multiplayer and UI test suite
         run: npm test
-      - name: Install native JavaScript dependencies
-        run: npm install --prefix ios-app --no-audit --no-fund
-      - name: Build and validate local iPhone app assets
-        run: npm run ios:check --prefix ios-app
-      - name: Save generated local web assets
-        uses: actions/upload-artifact@v4
-        with:
-          name: Thomas-PubGolf-iOS-web-assets
-          path: ios-app/www/
-          retention-days: 7
