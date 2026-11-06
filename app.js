@@ -232,7 +232,7 @@ function maybeSipMediaScare(){
    [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
   }
   const target=2+Math.floor(Math.random()*3);
-  record={plan:shuffled.slice(0,target).sort((a,b)=>a-b),seen:[],used:[],attempts:{},lastAt:0};
+  record={plan:shuffled.slice(0,target).sort((a,b)=>a-b),seen:[],used:[],attempts:{},lastAt:0,firstType:Math.random()<.5?"photo":"video"};
  }
  if(!record.plan.includes(hole)||record.seen.includes(hole))return;
  if(Date.now()-record.lastAt<6500)return;
@@ -243,8 +243,14 @@ function maybeSipMediaScare(){
   localStorage.setItem(key,JSON.stringify(record));
   return;
  }
- const available=SIP_SCARE_MEDIA.map((_,i)=>i).filter(i=>!record.used.includes(i));
- const selected=available[Math.floor(Math.random()*available.length)]??0;
+ // Alternate photo and video from one surprise to the next.
+ // Every match with at least two scares therefore gets both media types.
+ const firstType=record.firstType==="photo"?"photo":"video";
+ const preferred=record.seen.length%2===0?firstType:(firstType==="video"?"photo":"video");
+ const available=SIP_SCARE_MEDIA.map((item,i)=>({item,i}))
+  .filter(({item,i})=>item.type===preferred&&!record.used.includes(i))
+  .map(({i})=>i);
+ const selected=available[Math.floor(Math.random()*available.length)]??(preferred==="video"?5:0);
  record.seen.push(hole);
  record.used.push(selected);
  record.lastAt=Date.now();
