@@ -36,7 +36,7 @@ function boot(players,myId='p1',options={}){
   localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},
   document:{getElementById:get,hidden:false,addEventListener(){},
    body:options.allowScares?{appendChild(){}}:undefined,
-   createElement:()=>({style:{setProperty(){}},remove(){},className:'',textContent:'',setAttribute(){}})},
+   createElement:()=>({style:{setProperty(){}},remove(){},className:'',textContent:'',setAttribute(){},querySelector(){return null}})},
   window:{scrollTo(){},addEventListener(){},matchMedia(){return{matches:options.reducedMotion??true}}},
   navigator:{},
   fetch:()=>new Promise(()=>{}),
@@ -358,4 +358,55 @@ test('ranglijst toont minstens 16 deelnemers, met beste eerst en gelijke stand o
  const tied=boot(same);
  tied.click('action','board');
  assert.ok(tied.html().indexOf('data-leader="p1"')<tied.html().indexOf('data-leader="p2"'),'gelijke score: eerst aangemeld eerst');
+});
+
+
+test('tikken op de slokkenteller kan willekeurig echte fotos of videoverrassingen tonen, zonder extra slok',()=>{
+ const golfer=player('Thomas','p1',[null,null,null,null,null,null],null,{});
+ const ui=boot([golfer],'p1',{random:.999,allowScares:true,reducedMotion:false});
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ assert.equal(ui.view(),'hole');
+ ui.click('action','sip');
+ assert.equal(ui.element('stroke-value').textContent,'1');
+ const key='golf-sip-media-v1-THOMAS-OPEN-p1';
+ let record=JSON.parse(ui.storage.get(key));
+ assert.equal(record.seen.length,1);
+ assert.equal(record.used.length,1);
+ assert.ok(record.plan.length>=2&&record.plan.length<=4);
+ assert.equal(new Set(record.plan).size,record.plan.length);
+ assert.equal(record.used[0],9,'met deterministische random kiest hij de vijfde video');
+ ui.click('action','sip');
+ assert.equal(ui.element('stroke-value').textContent,'2');
+ record=JSON.parse(ui.storage.get(key));
+ assert.equal(record.seen.length,1,'maximaal één foto/video scare per hole');
+ assert.equal(ui.queue().length,0,'geen score opgeslagen tot bevestiging');
+ ui.click('action','submit');
+ assert.equal(ui.state().players[0].scores[0],2);
+ assert.equal(ui.queue().filter(a=>a.type==='setScore').length,1);
+});
+
+test('foto- en videomedia zijn in alle vijf varianten aanwezig en zijn klein voor mobiele verbindingen',()=>{
+ const matches=Array.from(source.matchAll(/src:"\.\/assets\/(scare-(?:photo|clip)-\d+\.(?:webp|mp4))"/g));
+ assert.equal(matches.length,10,'vijf fotos en vijf korte clips');
+ for(const [,name] of matches){
+  const file=path.join(__dirname,'../assets',name);
+  const stat=fs.statSync(file);
+  assert.ok(stat.size>10000,name+' is leeg');
+  assert.ok(stat.size<350000,name+' is te groot');
+ }
+ assert.match(source,/autoplay muted playsinline/);
+ assert.match(source,/sip-media-scare-close/);
+ assert.match(styles,/\.sip-media-scare--video/);
+ assert.match(styles,/\.sip-media-scare--photo/);
+});
+
+test('verminderde beweging onderdrukt automatisch alle foto- en videopopups',()=>{
+ const golfer=player('Thomas','p1',[null,null,null,null,null,null],null,{});
+ const ui=boot([golfer],'p1',{random:.999,allowScares:true,reducedMotion:true});
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ ui.click('action','sip');
+ assert.equal(ui.storage.get('golf-sip-media-v1-THOMAS-OPEN-p1'),undefined);
+ assert.equal(ui.element('stroke-value').textContent,'1');
 });
