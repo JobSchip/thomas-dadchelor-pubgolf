@@ -210,10 +210,7 @@ test('zes rondes vullen precies het juiste glas en tonen lege versus schone glaz
 test('in ronde drie staan twee lege glazen, tap je nummer drie en blijven drie schone over',()=>{
  const golfer=player('Thomas','p1',[8,10,null,null,null,null],null,{one:'blue',two:'18'},null,0);
  const ui=boot([golfer]);
- assert.equal(ui.view(),'thomolIntro'); // eerst de eenmalige bonus na hole twee
- ui.click('action','thomolSkip');
- ui.click('action','continue');
- assert.equal(ui.view(),'preview');
+ assert.equal(ui.view(),'preview'); // Thomol is al gespeeld, dus ronde drie staat meteen klaar.
  assert.match(ui.html(),/RONDE 3 \/ 6/);
  assert.equal((ui.html().match(/tavern-glass is-drunk/g)||[]).length,2);
  assert.equal((ui.html().match(/tavern-glass is-clean/g)||[]).length,3);
@@ -280,7 +277,8 @@ test('alle zes holes geven de BOEM-jackpot bij precies één slag, met de juiste
   ui.click('action','submit');
   assert.equal(ui.view(),'ace','Hole '+(hole+1)+' moet jackpot tonen');
   assert.match(ui.html(),new RegExp('HOLE 0'+(hole+1)));
-  assert.ok(ui.html().includes(venues[hole].replace(/'/g,'&#39;')),'Juiste locatie hole '+(hole+1));
+  assert.ok(!ui.html().includes(venues[hole].replace(/'/g,'&#39;')),'Kroegnaam mag niet meer getoond worden bij hole '+(hole+1));
+  assert.ok(ui.html().includes('BIERTJE '+(hole+1)),'Correct rondelabel bij hole '+(hole+1));
   assert.ok(ui.html().includes(drinks[hole]),'Juiste drankje hole '+(hole+1));
   assert.match(ui.html(),/1 SLAG · 1 SLOK/);
   assert.match(ui.html(),/Goed gedaan, maat!/);
@@ -582,7 +580,8 @@ test('STOP DE PLUIM verschijnt na hole vier en quiz, met drie snel moeilijker wo
  assert.match(ui.html(),/−2/);
  ui.click('action','continue');
  assert.equal(ui.view(),'preview','na het spel volgt de vijfde kroeg');
- assert.match(ui.html(),/Café De Lift/);
+ assert.match(ui.html(),/BIERTJE 5/);
+ assert.doesNotMatch(ui.html(),/Café De Lift/);
  ui.click('action','board');
  ui.click('leader','p1');
  assert.equal(ui.view(),'detail');
