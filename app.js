@@ -29,7 +29,7 @@ const parse=(raw,fallback)=>{try{return JSON.parse(raw)||fallback}catch{return f
 let state=parse(localStorage.getItem(storeKey),{players:[],revision:0,epoch:RESET_EPOCH});
 let queue=parse(localStorage.getItem(queueKey),[]);
 let myId=localStorage.getItem(meKey)||"",view="welcome",hole=0,strokes=8,selectedPlayerId="";
-let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={},nomineeDraft="",pourReady=false;
+let network=false,flushing=false,polling=false,toastTimer,avatarDraft="",checkinChoice=-1,aceTimer=null,questionResult={},nomineeDraft="",pourReady=false,thomolRound=null,thomolPopTimer=null,thomolTickTimer=null;
 const el=id=>document.getElementById(id);
 const escapeHtml=text=>String(text??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const newId=()=>globalThis.crypto?.randomUUID?.()||"x"+Date.now().toString(36)+Math.random().toString(36).slice(2);
@@ -40,7 +40,7 @@ function score(p){
  let total=0,par=0,completed=0;
  arr.forEach((val,i)=>{if(Number.isInteger(val)&&i<6){total+=val;par+=HOLES[i].par;completed++}});
  const answer=p.answers||{};
- let adjustment=-(p.salmari||0)-(p.checkin===3?1:0);
+ let adjustment=-(p.salmari||0)-(p.checkin===3?1:0)-(p.thomolHits||0);
  if(answer.one==='blue')adjustment-=1;
  else if(answer.one==='pink')adjustment+=1;
  else if(answer.one==='rainbow')adjustment+=2;
@@ -62,13 +62,14 @@ function notify(message){
 function apply(s,a){
  const p=s.players.find(p=>p.id===a.playerId);
  if(a.type==="addPlayer"&&!s.players.some(x=>x.id===a.player.id)){
-  s.players.push({...a.player,scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null});
+  s.players.push({...a.player,scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null,thomolHits:null});
  }else if(a.type==="setScore"&&p&&!Number.isInteger(p.scores[a.hole]))p.scores[a.hole]=a.value;
  else if(a.type==="setSalmari"&&p)p.salmari=a.value;
  else if(a.type==="setAvatar"&&p)p.avatar=a.avatar;
  else if(a.type==="setCheckin"&&p)p.checkin=a.value;
  else if(a.type==="answerRound"&&p){p.answers=p.answers||{};p.answers[a.round]=a.choice;}
  else if(a.type==="nominate"&&p)p.nomination=a.targetPlayerId;
+ else if(a.type==="finishThomol"&&p&&!Number.isInteger(p.thomolHits))p.thomolHits=a.hits;
 }
 function update(type,details,quiet=false){
  const a={id:newId(),epoch:RESET_EPOCH,type,...details};
@@ -158,13 +159,34 @@ function maybeJumpScare(event){
   const wrap=document.createElement("div");
   wrap.className="thomas-jumpscare thomas-jumpscare--"+type;
   wrap.setAttribute("aria-hidden","true");
-  wrap.innerHTML=`<div class="thomas-jumpscare-card">${sticker(stickerId,"jumpscare-sticker")}<span>${caption}</span></div>`;
+  wrap.innerHTML=`<div class="thomas-jumpscare-card">${sticker(stickerId,"jumpscare-sticker")}<span>${caption}</span><small class="sticker-chat-quote">“${escapeHtml(thomasQuote())}”</small></div>`;
   document.body.appendChild(wrap);
   nativeFeedback(type==="full"?"medium":"light");
   setTimeout(()=>wrap.remove(),duration);
  },55);
 }
 
+const THOMAS_QUOTES=[
+ "Big man, hoezo geef je op?",
+ "Maatje wie hou je voor de gek",
+ "Hahahah zieke gek",
+ "Niet slim oule??",
+ "Opeens ben je vet goed?",
+ "Met of zonder clownspak aan?",
+ "Hahahh wat een fucking legend",
+ "Pilsen?",
+ "Zuipeeennnnnnn",
+ "Ik ben nooit de verkeerde Thomas",
+ "Neem op dan !!!!!",
+ "Pohhhh lekker hoor",
+ "Nee man ben je gek",
+ "Goed geprobeerd",
+ "Oli 3000?",
+ "Wat doe jij gast?!? Hele weekend offline",
+ "Bro jij denkt dat ik gesprekken bewaar oule?",
+ "Hahaha geloof je het zelf"
+];
+function thomasQuote(){return THOMAS_QUOTES[Math.floor(Math.random()*THOMAS_QUOTES.length)]}
 const SIP_SCARE_MEDIA=[
  {type:"photo",src:"./assets/scare-photo-1.webp",label:"DE CHEF IS NIET ONDER DE INDRUK"},
  {type:"photo",src:"./assets/scare-photo-2.webp",label:"HET TEAM KEURT HET GOED"},
@@ -193,7 +215,7 @@ function showSipScare(media){
  wrap.innerHTML=`<div class="sip-media-scare-inner">
   <span class="sip-media-scare-kicker">💥 PUB GOLF SURPRISE</span>
   <div class="sip-media-scare-frame">${content}</div>
-  <div class="sip-media-scare-caption">${escapeHtml(media.label)}</div>
+  <div class="sip-media-scare-caption">“${escapeHtml(thomasQuote())}”<small>— THOMAS UIT DE CHAT</small></div>
   <button class="sip-media-scare-close" type="button" aria-label="Sluit verrassing">✕ VERDER</button>
  </div>`;
  let finished=false;
@@ -287,7 +309,7 @@ function setView(next){
  if(next==="preview")pourReady=false;
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
- const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
+ const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",thomolIntro:"general",thomolPlay:"general",thomolResult:"good",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
  setTimeout(()=>{if(view===next)rainIcons(kind,next==="ace"?18:next==="preview"?22:next==="board"?16:14)},120);
 }
 function nextHole(){
@@ -296,6 +318,7 @@ function nextHole(){
  const answers=p.answers||{};
  if(Number.isInteger(done[0])&&!answers.one){setView("quiz1");return}
  if(Number.isInteger(done[1])&&!answers.two){setView("quiz2");return}
+ if(Number.isInteger(done[1])&&answers.two&&!Number.isInteger(p.thomolHits)){setView("thomolIntro");return}
  if(Number.isInteger(done[2])&&!Number.isInteger(p.checkin)){setView("checkin");return}
  if(Number.isInteger(done[3])&&!answers.four){setView("quiz4");return}
  if(Number.isInteger(done[4])&&!p.nomination){setView("nominate");return}
@@ -604,7 +627,7 @@ function detail(){
  const p=state.players.find(x=>x.id===selectedPlayerId);
  if(!p)return `<div class="page-card"><button class="back" data-action="board">← Klassement</button><p>Deze golfer is niet gevonden.</p></div>`;
  const st=score(p),rank=leaders().findIndex(x=>x.id===p.id)+1;
- const otherAdjustment=st.net-st.total+(p.salmari||0);
+ const otherAdjustment=st.net-st.total+(p.salmari||0)+(p.thomolHits||0);
  const signed=n=>n>0?`+${n}`:n<0?`−${Math.abs(n)}`:"0";
  return `<div class="page-card detail-page">
  <button class="back" data-action="board">← Terug naar klassement</button>
@@ -627,6 +650,7 @@ function detail(){
  <div class="detail-calculation">
   <div><span>Totaal aantal slagen</span><strong>${st.completed?st.total:"–"}</strong></div>
   <div><span>🥃 Salmari-shotjes</span><strong>${p.salmari||0} <small>× −1</small></strong></div>
+  <div><span>🔨 Hit the Thomol</span><strong>${Number.isInteger(p.thomolHits)?p.thomolHits:"–"} <small>× −1</small></strong></div>
   <div><span>Quizzen, check-in en cadeaus</span><strong>${signed(otherAdjustment)}</strong></div>
   <div class="detail-total"><span>Netto slagen</span><strong>${st.completed?st.net:"–"}</strong></div>
  </div>
@@ -677,8 +701,8 @@ function menu(){
 }
 
 function render(){
- if(!me()&&["preview","hole","ace","board","detail","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules"].includes(view))view="choose";
- const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,detail,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu};
+ if(!me()&&["preview","hole","ace","board","detail","finish","menu","quiz1","quiz2","quiz4","quizResult","nominate","giftResult","checkin","checkinResult","rules","thomolIntro","thomolPlay","thomolResult"].includes(view))view="choose";
+ const pages={welcome:landing,choose,profile,rules,preview,hole:holeView,ace,board:leaderboard,detail,quiz1,quiz2,quiz4,quizResult,nominate,giftResult,checkin,checkinResult,finish,menu,thomolIntro,thomolPlay,thomolResult};
  const screen=el("screen");
  screen.innerHTML=`<section class="page page-${view}">${(pages[view]||landing)()}</section>`;
  el("app").dataset.view=view;
