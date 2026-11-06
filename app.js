@@ -111,22 +111,54 @@ function sticker(index,extra=""){
 }
 function maybeJumpScare(event){
  const p=me();
- if(!p||hole<1||hole>4||!["preview","hole","board","quiz1","quiz2","quiz4","checkin"].includes(view))return;
- if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches||!document.body?.appendChild)return;
- const clicked=event.target.closest("[data-action]")||event.target.closest("[data-mood]")||event.target.closest("[data-round]");
- if(!clicked)return;
- const key="golf-jumpscare-v1-"+room+"-"+myId;
- if(localStorage.getItem(key)||hole<4&&Math.random()>.33)return;
- localStorage.setItem(key,"1");
+ // Surprises are cosmetic; never intercept clicks or manipulate game state.
+ if(!p||!document.body?.appendChild||document.hidden)return;
+ if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches)return;
+ if(!["preview","hole","board","quiz1","quiz2","quiz4","checkin","nominate"].includes(view))return;
+ const action=event.target.closest("[data-action]");
+ const eligibleAction=action&&["pourDrink","gotDrink","continue","return","board","confirmNominate"].includes(action.dataset.action);
+ if(!eligibleAction&&!event.target.closest("[data-mood]")&&!event.target.closest("[data-round]"))return;
+
+ const key="golf-scares-v2-"+room+"-"+myId;
+ let record=parse(localStorage.getItem(key),null);
+ if(!record||!Array.isArray(record.plan)||!Array.isArray(record.seen)){
+  const holes=[0,1,2,3,4,5];
+  for(let i=holes.length-1;i>0;i--){
+   const j=Math.floor(Math.random()*(i+1));
+   [holes[i],holes[j]]=[holes[j],holes[i]];
+  }
+  // Between two and four surprise moments, spread across distinct holes.
+  const target=2+Math.floor(Math.random()*3);
+  record={plan:holes.slice(0,target).sort((a,b)=>a-b),seen:[],attempts:{},lastAt:0};
+ }
+ if(!record.plan.includes(hole)||record.seen.includes(hole))return;
+ if(Date.now()-record.lastAt<6500)return;
+ record.attempts??={};
+ record.attempts[hole]=(record.attempts[hole]||0)+1;
+ const shouldShow=record.attempts[hole]>=2||Math.random()<.45;
+ if(!shouldShow){
+  localStorage.setItem(key,JSON.stringify(record));
+  return;
+ }
+ record.seen.push(hole);
+ record.lastAt=Date.now();
+ localStorage.setItem(key,JSON.stringify(record));
+
+ // Each variant feels different. Only the final surprise can be full-screen.
+ const count=record.seen.length;
+ const type=count===record.plan.length&&record.plan.length>=3?"full":count%2?"mini":"medium";
+ const stickerId=type==="full"?3:type==="medium"?7:2;
+ const caption=type==="full"?"BOE, MAAT!":type==="medium"?"WAT DAN?!":"HOPPAAA!";
+ const duration=type==="full"?920:type==="medium"?690:520;
  setTimeout(()=>{
   const wrap=document.createElement("div");
-  wrap.className="thomas-jumpscare";
+  wrap.className="thomas-jumpscare thomas-jumpscare--"+type;
   wrap.setAttribute("aria-hidden","true");
-  wrap.innerHTML=`<div class="thomas-jumpscare-card">${sticker(3,"jumpscare-sticker")}<span>BOE, MAAT!</span></div>`;
+  wrap.innerHTML=`<div class="thomas-jumpscare-card">${sticker(stickerId,"jumpscare-sticker")}<span>${caption}</span></div>`;
   document.body.appendChild(wrap);
-  nativeFeedback("medium");
-  setTimeout(()=>wrap.remove(),920);
- },90);
+  nativeFeedback(type==="full"?"medium":"light");
+  setTimeout(()=>wrap.remove(),duration);
+ },55);
 }
 function avatar(p,extra=""){
  const name=escapeHtml(p.name?.slice(0,1)?.toUpperCase()||"?");
