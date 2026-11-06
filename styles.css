@@ -2609,3 +2609,30 @@ button:focus-visible{outline:3px solid #ffb800;outline-offset:3px}
  .sip-hold-button{transition:none!important}
  .sip-hold-ring circle{transition:none!important}
 }
+
+/* v29 — Calm hold instruction immediately below the sip counter. */
+.sip-minimal .sip-counter-stack{
+ display:flex;flex-direction:column;
+ align-items:center;justify-content:center;
+ align-self:center;justify-self:center;
+ width:100%;min-height:0;gap:18px;
+}
+.sip-minimal .sip-counter-stack .sip-hold-button{
+ width:min(76vw,315px,41dvh);
+ margin:0;
+}
+.sip-minimal .sip-hold-help{
+ margin:0;
+ max-width:315px;
+ color:#435b82;
+ font-size:13px;font-weight:700;line-height:1.45;
+ text-align:center;
+}
+@media(max-height:620px){
+ .sip-minimal .sip-counter-stack{gap:12px}
+ .sip-minimal .sip-counter-stack .sip-hold-button{
+  width:min(65vw,250px,37dvh);
+  min-width:142px;min-height:142px;
+ }
+ .sip-minimal .sip-hold-help{font-size:12px}
+}
