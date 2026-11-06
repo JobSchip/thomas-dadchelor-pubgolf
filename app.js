@@ -50,7 +50,11 @@ function score(p){
  adjustment-=gifts;
  return {completed,total,net:total+adjustment,relative:total+adjustment-par,bonus:-adjustment,gifts};
 }
-const leaders=()=>[...state.players].sort((a,b)=>score(b).completed-score(a).completed||score(a).relative-score(b).relative||a.name.localeCompare(b.name,"nl"));
+// Most completed holes first; on equal progress the lowest relative score wins.
+ // Ties follow the chronological player registration order, not alphabetical order.
+ const leaders=()=>state.players.map((p,index)=>({p,index}))
+  .sort((a,b)=>score(b.p).completed-score(a.p).completed||score(a.p).relative-score(b.p).relative||a.index-b.index)
+  .map(({p})=>p);
 function notify(message){
  const toast=el("toast");toast.textContent=message;toast.classList.add("visible");
  clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("visible"),2300);
@@ -203,7 +207,7 @@ function nextHole(){
  if(Number.isInteger(done[4])&&!p.nomination){setView("nominate");return}
  const first=done.findIndex(n=>!Number.isInteger(n));
  if(first<0){setView("finish");return}
- hole=first;strokes=HOLES[hole].par;
+ hole=first;strokes=0;
  setView("preview");
 }
 function svgDrink(kind){
@@ -225,10 +229,35 @@ function svgDrink(kind){
  }
  return start+content+"</svg>";
 }
+function sipStatus(){
+ const par=HOLES[hole].par;
+ if(strokes===0)return "Tik om je eerste slok te tellen.";
+ if(strokes<par)return "Nog "+(par-strokes)+" "+(par-strokes===1?"slok":"slokken")+" tot PAR.";
+ if(strokes===par)return "Precies op PAR. Netjes!";
+ return (strokes-par)+" "+(strokes-par===1?"slok":"slokken")+" boven PAR.";
+}
 function refreshCounter(){
- const number=el("stroke-value"),hint=el("screen")?.querySelector(".counter-note");
+ const number=el("stroke-value");
  if(number)number.textContent=String(strokes);
- if(hint){const par=HOLES[hole].par;hint.textContent=strokes<par?(par-strokes)+" onder par":strokes===par?"Precies op par":(strokes-par)+" boven par"}
+ const unit=el("sip-unit");
+ if(unit)unit.textContent=strokes===1?"SLOK":"SLOKKEN";
+ const hint=el("sip-hint");
+ if(hint)hint.textContent=sipStatus();
+ const count=el("sip-progress");
+ if(count)count.textContent=strokes+" / PAR "+HOLES[hole].par;
+ const undo=el("sip-undo");
+ if(undo)undo.disabled=strokes===0;
+ const submit=el("sip-submit");
+ if(submit)submit.disabled=strokes===0;
+ const label=el("sip-submit-label");
+ if(label)label.textContent=strokes===0?"Tel eerst je slokken":"Bevestig "+strokes+" "+(strokes===1?"slok":"slokken");
+ const pad=el("sip-pad");
+ if(pad?.style?.setProperty)pad.style.setProperty("--sip-fill",Math.min(100,strokes/HOLES[hole].par*100)+"%");
+ if(pad?.classList?.add&&pad?.classList?.remove){
+  pad.classList.remove("sip-pulse");
+  void pad.offsetWidth;
+  pad.classList.add("sip-pulse");
+ }
 }
 function landing(){
  return `<div class="landing page-card">
@@ -300,16 +329,32 @@ function preview(){
  </div>`;
 }
 function holeView(){
- const h=HOLES[hole];const progress=HOLES.map((x,i)=>`<span class="${i<=hole?'active':''}"></span>`).join("");
- return `<div class="page-card hole-page" style="--haze:${hole*2.6}px;--haze-alpha:${0.08+hole*.05}"><div class="progress">${progress}</div>
- <div class="hole-head"><span class="overline">HOLE ${hole+1} / 6</span><span class="par-badge">PAR ${h.par}</span></div>
- <h1 class="venue">${escapeHtml(h.venue)}</h1><p class="drink-name">${escapeHtml(h.drink)} <span>· ${escapeHtml(h.details)}</span></p>
- <div class="hole-tag">⭐ 1 SLAG = HOLE-IN-ONE</div>
- <div class="drink-frame">${sticker([0,5,4,2,7,3][hole],"drink-sticker")}${svgDrink(h.visual)}</div>
- <div class="score-control"><div class="overline">JOUW SLAGEN</div>
- <div class="counter" role="group" aria-label="Aantal slagen"><button data-action="minus" aria-label="Minder slagen" type="button">−</button><strong id="stroke-value">${strokes}</strong><button data-action="plus" aria-label="Meer slagen" type="button">+</button></div>
- <p class="counter-note">${strokes<h.par?`${h.par-strokes} onder par`:strokes===h.par?"Precies op par":`${strokes-h.par} boven par`}</p></div>
- <div class="grow"></div><button class="cta" data-action="submit">Score vastleggen <span>→</span></button></div>`;
+ const h=HOLES[hole],progress=HOLES.map((x,i)=>`<span class="${i<=hole?'active':''}"></span>`).join("");
+ return `<div class="page-card hole-page sip-page" style="--haze:${hole*2.6}px;--haze-alpha:${0.08+hole*.05}">
+  <div class="progress">${progress}</div>
+  <div class="hole-head"><span class="overline">HOLE ${hole+1} / 6</span><span class="par-badge">PAR ${h.par} SLOKKEN</span></div>
+  <h1 class="venue">${escapeHtml(h.venue)}</h1>
+  <p class="drink-name">${escapeHtml(h.drink)} <span>· ${escapeHtml(h.details)}</span></p>
+  <div class="sip-stage">
+   <p class="sip-stage-overline">HOEVEEL SLOKKEN HEB JE NODIG?</p>
+   <button id="sip-pad" data-action="sip" class="sip-pad" type="button" aria-label="Tel één slok" style="--sip-fill:${Math.min(100,strokes/h.par*100)}%">
+    <span class="sip-pad-accent" aria-hidden="true">✦</span>
+    <span class="sip-pad-caption">ELKE TIK = +1 SLOK</span>
+    <strong id="stroke-value" class="sip-number" aria-live="polite" aria-atomic="true">${strokes}</strong>
+    <span id="sip-unit" class="sip-unit">${strokes===1?'SLOK':'SLOKKEN'}</span>
+    <span class="sip-pad-hint" aria-hidden="true">👆 TIK OM TE TELLEN</span>
+   </button>
+   <div class="sip-stage-bottom">
+    <span id="sip-progress" class="sip-par-progress">${strokes} / PAR ${h.par}</span>
+    <p id="sip-hint" class="sip-hint" aria-live="polite">${sipStatus()}</p>
+   </div>
+   <button id="sip-undo" data-action="minus" type="button" class="sip-undo" ${strokes===0?'disabled':''}>↶ Laatste slok ongedaan maken</button>
+  </div>
+  <div class="grow"></div>
+  <button id="sip-submit" class="cta sip-submit" data-action="submit" type="button" ${strokes===0?'disabled':''}>
+   <span id="sip-submit-label">${strokes===0?'Tel eerst je slokken':'Bevestig '+strokes+' '+(strokes===1?'slok':'slokken')}</span><span>→</span>
+  </button>
+ </div>`;
 }
 function ace(){
  const h=HOLES[hole];
@@ -432,41 +477,32 @@ function rankIcon(index,total){
  return RANK_ICONS[index]||"🧻";
 }
 function leaderboard(){
- const players=leaders(),p=me(),st=p?score(p):null,done=st?.completed===6;
- const podium=players.slice(0,3),rest=players.slice(3);
- const format=n=>n>0?'+'+n:String(n);
- return `<div class="page-card leader-page">
- <div class="leader-heading">
-  <div><span class="overline">${done?'DE EINDSTAND':'LIVE KLASSEMENT'}</span>
-  <h1 class="display">The <i>clubhouse.</i></h1></div>
-  <span class="leader-live"><span class="leader-live-dot"></span>${done?'FINISH':'LIVE'}</span>
- </div>
- <p class="helper leader-helper">De stand van zaken. Tik op een golfer voor de scorekaart.</p>
- <div class="leader-sticker-peek">${sticker(5)}</div>
- ${players.length? `<div class="podium" aria-label="Top drie golfers">
- ${podium.map((player,index)=>{
- const stat=score(player);
- return `<button type="button" class="podium-card place-${index+1} ${player.id===myId?'is-you':''}" data-leader="${escapeHtml(player.id)}" aria-label="Bekijk scorekaart van ${escapeHtml(player.name)}">
-  <span class="podium-medal">${rankIcon(index,players.length)}</span>
-  ${avatar(player,"podium-avatar")}
-  <span class="podium-name">${escapeHtml(player.name)}${player.id===myId?' <small>JIJ</small>':''}</span>
-  <strong class="podium-score">${stat.completed?format(stat.relative):'–'}</strong>
-  <small class="podium-meta">${stat.completed}/6 holes · PAR</small>
- </button>`;
- }).join("")}</div>` : '<div class="no-players">Nog geen golfers aan de start.</div>'}
- ${rest.length?`<div class="leader-section-title"><span>DE REST VAN DE CLUB</span><span>${players.length} DEELNEMERS</span></div>
- <div class="leader-list">${rest.map((player,i)=>{
-  const index=i+3,stat=score(player),last=index===players.length-1,emblem=rankIcon(index,players.length);
-  return `<button type="button" data-leader="${escapeHtml(player.id)}" aria-label="Bekijk de scorekaart van ${escapeHtml(player.name)}" class="leader-row ${player.id===myId?'selected':''}" style="--row:${Math.min(index,18)}">
-  <span class="rank"><span class="rank-emoji" aria-hidden="true">${emblem}</span><span class="rank-num">${index+1}</span></span>
-  <span class="avatar-holder">${avatar(player)}${last?'<span class="award poo">💩</span>':''}</span>
-  <span class="leader-name"><strong>${escapeHtml(player.name)}${player.id===myId?' <span class="you">jij</span>':''}</strong><small>${stat.completed} van 6 holes</small></span>
-  <span class="leader-score">${stat.completed?format(stat.relative):'–'}<small>t.o.v. PAR</small></span>
-  <span class="leader-arrow" aria-hidden="true">›</span>
-  </button>`;
- }).join("")}</div>`:''}
- <div class="grow"></div>
- <div class="leader-bottom"><button class="cta" data-action="${done?'finish':'continue'}">${done?'Mijn eindscore':'Volgende hole'} <span>→</span></button></div>
+ const players=leaders(),p=me(),stat=p?score(p):null,done=stat?.completed===6;
+ const format=n=>n>0?"+"+n:String(n);
+ return `<div class="page-card leader-page leader-vertical">
+  <div class="leader-heading">
+   <div><span class="overline">${done?'DE EINDSTAND':'LIVE KLASSEMENT'}</span>
+    <h1 class="display">The <i>clubhouse.</i></h1></div>
+   <span class="leader-live"><span class="leader-live-dot"></span>${done?'FINISH':'LIVE'}</span>
+  </div>
+  <p class="helper leader-helper">Beste golfer bovenaan. Iedereen staat onder elkaar.</p>
+  <div class="leader-sticker-peek">${sticker(5)}</div>
+  <div class="leader-vertical-header"><span>RANGSCHIKKING</span><span>${players.length} ${players.length===1?'GOLFER':'GOLFERS'}</span></div>
+  <div class="leader-list leader-vertical-list" aria-label="Live ranglijst">
+   ${players.map((player,index)=>{
+    const scorecard=score(player);
+    const last=players.length>1&&index===players.length-1;
+    return `<button type="button" data-leader="${escapeHtml(player.id)}" aria-label="Nummer ${index+1}: ${escapeHtml(player.name)}, ${scorecard.completed} van 6 holes" class="leader-row rank-place-${index+1} ${index<3?'leader-top-three':''} ${player.id===myId?'selected':''}" style="--row:${Math.min(index,18)}">
+     <span class="rank"><strong>${index+1}</strong><small aria-hidden="true">${rankIcon(index,players.length)}</small></span>
+     <span class="avatar-holder">${avatar(player)}</span>
+     <span class="leader-name"><strong>${escapeHtml(player.name)}${player.id===myId?' <span class="you">jij</span>':''}</strong><small>${scorecard.completed}/6 holes${last?' · Hekkensluiter':''}</small></span>
+     <span class="leader-score">${scorecard.completed?format(scorecard.relative):'–'}<small>t.o.v. PAR</small></span>
+     <span class="leader-arrow" aria-hidden="true">›</span>
+    </button>`;
+   }).join("")||'<div class="no-players">Nog geen golfers aan de start.</div>'}
+  </div>
+  <div class="grow"></div>
+  <div class="leader-bottom"><button class="cta" data-action="${done?'finish':'continue'}">${done?'Mijn eindscore':'Volgende hole'} <span>→</span></button></div>
  </div>`;
 }
 function detail(){
@@ -507,7 +543,7 @@ function checkin(){
   [4,"Vlees nog vis","Het kan nog alle kanten op."],
   [3,"Lekker in de oli","Kijk, nu wordt het gezellig."],
   [2,"Poepiepapiepoe","Duidelijk verhaal, chef."],
-  [6,"GAA VOOR GOUUUDD","Voor die ene bonus. Uiteraard."]
+  [6,"GAA VOOR GOUUUDD","We zien wel waar het schip strandt."]
  ];
  return `<div class="page-card checkin-page">
  <span class="checkin-pill">🍺 HALVERWEGE · HOLE 03</span>
@@ -519,7 +555,6 @@ function checkin(){
    <span class="mood-copy"><strong>${m[1]}</strong><small>${m[2]}</small></span>
    <span class="mood-arrow" aria-hidden="true">↗</span>
  </button>`).join("")}</div>
- <p class="small-message">Geen jury. Wel een bonusslag als je voor goud gaat. 🏅</p>
  <div class="grow"></div></div>`;
 }
 function checkinResult(){
@@ -695,7 +730,14 @@ el("screen").addEventListener("click",e=>{
  }
  const golfer=e.target.closest("[data-leader]");
  if(golfer){selectedPlayerId=golfer.dataset.leader;setView("detail");return;}
- const button=e.target.closest("[data-action]");if(!button)return;
+ const button=e.target.closest("[data-action]");
+ if(!button){
+  // The whole score screen counts a tap, except buttons and interactive controls.
+  if(view==="hole"&&e.target.closest(".hole-page")&&!e.target.closest("button,a,input,select,textarea,[role=button]")){
+   strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");
+  }
+  return;
+ }
  switch(button.dataset.action){
   case "start":if(me())nextHole();else setView("choose");break;
   case "welcome":setView("welcome");break;
@@ -715,9 +757,16 @@ el("screen").addEventListener("click",e=>{
    setView("rules");break;
   }
   case "rulesDone":localStorage.setItem("golf-intro-"+myId,"1");nextHole();break;
-  case "minus":strokes=Math.max(1,strokes-1);refreshCounter();nativeFeedback("light");break;
-  case "plus":strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");break;
+  case "minus":
+   if(view!=="hole")break;
+   strokes=Math.max(0,strokes-1);refreshCounter();nativeFeedback("light");break;
+  case "sip":
+  case "plus":
+   if(view!=="hole")break;
+   strokes=Math.min(99,strokes+1);refreshCounter();nativeFeedback("light");break;
   case "submit":{
+   if(view!=="hole")break;
+   if(strokes<1){notify("Tel eerst minstens één slok");break}
    if(Number.isInteger(me()?.scores?.[hole])){notify("Deze score staat al vast");break}
    const under=strokes<HOLES[hole].par;
    const above=strokes>HOLES[hole].par;
