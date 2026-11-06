@@ -27,7 +27,7 @@ if(!fs.existsSync(resetMarker)){
  }catch(error){console.error('PubGolf volledige reset mislukt:',error.message)}
 }
 
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.webp':'image/webp','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json; charset=utf-8'};
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.webp':'image/webp','.mp4':'video/mp4','.png':'image/png','.webmanifest':'application/manifest+json','.json':'application/json; charset=utf-8'};
 const initial=()=>({players:[],revision:0,updatedAt:Date.now(),seenActions:[],epoch:resetEpoch});
 function roomName(requestUrl){return String(requestUrl.searchParams.get('room')||'THOMAS').toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,24)||'THOMAS'}
 function roomFile(room){return path.join(dataDir,room+'.json')}
@@ -129,6 +129,27 @@ const server=http.createServer((req,res)=>{
    'ETag':asset.etag,
    'Vary':'Accept-Encoding'
   };
+  if(file.endsWith('.mp4')){
+   const total=asset.raw.length;
+   headers['Accept-Ranges']='bytes';
+   const range=String(req.headers.range||'');
+   if(range){
+    const match=/^bytes=(\\d*)-(\\d*)$/.exec(range);
+    if(!match||(match[1]===''&&match[2]==='')){
+     res.writeHead(416,{...headers,'Content-Range':'bytes */'+total,'Content-Length':0});return res.end();
+    }
+    let start=match[1]===''?Math.max(0,total-Number(match[2])):Number(match[1]);
+    let end=match[2]===''||match[1]===''?total-1:Number(match[2]);
+    if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>=total||end<start){
+     res.writeHead(416,{...headers,'Content-Range':'bytes */'+total,'Content-Length':0});return res.end();
+    }
+    end=Math.min(total-1,end);
+    headers['Content-Range']='bytes '+start+'-'+end+'/'+total;
+    headers['Content-Length']=end-start+1;
+    res.writeHead(206,headers);
+    return req.method==='HEAD'?res.end():res.end(asset.raw.subarray(start,end+1));
+   }
+  }
   if(req.headers['if-none-match']===asset.etag){res.writeHead(304,headers);return res.end()}
   const accept=String(req.headers['accept-encoding']||'');
   let output=asset.raw;
