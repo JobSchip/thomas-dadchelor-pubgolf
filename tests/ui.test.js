@@ -588,7 +588,7 @@ test('lange druk bij nul slokken mag geen score vastleggen',()=>{
  assert.equal(ui.view(),'hole');
  assert.equal(ui.queue().length,0);
  ui.click('action','sip'); // Een touchrelease na long press wordt genegeerd.
- assert.equal(ui.element('stroke-value').textContent,'0');
+ assert.match(ui.html(),/id="stroke-value"[^>]*>0<\/strong>/);
  ui.click('action','sip');
  assert.equal(ui.element('stroke-value').textContent,'1');
 });
