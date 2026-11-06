@@ -2839,3 +2839,350 @@ button:focus-visible{outline:3px solid #ffb800;outline-offset:3px}
 .thomas-jumpscare--full .thomas-jumpscare-card{
  animation-duration:1.65s;
 }
+
+
+/* ==============================================================
+   v31 BROWN CAFÉ · THOMAS BEHIND THE BAR
+   Six actual glass positions. Earlier = empty, current = pourable,
+   future = clean. Round 3 taps the third glass, and so on.
+   ============================================================== */
+.page-preview:has(.tavern){padding:0!important;background:#25120d!important}
+.taproom.tavern{
+ --bar-amber:#dca94f;--bar-gold:#f7cf77;
+ position:relative;isolation:isolate;
+ display:flex;flex-direction:column;
+ min-height:calc(100dvh - 74px - env(safe-area-inset-top));
+ padding:clamp(16px,3dvh,27px) clamp(13px,4vw,27px) calc(18px + env(safe-area-inset-bottom));
+ background:
+  radial-gradient(ellipse at 49% 27%,#88412288,transparent 43%),
+  repeating-linear-gradient(90deg,#3e2118 0px,#48271b 23px,#301a13 27px,#44261d 58px,#291911 61px),
+  #311b14!important;
+ color:#ffe8b8;
+ box-shadow:inset 0 0 100px #100906cf;
+}
+.taproom.tavern:before{
+ z-index:-1;
+ background:linear-gradient(180deg,#2e150ac9 0%,#74442127 43%,#10090998 100%)!important;
+}
+.taproom.tavern:after{display:none!important}
+.tavern-interior{
+ position:absolute;inset:0;z-index:-1;
+ pointer-events:none;overflow:hidden;
+ background:
+  radial-gradient(ellipse at 52% 14%,#e9ad4d45 0,transparent 44%),
+  linear-gradient(90deg,#25150c75 0,#8b532429 45%,#20100d75 100%);
+}
+.tavern-wall-rail{
+ position:absolute;top:28%;left:0;right:0;height:8px;
+ background:linear-gradient(#bf8550,#56351f 48%,#190f0b);
+ box-shadow:0 4px 11px #100905a3,0 -1px 0 #e8b57744;
+}
+.tavern-shelf{
+ position:absolute;z-index:1;left:-5%;right:-5%;height:13px;
+ border-radius:2px;
+ background:linear-gradient(#e2aa57 0%,#995b2d 26%,#472717 72%,#160e0b);
+ box-shadow:0 5px 13px #050302bc,0 -2px 0 #f4d3865a;
+}
+.tavern-shelf-one{top:20%}
+.tavern-shelf-two{top:38%}
+.tavern-bottles{
+ position:absolute;top:10%;height:10%;width:36%;
+ background:
+  repeating-linear-gradient(90deg,transparent 0 6px,#1a331e 6px 20px,#847047 21px 23px,transparent 24px 29px,#371910 30px 42px,#e2a95e 43px 45px,transparent 46px 55px);
+ opacity:.55;filter:drop-shadow(0 4px 2px #100701a0);
+}
+.tavern-bottles-left{left:6%}.tavern-bottles-right{right:6%}
+.tavern-wall-lamp{
+ position:absolute;z-index:3;top:5%;
+ width:55px;height:19px;
+ border-radius:0 0 48% 48%;
+ background:linear-gradient(#4e341c,#ae7f37 35%,#412718 90%);
+ box-shadow:0 17px 44px 16px #ffc96a23,0 2px 5px #0a0706a3;
+}
+.tavern-wall-lamp:before{
+ content:"";position:absolute;top:-55px;left:26px;width:3px;height:56px;
+ background:linear-gradient(90deg,#927049,#f0d493);
+}
+.tavern-wall-lamp:after{
+ content:"";position:absolute;top:11px;left:9px;right:9px;height:9px;
+ border-radius:50%;background:#ffdda1;
+ filter:blur(6px);opacity:.92;
+}
+.tavern-wall-lamp.lamp-left{left:6%}
+.tavern-wall-lamp.lamp-right{right:6%}
+.tavern-topline{
+ position:relative;z-index:10;width:100%;
+ display:flex;gap:8px;justify-content:space-between;align-items:center;
+ text-transform:uppercase;
+ font-size:clamp(9px,2.7vw,12px);font-weight:950;letter-spacing:.11em;
+ color:#f1dba4;
+}
+.tavern-topline strong{
+ flex-shrink:0;color:#251408;background:#f4d07f;
+ border-radius:999px;padding:8px 11px;font-size:11px;
+ letter-spacing:.03em;
+ border:1px solid #ffedb7;
+ box-shadow:0 4px 8px #0005;
+}
+.tavern-host{
+ flex:1 1 auto;min-height:140px;max-height:265px;
+ display:flex;align-items:center;justify-content:space-between;
+ gap:12px;position:relative;z-index:2;
+ padding:10px 5px 0;
+}
+.tavern-speech{
+ max-width:55%;position:relative;z-index:5;
+ background:#ffdf90;color:#402012;
+ border:3px solid #fff3c3;
+ border-radius:19px 19px 6px 19px;
+ padding:clamp(11px,3.7vw,17px) clamp(11px,4vw,18px);
+ text-shadow:0 2px 0 #fff3b13a;
+ box-shadow:7px 9px 0 #26120a9a,0 13px 22px #130806b8;
+ font-size:clamp(21px,6.8vw,36px);font-weight:1000;
+ line-height:.99;letter-spacing:-.065em;
+ transform:rotate(-5deg);
+}
+.tavern-speech span{color:#c82f22}
+.tavern-speech:after{
+ content:"";position:absolute;right:-12px;bottom:6px;
+ width:19px;height:18px;background:#ffdf90;
+ clip-path:polygon(0 0,100% 100%,0 100%);
+ transform:rotate(-31deg);
+ border-bottom:2px solid #fff3c3;
+}
+.tavern-thomas{
+ position:relative;
+ display:flex;align-items:center;justify-content:center;
+ width:45%;max-width:210px;min-height:140px;align-self:flex-end;
+ filter:drop-shadow(0 11px 8px #0f0505b9);
+}
+.tavern-thomas:before{
+ content:"";position:absolute;z-index:0;inset:20% 5% -30%;
+ background:linear-gradient(#202b28,#070c0a);
+ border:3px solid #635443;border-radius:28% 28% 0 0;
+ box-shadow:inset 0 8px 13px #ffffff08;
+}
+.tavern-thomas-face{
+ position:relative;z-index:1;
+ width:clamp(120px,43vw,190px)!important;
+ height:clamp(120px,43vw,190px)!important;
+ transform:rotate(-6deg);
+ filter:drop-shadow(0 6px 4px #0f050577);
+}
+.tavern-host-name{
+ position:absolute;z-index:4;bottom:0;right:3px;
+ border:1px solid #e9c386;
+ padding:5px 9px;border-radius:4px;
+ background:#4b2e1e;color:#ffe4a6;
+ font-size:10px;letter-spacing:.16em;font-weight:950;
+ transform:rotate(4deg);
+}
+.tavern-order{
+ position:relative;z-index:5;
+ display:flex;align-items:center;justify-content:space-between;
+ gap:9px;width:100%;
+ border:1px solid #d7a55f75;
+ background:#2d180ecd;border-radius:14px;
+ padding:11px 13px;margin:4px 0 6px;
+ box-shadow:0 4px 13px #160c079c;
+}
+.tavern-order>span{
+ flex-shrink:0;color:#e0ba78;font-size:10px;font-weight:940;letter-spacing:.13em;
+}
+.tavern-order strong{
+ text-align:right;font-size:clamp(12px,3.7vw,16px);
+ color:#ffe4a4;letter-spacing:-.025em;line-height:1.2;
+}
+.tavern-stage{
+ flex:0 0 auto;position:relative;isolation:isolate;
+ width:100%;min-height:166px;height:clamp(158px,25dvh,220px);
+ display:flex;align-items:end;justify-content:center;
+ padding-bottom:37px;z-index:4;
+}
+.tavern-bar-counter{
+ position:absolute;z-index:-1;bottom:0;left:-8vw;right:-8vw;
+ height:53px;
+ background:
+  linear-gradient(175deg,#ffffff0f 0 6px,transparent 7px),
+  repeating-linear-gradient(94deg,#684021 0 33px,#734822 36px,#623919 45px,#a66e39 50px);
+ border-top:11px solid #b57a41;
+ border-bottom:5px solid #2e190f;
+ border-radius:5px 5px 0 0;
+ box-shadow:0 -6px 20px #1108056a,inset 0 5px 4px #e6b8706b,0 18px 22px #130806ce;
+}
+.tavern-glass-lineup{
+ display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+ width:100%;max-width:490px;
+ gap:clamp(2px,1.4vw,8px);
+ align-items:end;position:relative;z-index:5;
+}
+.tavern-glass-slot{
+ appearance:none;border:0;background:transparent;
+ display:flex;flex-direction:column;justify-content:end;align-items:center;
+ gap:8px;padding:0;min-width:0;
+ position:relative;color:#f3d5a5;
+ user-select:none;
+}
+.tavern-current-glass{
+ cursor:pointer;
+ -webkit-tap-highlight-color:transparent;
+ touch-action:manipulation;
+}
+.tavern-current-glass:focus-visible{outline:3px solid #ffe37a;outline-offset:5px;border-radius:10px}
+.tavern-glass{
+ width:min(100%,54px);
+ height:clamp(72px,13dvh,111px);
+ position:relative;overflow:hidden;
+ border:3px solid #ece6ce90;border-top:5px solid #faf3dfba;border-bottom:7px solid #faf1d5a3;
+ border-radius:7px 7px 13px 13px;
+ background:linear-gradient(110deg,#fff3ce25 0 14%,#adcee425 18% 30%,#fff8e706 35% 85%,#fcf8e430 100%);
+ box-shadow:inset 3px 0 4px #ffffff27,0 6px 8px #0009;
+ transform-origin:bottom center;
+}
+.tavern-glass.is-current{
+ width:min(100%,66px);
+ height:clamp(85px,16dvh,136px);
+ border-color:#fff0bded;
+ filter:drop-shadow(0 0 9px #ffe6a244);
+}
+.tavern-current-glass:active .tavern-glass{transform:scale(.96)}
+.tavern-glass.is-drunk{
+ border-color:#d8bda47a;
+ background:linear-gradient(130deg,#ffffff19,#64432921);
+}
+.tavern-glass.is-drunk:after{
+ content:"";position:absolute;bottom:2px;left:13%;right:13%;height:5px;
+ border-radius:50%;background:#a16c3699;
+}
+.tavern-glass.is-clean{opacity:.56}
+.tavern-glass-beer{
+ position:absolute;z-index:1;bottom:0;left:1px;right:1px;height:0;
+ background:linear-gradient(90deg,#b16e1d,#f2b744 29%,#ffda6b 65%,#a96a1c);
+ border-radius:3px 3px 5px 5px;
+ box-shadow:inset 4px 0 7px #fff8b248;
+}
+.tavern-glass.is-filled .tavern-glass-beer{
+ height:78%;animation:tavernFill 1.05s cubic-bezier(.2,.8,.25,1) both;
+}
+.tavern-glass-foam{
+ position:absolute;z-index:2;left:0;right:0;bottom:0;height:0;
+ background:#fff3d0;border-radius:55% 50% 18% 18%;
+ box-shadow:0 -3px 4px #fff5df5e;
+}
+.tavern-glass.is-filled .tavern-glass-foam{
+ height:10px;bottom:calc(78% - 6px);
+ animation:tavernFoam 1.05s ease-out both;
+}
+.tavern-glass-reflection{
+ position:absolute;z-index:3;top:6px;left:13%;height:75%;width:5px;
+ border-radius:99px;background:#fff9de69;filter:blur(1px);
+}
+.tavern-glass-number{
+ font-size:10px;font-weight:900;line-height:1;
+ color:#dbc18e;opacity:.8;
+}
+.tavern-current-glass .tavern-glass-number{
+ color:#ffdb62;font-size:12px;opacity:1;
+ border-radius:100px;background:#40220f;
+ padding:4px 8px;border:1px solid #ddac57;
+}
+.tavern-current-glass:before{
+ content:"";position:absolute;z-index:7;top:-16px;left:50%;
+ width:7px;height:10px;border-radius:3px;
+ background:#e2af53;transform:translateX(-50%);
+ box-shadow:0 -9px 0 2px #54371e,0 -21px 0 4px #dec695;
+}
+.tavern-current-glass.is-filled:before{opacity:.6}
+.tavern-inventory{
+ display:grid;grid-template-columns:1fr 1fr 1fr;
+ gap:5px;width:100%;
+ margin:10px auto 13px;position:relative;z-index:5;
+}
+.tavern-inventory>div{
+ display:flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:4px;min-height:74px;
+ background:#24150fc9;border:1px solid #be8f5475;
+ padding:8px 4px;border-radius:13px;
+ text-align:center;
+}
+.tavern-inventory strong{
+ font-variant-numeric:tabular-nums;
+ font-size:clamp(24px,7.1vw,33px);
+ line-height:.95;font-weight:1000;color:#e2bb7e;
+}
+.tavern-inventory span{
+ font-size:clamp(8px,2.5vw,10px);
+ line-height:1.2;font-weight:940;letter-spacing:.06em;
+ color:#d0b68d;
+}
+.tavern-inventory-current{
+ border-color:#f6cc69!important;
+ background:#59351fcf!important;
+}
+.tavern-inventory-current strong,.tavern-inventory-current span{
+ color:#ffe4a6!important;
+}
+.tavern-action{
+ display:flex;align-items:center;gap:12px;width:100%;min-height:68px;
+ border:2px solid #f7d99a;border-radius:19px;
+ background:#ffdd84;color:#45291b;
+ padding:12px 13px;margin-top:auto;
+ box-shadow:0 7px 0 #a66a28,0 16px 24px #16070577;
+ position:relative;z-index:6;
+ cursor:pointer;text-align:left;
+}
+.tavern-action:active{transform:translateY(4px);box-shadow:0 3px 0 #a66a28}
+.tavern-action-icon{font-size:25px;flex-shrink:0}
+.tavern-action>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:4px}
+.tavern-action strong{
+ font-size:clamp(16px,5vw,19px);
+ font-weight:950;line-height:1.12;letter-spacing:-.03em;
+}
+.tavern-action small{font-size:11px;color:#76502c;font-weight:780}
+.tavern-action-arrow{
+ width:32px;height:32px;border-radius:50%;flex-shrink:0;
+ display:grid;place-items:center;background:#643d1b;color:#fff1c8;
+ font-size:20px;font-weight:950;
+}
+@keyframes tavernFill{
+ from{height:0}to{height:78%}
+}
+@keyframes tavernFoam{
+ from{opacity:0;bottom:0}to{opacity:1;bottom:calc(78% - 6px)}
+}
+@media(max-height:735px){
+ .taproom.tavern{padding-top:12px;padding-bottom:calc(11px + env(safe-area-inset-bottom))}
+ .tavern-host{min-height:108px;max-height:178px}
+ .tavern-thomas{min-height:104px}
+ .tavern-thomas-face{width:clamp(95px,30vw,142px)!important;height:clamp(95px,30vw,142px)!important}
+ .tavern-speech{font-size:clamp(18px,5.5vw,28px);padding:10px 12px}
+ .tavern-stage{min-height:130px;height:clamp(126px,23dvh,166px);padding-bottom:27px}
+ .tavern-glass{height:clamp(61px,11dvh,89px)}
+ .tavern-glass.is-current{height:clamp(70px,13dvh,104px)}
+ .tavern-inventory{margin:6px auto 8px}
+ .tavern-inventory>div{min-height:56px}
+ .tavern-action{min-height:58px;padding:9px 11px}
+}
+@media(max-height:605px){
+ .tavern-host{min-height:90px;max-height:122px}
+ .tavern-thomas-face{width:92px!important;height:92px!important}
+ .tavern-order{padding:7px 9px;margin:0}
+ .tavern-stage{min-height:105px;height:clamp(104px,19dvh,132px)}
+ .tavern-glass{height:56px}
+ .tavern-glass.is-current{height:70px}
+ .tavern-inventory>div{min-height:48px}
+ .tavern-inventory strong{font-size:22px}
+ .tavern-action{min-height:52px}
+}
+@media(max-width:345px){
+ .tavern-speech{font-size:20px}
+ .tavern-topline{font-size:8px}
+ .tavern-topline strong{padding:6px 8px}
+ .tavern-glass-slot{gap:6px}
+ .tavern-glass{width:100%}
+ .tavern-inventory span{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .tavern-glass.is-filled .tavern-glass-beer,
+ .tavern-glass.is-filled .tavern-glass-foam{animation:none!important}
+}
