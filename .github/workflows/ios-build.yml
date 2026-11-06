@@ -1,15 +1,7 @@
-name: iOS native build check
+name: iOS native build — Manual only
+
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'ios-app/**'
-      - 'app.js'
-      - 'index.html'
-      - 'styles.css'
-      - 'sw.js'
-      - 'assets/**'
-      - '.github/workflows/ios-build.yml'
 
 permissions:
   contents: read
