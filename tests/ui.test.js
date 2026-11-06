@@ -291,7 +291,8 @@ test('Thomas stickers maken cameo bij quizvragen, scorekaart en jackpot zonder s
  assert.match(ui.html(),/taproom-peeker/);
  ui.click('action','pourDrink');
  ui.click('action','gotDrink');
- assert.match(ui.html(),/sip-hold-button/);
+ assert.match(ui.html(),/sip-score-page/);
+ assert.match(ui.html(),/sip-adjust-plus/);
  assert.doesNotMatch(ui.html(),/sip-sticker/);
  const two=player('Thomas','p1',[8,10,8,null,null,null],3,{one:'blue',two:'18'});
  const ui2=boot([two]);
@@ -441,6 +442,11 @@ test('foto- en videomedia zijn in alle vijf varianten aanwezig en zijn klein voo
   assert.ok(stat.size<350000,name+' is te groot');
  }
  assert.match(source,/autoplay muted playsinline/);
+ assert.match(source,/sip-media-scare-video-poster/);
+ assert.match(source,/sip-media-scare-play/);
+ assert.match(source,/addEventListener\("playing",playbackStarted\)/);
+ assert.match(source,/playRequest|request=vid\.play\(\)/);
+ assert.match(source,/scheduleClose\(2450\)/);
  assert.match(source,/sip-media-scare-close/);
  assert.match(styles,/\.sip-media-scare--video/);
  assert.match(styles,/\.sip-media-scare--photo/);
