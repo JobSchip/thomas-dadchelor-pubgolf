@@ -155,7 +155,7 @@ function maybeJumpScare(event){
  const type=count===record.plan.length&&record.plan.length>=3?"full":count%2?"mini":"medium";
  const stickerId=type==="full"?3:type==="medium"?7:2;
  const caption=type==="full"?"BOE, MAAT!":type==="medium"?"WAT DAN?!":"HOPPAAA!";
- const duration=type==="full"?920:type==="medium"?690:520;
+ const duration=type==="full"?1650:type==="medium"?1350:1020;
  setTimeout(()=>{
   const wrap=document.createElement("div");
   wrap.className="thomas-jumpscare thomas-jumpscare--"+type;
@@ -315,7 +315,7 @@ function setView(next){
  setTimeout(()=>{if(view===next)rainIcons(kind,next==="ace"?18:next==="preview"?22:next==="board"?16:14)},120);
 }
 
-const THOMOL_DURATION=13000,THOMOL_MAX_HITS=10;
+const THOMOL_DURATION=16000,THOMOL_MAX_HITS=10;
 function thomolClearTimers(){
  if(thomolPopTimer){clearTimeout(thomolPopTimer);thomolPopTimer=null}
  if(thomolTickTimer){clearInterval(thomolTickTimer);thomolTickTimer=null}
@@ -330,7 +330,7 @@ function thomolIntro(){
   </div>
   <h1 class="thomol-title">HIT THE<br><em>THOMOL</em></h1>
   <p class="thomol-description">Thomas komt overal omhoog. Pak 'm als je kan.</p>
-  <div class="thomol-rules"><span>⏱️ 13 seconden</span><span>🔨 9 gaten</span><span>🎯 1 hit = −1 slag</span></div>
+  <div class="thomol-rules"><span>⏱️ 16 seconden</span><span>🔨 9 gaten</span><span>🎯 1 hit = −1 slag</span></div>
   <p class="thomol-footnote">Hij is razendsnel. Eén poging. Maximaal 10 slagen korting.</p>
   <div class="grow"></div>
   <button type="button" class="cta thomol-start-btn" data-action="thomolStart">START HET GEKLOP <span>→</span></button>
@@ -398,12 +398,12 @@ function thomolSpawn(){
  const options=Array.from({length:9},(_,i)=>i).filter(i=>i!==target);
  g.decoy=Math.random()<.63?options[Math.floor(Math.random()*options.length)]:-1;
  render();
- const exposure=310+Math.floor(Math.random()*210);
+ const exposure=510+Math.floor(Math.random()*230);
  thomolPopTimer=setTimeout(()=>{
   if(!thomolRound||view!=="thomolPlay")return;
   g.active=-1;g.decoy=-1;
   render();
-  thomolPopTimer=setTimeout(thomolSpawn,155+Math.floor(Math.random()*115));
+  thomolPopTimer=setTimeout(thomolSpawn,220+Math.floor(Math.random()*130));
  },exposure);
 }
 function thomolHit(index){
