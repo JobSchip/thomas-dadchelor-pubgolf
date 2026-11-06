@@ -206,12 +206,16 @@ function showSipScare(media){
  sipScareVisible=true;
  const wrap=document.createElement("div");
  const isVideo=media.type==="video";
+ const index=SIP_SCARE_MEDIA.indexOf(media);
+ const poster="./assets/scare-photo-"+(Math.max(index-5,0)%5+1)+".webp";
  wrap.className="sip-media-scare "+(isVideo?"sip-media-scare--video":"sip-media-scare--photo");
  wrap.setAttribute("role","dialog");
  wrap.setAttribute("aria-modal","true");
  wrap.setAttribute("aria-label","Onverwachte Pub Golf-verrassing. Tik op Verder om door te spelen.");
  const content=isVideo?
-  `<video class="sip-media-scare-media" autoplay muted playsinline preload="auto" disablepictureinpicture><source src="${media.src}" type="video/mp4"></video>`:
+  `<img class="sip-media-scare-video-poster" src="${poster}" alt="Thomas in beeld">
+   <video class="sip-media-scare-media" autoplay muted playsinline webkit-playsinline preload="auto" poster="${poster}" disablepictureinpicture><source src="${media.src}" type="video/mp4"></video>
+   <button type="button" class="sip-media-scare-play" aria-label="Speel video af">▶ Speel video af</button>`:
   `<img class="sip-media-scare-media" src="${media.src}" alt="" decoding="async">`;
  wrap.innerHTML=`<div class="sip-media-scare-inner">
   <span class="sip-media-scare-kicker">💥 PUB GOLF SURPRISE</span>
@@ -219,28 +223,84 @@ function showSipScare(media){
   <div class="sip-media-scare-caption">“${escapeHtml(thomasQuote())}”<small>— THOMAS UIT DE CHAT</small></div>
   <button class="sip-media-scare-close" type="button" aria-label="Sluit verrassing">✕ VERDER</button>
  </div>`;
- let finished=false;
- let timeout;
+ let finished=false,timeout=null,watchdog=null,playing=false;
  const onKey=e=>{if(e.key==="Escape")close()};
+ function clearClocks(){clearTimeout(timeout);clearTimeout(watchdog)}
  function close(){
   if(finished)return;
   finished=true;
-  clearTimeout(timeout);
+  clearClocks();
   document.removeEventListener?.("keydown",onKey);
+  if(isVideo){
+   const vid=wrap.querySelector("video");
+   if(vid){try{vid.pause();vid.removeAttribute("src");vid.load()}catch(e){}}
+  }
   wrap.remove();
   sipScareVisible=false;
+ }
+ function scheduleClose(delay){
+  clearTimeout(timeout);
+  timeout=setTimeout(close,delay);
  }
  wrap.querySelector(".sip-media-scare-close")?.addEventListener("click",e=>{e.stopPropagation();close()});
  document.body.appendChild(wrap);
  document.addEventListener?.("keydown",onKey);
  wrap.querySelector(".sip-media-scare-close")?.focus?.();
- const video=isVideo?wrap.querySelector("video"):null;
- if(video){
-  video?.addEventListener("ended",close,{once:true});
-  video?.play?.()?.catch?.(()=>{});
+ if(isVideo){
+  const vid=wrap.querySelector("video");
+  const playBtn=wrap.querySelector(".sip-media-scare-play");
+  function playbackStarted(){
+   if(finished)return;
+   playing=true;
+   clearTimeout(watchdog);
+   wrap.classList.remove("needs-play","video-error");
+   wrap.classList.add("is-playing");
+   scheduleClose(Math.max(3600,(media.duration||4200)+850));
+  }
+  function playbackFailed(){
+   if(finished||playing)return;
+   wrap.classList.add("needs-play");
+   // Show the photo while the player waits. Nothing is black or blank.
+   scheduleClose(12500);
+  }
+  if(vid){
+   vid.muted=true;
+   vid.defaultMuted=true;
+   vid.playsInline=true;
+   vid.addEventListener("playing",playbackStarted);
+   vid.addEventListener("ended",()=>scheduleClose(450),{once:true});
+   vid.addEventListener("error",()=>{
+    if(!playing){wrap.classList.add("video-error");playbackFailed()}
+   });
+   vid.addEventListener("stalled",()=>{
+    if(!playing)wrap.classList.add("needs-play");
+   });
+   playBtn?.addEventListener("click",e=>{
+    e.stopPropagation();
+    if(finished)return;
+    vid.muted=true;
+    try{
+     const playRequest=vid.play();
+     if(playRequest?.catch)playRequest.catch(playbackFailed);
+    }catch(e){playbackFailed()}
+   });
+   // Attempt autoplay within the user's sip-tap gesture. Some Android browsers
+   // require another direct gesture: the yellow play button provides that path.
+   try{
+    const request=vid.play();
+    if(request?.catch)request.catch(playbackFailed);
+   }catch(e){playbackFailed()}
+   watchdog=setTimeout(()=>{if(!playing)playbackFailed()},1100);
+  }else{
+   // DOM player unavailable: retain the poster and allow normal dismissal.
+   wrap.classList.add("needs-play","video-error");
+   scheduleClose(5500);
+  }
+ }else{
+  // A slightly longer photo surprise than the earlier 1.4 seconds.
+  scheduleClose(2450);
  }
  nativeFeedback("medium");
- timeout=setTimeout(close,isVideo?media.duration:1400);
 }
 function maybeSipMediaScare(){
  if(view!=="hole"||!me()||sipScareVisible||document.hidden)return;
