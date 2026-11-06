@@ -58,7 +58,26 @@ function boot(players,myId='p1',options={}){
   }}});
  }
  return {
-  click,view:()=>get('app').dataset.view,html:()=>get('screen').innerHTML,
+  click,
+  holdStart(x=25,y=25){
+   get('screen').listeners.pointerdown({target:{closest(selector){return selector==='#sip-pad'?get('sip-pad'):null}},clientX:x,clientY:y,button:0,isPrimary:true});
+  },
+  holdStop(){
+   get('screen').listeners.pointerup({target:{closest(selector){return selector==='#sip-pad'?get('sip-pad'):null}}});
+  },
+  holdCancel(){get('screen').listeners.pointercancel({})},
+  runHoldTimer(){
+   const index=timeouts.findLastIndex(t=>t.delay===850);
+   if(index<0)throw Error('Geen hold timer');
+   const next=timeouts.splice(index,1)[0];
+   clock.now+=next.delay;
+   next.fn();
+  },
+  keyboardSip(key,type){
+   const handler=get('screen').listeners[type];
+   handler({key,repeat:false,target:{closest(selector){return selector==='#sip-pad'?get('sip-pad'):null}},preventDefault(){}});
+  },
+  view:()=>get('app').dataset.view,html:()=>get('screen').innerHTML,
   state:()=>JSON.parse(storage.get('golf-v5-THOMAS-OPEN')),queue:()=>JSON.parse(storage.get('golf-queue-v5-THOMAS-OPEN')||'[]'),
   element:get,storage,
   advance(ms){clock.now+=ms;for(const fn of intervals.slice())fn()},
@@ -151,9 +170,10 @@ test('tap-to-pour is een aparte kroegervaring, zonder score of bonus weg te schr
  assert.equal(ui.state().players[0].scores[0],null);
  ui.click('action','gotDrink');
  assert.equal(ui.view(),'hole');
- assert.match(ui.html(),/PAR 8 SLOKKEN/);
- assert.match(ui.html(),/ELKE TIK = \+1 SLOK/);
+ assert.match(ui.html(),/PAR <strong>8<\/strong>/);
  assert.match(ui.html(),/id="stroke-value"[^>]*>0<\/strong>/);
+ assert.doesNotMatch(ui.html(),/sip-stage-overline|sip-sticker|sip-submit|sip-undo|drink-name|hole-head|sip-hint/);
+ assert.equal((ui.html().match(/<button /g)||[]).length,1);
  assert.match(ui.html(),/data-action="sip"/);
  assert.equal(ui.queue().length,0);
 });
@@ -228,7 +248,7 @@ test('alle zes holes geven de BOEM-jackpot bij precies één slag, met de juiste
   ui.click('action','pourDrink');
   ui.click('action','gotDrink');
   assert.equal(ui.view(),'hole');
-  assert.match(ui.html(),new RegExp('PAR '+pars[hole]+' SLOKKEN'));
+  assert.match(ui.html(),new RegExp('PAR <strong>'+pars[hole]+'</strong>'));
   ui.click('action','sip');
   ui.click('action','submit');
   assert.equal(ui.view(),'ace','Hole '+(hole+1)+' moet jackpot tonen');
@@ -268,7 +288,8 @@ test('Thomas stickers maken cameo bij quizvragen, scorekaart en jackpot zonder s
  assert.match(ui.html(),/taproom-peeker/);
  ui.click('action','pourDrink');
  ui.click('action','gotDrink');
- assert.match(ui.html(),/sip-sticker/);
+ assert.match(ui.html(),/sip-hold-button/);
+ assert.doesNotMatch(ui.html(),/sip-sticker/);
  const two=player('Thomas','p1',[8,10,8,null,null,null],3,{one:'blue',two:'18'});
  const ui2=boot([two]);
  ui2.click('action','pourDrink');ui2.click('action','gotDrink');
@@ -319,29 +340,33 @@ test('primaire kleuren maken check-in, quiz, kroeg en score visueel uniek',()=>{
  assert.match(styles,/prefers-reduced-motion:reduce/);
 });
 
-test('tapscherm begint op nul: elke tik telt één slok, herstel werkt en registratie vereist bevestiging',()=>{
- const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})]);
+test('minimalistische slokkenteller toont uitsluitend PAR en één ronde knop; alleen ingedrukt houden bevestigt',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{clock:true});
  ui.click('action','pourDrink');
  ui.click('action','gotDrink');
  assert.equal(ui.view(),'hole');
- assert.match(ui.html(),/PAR 8 SLOKKEN/);
- assert.match(ui.html(),/id="sip-submit"[^>]*disabled/);
- ui.click('action','submit');
- assert.equal(ui.view(),'hole');
+ assert.match(ui.html(),/PAR <strong>8<\/strong>/);
+ assert.equal((ui.html().match(/<button /g)||[]).length,1);
+ assert.doesNotMatch(ui.html(),/HOLE 1|Jopen|Mooie Nel|sip-submit|sip-undo|sip-stage|sip-sticker|sip-hint|Volgende hole/);
+ assert.match(ui.html(),/id="stroke-value"[^>]*>0<\/strong>/);
  assert.equal(ui.queue().length,0);
- assert.equal(ui.element('stroke-value').textContent,'');
- ui.click('action','sip');ui.click('action','sip');ui.click('action','sip');
+ ui.holdStart();
+ ui.advance(130);
+ ui.holdStop();
+ ui.click('action','sip');
+ assert.equal(ui.element('stroke-value').textContent,'1','korte tik is precies +1');
+ ui.click('action','sip');
+ ui.click('action','sip');
  assert.equal(ui.element('stroke-value').textContent,'3');
- assert.equal(ui.element('sip-progress').textContent,'3 / PAR 8');
- assert.equal(ui.element('sip-submit').disabled,false);
- ui.click('action','minus');
- assert.equal(ui.element('stroke-value').textContent,'2');
- assert.equal(ui.element('sip-progress').textContent,'2 / PAR 8');
- assert.equal(ui.queue().length,0,'tikken slaan niet alvast scores op');
- ui.click('action','submit');
- assert.equal(ui.view(),'board');
- assert.equal(ui.state().players[0].scores[0],2);
+ assert.equal(ui.queue().length,0,'geen score opgeslagen door kort tikken');
+ ui.holdStart();
+ ui.advance(900);
+ ui.holdStop();
+ assert.equal(ui.view(),'board','lange druk bevestigt en opent klassement');
+ assert.equal(ui.state().players[0].scores[0],3);
  assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1);
+ ui.click('action','sip');
+ assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1,'loslaatklik mag nooit nogmaals een score opslaan');
 });
 
 test('ranglijst toont minstens 16 deelnemers, met beste eerst en gelijke stand op aanmeldvolgorde',()=>{
@@ -551,4 +576,47 @@ test('STOP DE PLUIM heeft live wijzer, kleurzone, tijdlimiet en veilige stopacti
  assert.match(styles,/\.pluim-zone/);
  assert.match(styles,/\.pluim-stop-button/);
  assert.match(styles,/prefers-reduced-motion:reduce/);
+});
+
+test('lange druk bij nul slokken mag geen score vastleggen',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{clock:true});
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ ui.holdStart();
+ ui.runHoldTimer();
+ ui.holdStop();
+ assert.equal(ui.view(),'hole');
+ assert.equal(ui.queue().length,0);
+ ui.click('action','sip'); // Een touchrelease na long press wordt genegeerd.
+ assert.equal(ui.element('stroke-value').textContent,'0');
+ ui.click('action','sip');
+ assert.equal(ui.element('stroke-value').textContent,'1');
+});
+
+test('een korte toetsenborddruk telt slokken en een lange toetsenborddruk bevestigt',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{clock:true});
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ ui.keyboardSip(' ','keydown');
+ ui.advance(110);
+ ui.keyboardSip(' ','keyup');
+ assert.equal(ui.element('stroke-value').textContent,'1');
+ assert.equal(ui.queue().length,0);
+ ui.keyboardSip('Enter','keydown');
+ ui.runHoldTimer();
+ assert.equal(ui.view(),'ace','één slok bevestigen blijft een hole-in-one jackpot');
+ assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1);
+});
+
+test('een geannuleerde hold mag nooit de score bewaren',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{clock:true});
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ ui.click('action','sip');
+ ui.holdStart();
+ ui.advance(450);
+ ui.holdCancel();
+ ui.advance(600);
+ assert.equal(ui.view(),'hole');
+ assert.equal(ui.queue().length,0);
 });
