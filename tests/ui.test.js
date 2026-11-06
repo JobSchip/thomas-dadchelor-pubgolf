@@ -86,7 +86,7 @@ test('dronken-check-in gebruikt de nieuwe vrienden-copy en bewaart optie 4 als b
  assert.match(ui.html(),/Hoe ga <i>je\?<\/i>/);
  assert.match(ui.html(),/Even inchecken als vrienden onder elkaar/);
  assert.equal((ui.html().match(/class="thomas-sticker sticker-[0-7] mood-sticker"/g)||[]).length,4,'vier echte stickers, geen smileys');
- assert.doesNotMatch(ui.html(),/mood-emoji/);
+ assert.doesNotMatch(ui.html(),/mood-emoji|Geen jury|bonusslag|Voor die ene bonus/);
   for(const label of ['Vlees nog vis','Lekker in de oli','Poepiepapiepoe','GAA VOOR GOUUUDD'])
   assert.ok(ui.html().includes(label),label+' ontbreekt');
  ui.click('mood','3');
@@ -95,14 +95,15 @@ test('dronken-check-in gebruikt de nieuwe vrienden-copy en bewaart optie 4 als b
  assert.match(ui.html(),/SLAG CADEAU/);
 });
 
-test('klassement heeft een podium met drie klikbare scorekaarten, plus iconen tot de drol',()=>{
+test('klassement toont alle vijf spelers in één verticale volgorde van goed naar minder goed',()=>{
  const names=['Alec','Vincent','Thomas','Robin','Mats'];
  const players=names.map((name,i)=>player(name,'p'+(i+1),[8+i,10,8,1,7,9],1,{one:'blue',two:'18',four:'Thomas'},'p2'));
  const ui=boot(players);
  ui.click('action','board');
  assert.equal(ui.view(),'board');
- assert.equal((ui.html().match(/class="podium-card/g)||[]).length,3);
- assert.match(ui.html(),/class="leader-list"/);
+ assert.equal((ui.html().match(/class="leader-row /g)||[]).length,5);
+ assert.doesNotMatch(ui.html(),/class="podium-card/);
+ assert.match(ui.html(),/class="leader-list leader-vertical-list"/);
  assert.match(ui.html(),/💩/);
  ui.click('leader','p1');
  assert.equal(ui.view(),'detail');
@@ -143,7 +144,10 @@ test('tap-to-pour is een aparte kroegervaring, zonder score of bonus weg te schr
  assert.equal(ui.state().players[0].scores[0],null);
  ui.click('action','gotDrink');
  assert.equal(ui.view(),'hole');
- assert.match(ui.html(),/Score vastleggen/);
+ assert.match(ui.html(),/PAR 8 SLOKKEN/);
+ assert.match(ui.html(),/ELKE TIK = \+1 SLOK/);
+ assert.match(ui.html(),/id="stroke-value"[^>]*>0<\/strong>/);
+ assert.match(ui.html(),/data-action="sip"/);
  assert.equal(ui.queue().length,0);
 });
 
@@ -172,6 +176,7 @@ test('hole-in-one-jackpot na exact één slag in hole vier blijft zichtbaar tot 
  ui.click('action','pourDrink');
  ui.click('action','gotDrink');
  assert.equal(ui.view(),'hole');
+ ui.click('action','sip');
  ui.click('action','submit');
  assert.equal(ui.view(),'ace');
  assert.match(ui.html(),/ace-insane/);
@@ -196,7 +201,8 @@ test('score twee op hole vier toont klassement, niet de hole-in-one-jackpot',()=
  const ui=boot([golfer]);
  ui.click('action','pourDrink');
  ui.click('action','gotDrink');
- ui.click('action','plus');
+ ui.click('action','sip');
+ ui.click('action','sip');
  ui.click('action','submit');
  assert.equal(ui.view(),'board');
  assert.equal(ui.state().players[0].scores[3],2);
@@ -215,8 +221,8 @@ test('alle zes holes geven de BOEM-jackpot bij precies één slag, met de juiste
   ui.click('action','pourDrink');
   ui.click('action','gotDrink');
   assert.equal(ui.view(),'hole');
-  assert.match(ui.html(),/1 SLAG = HOLE-IN-ONE/);
-  for(let n=1;n<pars[hole];n++)ui.click('action','minus');
+  assert.match(ui.html(),new RegExp('PAR '+pars[hole]+' SLOKKEN'));
+  ui.click('action','sip');
   ui.click('action','submit');
   assert.equal(ui.view(),'ace','Hole '+(hole+1)+' moet jackpot tonen');
   assert.match(ui.html(),new RegExp('HOLE 0'+(hole+1)));
@@ -240,7 +246,8 @@ test('andere scores dan één in een willekeurige hole houden de normale score-f
   const ui=boot([player('Thomas','p1',scores,3,{one:'blue',two:'18',four:'Thomas'},'p1')]);
   ui.click('action','pourDrink');
   ui.click('action','gotDrink');
-  for(let i=2;i<pars[hole];i++)ui.click('action','minus');
+  ui.click('action','sip');
+  ui.click('action','sip');
   ui.click('action','submit');
   assert.equal(ui.view(),'board','Geen jackpot voor '+(hole+1));
   assert.equal(ui.state().players[0].scores[hole],2);
@@ -254,16 +261,17 @@ test('Thomas stickers maken cameo bij quizvragen, scorekaart en jackpot zonder s
  assert.match(ui.html(),/taproom-peeker/);
  ui.click('action','pourDrink');
  ui.click('action','gotDrink');
- assert.match(ui.html(),/drink-sticker/);
+ assert.match(ui.html(),/sip-sticker/);
  const two=player('Thomas','p1',[8,10,8,null,null,null],3,{one:'blue',two:'18'});
  const ui2=boot([two]);
  ui2.click('action','pourDrink');ui2.click('action','gotDrink');
- ui2.click('action','plus'); // Een fluitje met 1 slag is terecht een jackpot.
+ ui2.click('action','sip');
+ ui2.click('action','sip'); // Twee slokken: geen jackpot.
  ui2.click('action','submit');
  assert.equal(ui2.view(),'board');
  assert.match(ui2.html(),/leader-sticker-peek/);
  const ace=boot([player('Thomas','p1',[8,10,8,null,null,null],3,{one:'blue',two:'18'})]);
- ace.click('action','pourDrink');ace.click('action','gotDrink');ace.click('action','submit');
+ ace.click('action','pourDrink');ace.click('action','gotDrink');ace.click('action','sip');ace.click('action','submit');
  assert.equal(ace.view(),'ace');
  assert.equal((ace.html().match(/class="ace-sticker-fly/g)||[]).length,4);
 });
@@ -302,4 +310,52 @@ test('primaire kleuren maken check-in, quiz, kroeg en score visueel uniek',()=>{
  assert.match(styles,/thomas-jumpscare--medium/);
  assert.match(styles,/thomas-jumpscare--full/);
  assert.match(styles,/prefers-reduced-motion:reduce/);
+});
+
+test('tapscherm begint op nul: elke tik telt één slok, herstel werkt en registratie vereist bevestiging',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})]);
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ assert.equal(ui.view(),'hole');
+ assert.match(ui.html(),/PAR 8 SLOKKEN/);
+ assert.match(ui.html(),/id="sip-submit"[^>]*disabled/);
+ ui.click('action','submit');
+ assert.equal(ui.view(),'hole');
+ assert.equal(ui.queue().length,0);
+ assert.equal(ui.element('stroke-value').textContent,'');
+ ui.click('action','sip');ui.click('action','sip');ui.click('action','sip');
+ assert.equal(ui.element('stroke-value').textContent,'3');
+ assert.equal(ui.element('sip-progress').textContent,'3 / PAR 8');
+ assert.equal(ui.element('sip-submit').disabled,false);
+ ui.click('action','minus');
+ assert.equal(ui.element('stroke-value').textContent,'2');
+ assert.equal(ui.element('sip-progress').textContent,'2 / PAR 8');
+ assert.equal(ui.queue().length,0,'tikken slaan niet alvast scores op');
+ ui.click('action','submit');
+ assert.equal(ui.view(),'board');
+ assert.equal(ui.state().players[0].scores[0],2);
+ assert.equal(ui.queue().filter(x=>x.type==='setScore').length,1);
+});
+
+test('ranglijst toont minstens 16 deelnemers, met beste eerst en gelijke stand op aanmeldvolgorde',()=>{
+ const raw=[9,2,7,4,1,6,3,12,8,11,10,5,16,15,14,13];
+ const group=raw.map((x,i)=>player('Deelnemer '+(i+1),'p'+(i+1),[x,10,8,1,7,9],3,{one:'blue',two:'18',four:'Thomas'},'p2'));
+ const ui=boot(group);
+ ui.click('action','board');
+ assert.equal(ui.view(),'board');
+ const html=ui.html();
+ assert.equal((html.match(/class="leader-row /g)||[]).length,16);
+ assert.doesNotMatch(html,/class="podium-card/);
+ assert.ok(html.indexOf('data-leader="p5"')<html.indexOf('data-leader="p2"'));
+ assert.ok(html.indexOf('data-leader="p2"')<html.indexOf('data-leader="p7"'));
+ assert.ok(html.indexOf('data-leader="p13"')>html.indexOf('data-leader="p15"'));
+ assert.match(html,/16 GOLFERS/);
+ assert.match(html,/💩/);
+ const same=[
+ player('Zebra','p1',[8,10,8,1,7,9],3,{one:'blue',two:'18',four:'Thomas'}),
+ player('Aap','p2',[8,10,8,1,7,9],3,{one:'blue',two:'18',four:'Thomas'})
+ ];
+ const tied=boot(same);
+ tied.click('action','board');
+ assert.ok(tied.html().indexOf('data-leader="p1"')<tied.html().indexOf('data-leader="p2"'),'gelijke score: eerst aangemeld eerst');
 });
