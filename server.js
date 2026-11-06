@@ -163,6 +163,12 @@ const server=http.createServer((req,res)=>{
    }
   }
   if(req.headers['if-none-match']===asset.etag){res.writeHead(304,headers);return res.end()}
+  // Never send compressed MP4: Android video decoders expect raw, seekable bytes.
+  if(file.endsWith('.mp4')){
+   headers['Content-Length']=asset.raw.length;
+   res.writeHead(200,headers);
+   return req.method==='HEAD'?res.end():res.end(asset.raw);
+  }
   const accept=String(req.headers['accept-encoding']||'');
   let output=asset.raw;
   if(asset.br&&accept.includes('br')){headers['Content-Encoding']='br';output=asset.br}
