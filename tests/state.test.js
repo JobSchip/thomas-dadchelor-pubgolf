@@ -105,6 +105,12 @@ test('mobiele videos ondersteunen video/mp4, iPhone byte ranges en HEAD',async()
   assert.equal(full.headers.get('content-type'),'video/mp4');
   assert.equal(full.headers.get('accept-ranges'),'bytes');
   assert.equal(Number(full.headers.get('content-length')),fileSize);
+  // Android must get raw, seekable MP4 bytes even when it requests gzip.
+  const android=await fetch(base,{headers:{'Accept-Encoding':'gzip'}});
+  assert.equal(android.status,200);
+  assert.equal(android.headers.get('content-encoding'),null);
+  assert.equal(Number(android.headers.get('content-length')),fileSize);
+  assert.equal((await android.arrayBuffer()).byteLength,fileSize);
   const partial=await fetch(base,{headers:{Range:'bytes=0-99'}});
   assert.equal(partial.status,206);
   assert.equal(partial.headers.get('content-range'),'bytes 0-99/'+fileSize);
