@@ -662,6 +662,9 @@ function completeSipHold(){
  if(view!=="hole"||sipHoldDone)return;
  sipHoldDone=true;
  ignoreSipClick=true;
+ // Safari may suppress the synthetic click after a long hold.
+ // Expire this guard, so a later legitimate tap is never lost.
+ setTimeout(()=>{ignoreSipClick=false},420);
  cancelSipHold();
  confirmSipScore();
 }
