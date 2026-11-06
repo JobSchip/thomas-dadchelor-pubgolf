@@ -346,6 +346,8 @@ test('minimalistische slokkenteller toont uitsluitend PAR en één ronde knop; a
  ui.click('action','gotDrink');
  assert.equal(ui.view(),'hole');
  assert.match(ui.html(),/PAR <strong>8<\/strong>/);
+ assert.match(ui.html(),/Houd de knop ingedrukt als je glas leeg is\./);
+ assert.match(ui.html(),/aria-describedby="sip-hold-help"/);
  assert.equal((ui.html().match(/<button /g)||[]).length,1);
  assert.doesNotMatch(ui.html(),/HOLE 1|Jopen|Mooie Nel|sip-submit|sip-undo|sip-stage|sip-sticker|sip-hint|Volgende hole/);
  assert.match(ui.html(),/id="stroke-value"[^>]*>0<\/strong>/);
