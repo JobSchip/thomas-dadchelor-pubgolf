@@ -372,7 +372,7 @@ function setView(next){
  view=next;render();
  window.scrollTo({top:0,behavior:"instant"});
  const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",thomolIntro:"general",thomolPlay:"general",thomolResult:"good",pluimIntro:"general",pluimPlay:"general",pluimResult:"good",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
- setTimeout(()=>{if(view===next)rainIcons(kind,next==="ace"?18:next==="preview"?22:next==="board"?16:14)},120);
+ if(next!=="preview")setTimeout(()=>{if(view===next)rainIcons(kind,next==="ace"?18:next==="board"?16:14)},120);
 }
 
 const THOMOL_DURATION=16000,THOMOL_MAX_HITS=10;
@@ -759,47 +759,36 @@ const BAR_LINES=[
  ["Het laatste rondje is aangebroken.","Finale. Net doen alsof je nog scherp bent."]
 ];
 function preview(){
- const h=HOLES[hole],ready=pourReady;
- const drunk=hole,clean=HOLES.length-hole-1;
- const glasses=HOLES.map((drink,i)=>{
+ const ready=pourReady;
+ const colors=["blond","dark","amber","pils","gold","dark-amber"];
+ const glasses=HOLES.map((_,i)=>{
   const status=i<hole?"is-drunk":i===hole?"is-current":"is-clean";
-  const served=i===hole&&ready?"is-filled":"";
-  const label=i<hole?"Leeggedronken glas "+(i+1):i===hole?"Biertje "+(i+1)+" tappen":"Schoon glas "+(i+1);
-  const content=`<span class="tavern-glass ${status} ${served} glass-${drink.visual}">
-    <span class="tavern-glass-beer"></span>
-    <span class="tavern-glass-foam"></span>
-    <span class="tavern-glass-reflection"></span>
-   </span>
-   <span class="tavern-glass-number">${i+1}</span>`;
-  if(i===hole)return `<button class="tavern-glass-slot tavern-current-glass ${served}" type="button" data-action="${ready?'gotDrink':'pourDrink'}" aria-label="${ready?'Biertje '+(i+1)+' is klaar; ga naar de slokkenteller':label}">
-    ${content}
-   </button>`;
-  return `<div class="tavern-glass-slot" aria-label="${label}">${content}</div>`;
+  const filled=i===hole&&ready?"is-filled":"";
+  const label=i<hole?"Leeg glas":i===hole?(ready?"Volgetapt glas, ga naar de slokkenteller":"Tap dit schone glas"):"Schoon glas";
+  const content=`<span class="tavern-glass ${status} ${filled} beer-${colors[i]}">
+   <span class="tavern-glass-beer"></span><span class="tavern-glass-foam"></span>
+   <span class="tavern-glass-reflection"></span>
+  </span>`;
+  if(i===hole)return `<button class="tavern-glass-slot tavern-current-glass ${filled}" type="button" data-action="${ready?'gotDrink':'pourDrink'}" aria-label="${label}">${content}</button>`;
+  return `<div class="tavern-glass-slot" role="img" aria-label="${label}">${content}</div>`;
  }).join("");
- return `<div class="page-card taproom tavern ${ready?'is-served':'is-waiting'}" data-tap-hole="${hole+1}">
+ return `<div class="page-card taproom tavern tavern-clean ${ready?'is-served':'is-waiting'}" data-tap-hole="${hole+1}">
   <div class="tavern-interior" aria-hidden="true">
    <span class="tavern-wall-rail"></span><span class="tavern-shelf tavern-shelf-one"></span><span class="tavern-shelf tavern-shelf-two"></span>
    <span class="tavern-bottles tavern-bottles-left"></span><span class="tavern-bottles tavern-bottles-right"></span>
    <span class="tavern-wall-lamp lamp-left"></span><span class="tavern-wall-lamp lamp-right"></span>
   </div>
-  <div class="tavern-topline"><span>PRE PAPA · PLUIM PUB GOLF</span><strong>RONDE ${hole+1} / 6</strong></div>
-  <div class="tavern-host" aria-label="Thomas staat achter de bar en roept Volgende ronde">
-   <div class="tavern-speech">VOLGENDE<br>RONDE<span>!</span></div>
-   <div class="tavern-thomas">${sticker([3,3,3,3,3,3][hole],"tavern-thomas-face")}<span class="tavern-host-name">THOMAS</span></div>
+  <div class="tavern-host" aria-label="Thomas staat achter de bar">
+   <div class="tavern-speech">VOLGENDE<span>!</span></div>
+   <div class="tavern-thomas">${sticker(3,"tavern-thomas-face")}</div>
   </div>
-  <div class="tavern-order"><span>BIERTJE ${hole+1}</span><strong>${escapeHtml(h.drink)}</strong></div>
   <div class="tavern-stage">
    <div class="tavern-bar-counter" aria-hidden="true"></div>
    <div class="tavern-glass-lineup">${glasses}</div>
   </div>
-  <div class="tavern-inventory" role="group" aria-label="Glazen op de bar">
-   <div><strong>${drunk}</strong><span>LEEGGEDRONKEN<br>AL GEHAD</span></div>
-   <div class="tavern-inventory-current"><strong>1</strong><span>${ready?'VOLGETAPT':'AAN DE BEURT'}</span></div>
-   <div><strong>${clean}</strong><span>SCHOON<br>NOG TE GAAN</span></div>
-  </div>
   <button type="button" class="tavern-action" data-action="${ready?'gotDrink':'pourDrink'}">
    <span class="tavern-action-icon">${ready?'✓':'🍺'}</span>
-   <span><strong>${ready?"Ik heb m'n drankje!":"Tap biertje "+(hole+1)}</strong><small>${ready?'Op naar de slokkenteller':'Tik op het glas of deze knop'}</small></span>
+   <strong>${ready?'Verder':'Tap glas'}</strong>
    <span class="tavern-action-arrow">→</span>
   </button>
  </div>`;
