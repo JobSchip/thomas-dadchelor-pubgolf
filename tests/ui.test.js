@@ -151,52 +151,76 @@ test('startpagina heeft Pre Papa. Pluim Pub Golf. zonder Haarlem Open',()=>{
  assert.match(ui.html(),/landing-sticker/);
 });
 
-test('tap-to-pour is een aparte kroegervaring, zonder score of bonus weg te schrijven',()=>{
+test('bruin café heeft Thomas achter de bar en laat het juiste glas tappen zonder scores te wijzigen',()=>{
  const golfer=player('Thomas','p1',[null,null,null,null,null,null],null,{});
  const ui=boot([golfer]);
  assert.equal(ui.view(),'preview');
- assert.match(ui.html(),/class="page-card taproom is-waiting"/);
- assert.match(ui.html(),/taproom-machine/);
- assert.match(ui.html(),/Tap dat biertje/);
+ assert.match(ui.html(),/taproom tavern is-waiting/);
+ assert.match(ui.html(),/VOLGENDE/);
+ assert.match(ui.html(),/RONDE<span>!/);
+ assert.match(ui.html(),/tavern-thomas-face/);
+ assert.match(ui.html(),/data-tap-hole="1"/);
+ assert.match(ui.html(),/Tap biertje 1/);
+ assert.equal((ui.html().match(/class="tavern-glass-slot/g)||[]).length,6);
+ assert.match(ui.html(),/0<\/strong><span>LEEGGEDRONKEN/);
+ assert.match(ui.html(),/5<\/strong><span>SCHOON/);
+ assert.doesNotMatch(ui.html(),/Jopen|Tierney|Uiver|De Lift|Café Studio/);
  assert.doesNotMatch(ui.html(),/class="bar-scene"/);
  ui.click('action','gotDrink');
- assert.equal(ui.view(),'preview','oude scoreknop mag de tap niet overslaan');
+ assert.equal(ui.view(),'preview','je kunt het tappen niet overslaan');
  ui.click('action','pourDrink');
  assert.equal(ui.view(),'preview');
- assert.match(ui.html(),/taproom is-served/);
- assert.match(ui.html(),/Je drankje is klaar/);
+ assert.match(ui.html(),/taproom tavern is-served/);
+ assert.match(ui.html(),/tavern-glass is-current is-filled/);
  assert.match(ui.html(),/Ik heb m&#39;n drankje!|Ik heb m'n drankje!/);
- assert.equal(ui.queue().length,0,'gimmick verstuurt geen score');
+ assert.equal(ui.queue().length,0,'tappen verstuurt geen score');
  assert.equal(ui.state().players[0].scores[0],null);
  ui.click('action','gotDrink');
  assert.equal(ui.view(),'hole');
  assert.match(ui.html(),/PAR <strong>8<\/strong>/);
  assert.match(ui.html(),/id="stroke-value">0<\/strong>/);
- assert.match(ui.html(),/Hoeveel slokken\?/);
- assert.match(ui.html(),/id="sip-comparison"/);
- assert.equal((ui.html().match(/<button /g)||[]).length,3);
- assert.match(ui.html(),/data-action="minus"/);
- assert.match(ui.html(),/data-action="plus"/);
- assert.match(ui.html(),/data-action="submit"/);
  assert.equal(ui.queue().length,0);
 });
 
-test('elke van de zes kroegen heeft een eigen tap-to-pour-ervaring en behoudt zijn PAR',()=>{
+test('zes rondes vullen precies het juiste glas en tonen lege versus schone glazen',()=>{
+ const pars=[8,10,8,1,7,9];
  const venues=['Jopen',"Tierney's Irish Pub",'Proeflokaal In den Uiver','Bierlokaal de Uiver','Café De Lift','Café Studio'];
- const par=[8,10,8,1,7,9];
  for(let i=0;i<6;i++){
-  const scores=Array.from({length:6},(_,j)=>j<i?par[j]:null);
+  const scores=pars.map((p,j)=>j<i?p:null);
   const golfer=player('Thomas','p1',scores,3,{one:'blue',two:'18',four:'Thomas'},'p1');
   const ui=boot([golfer]);
-  assert.equal(ui.view(),'preview','hole '+(i+1));
-  assert.ok(ui.html().includes(venues[i].replace(/'/g,'&#39;')),'kroeg '+(i+1));
-  assert.doesNotMatch(ui.html(),/taproom-topline|taproom-bottomline|taproom-banter|taproom-nudge|taproom-glass-label/);
-  assert.doesNotMatch(ui.html(),/PAR [0-9]+|DE VOLGENDE RONDE|\/ 06|THOMAS&#39; OPEN · HOLE/);
-  assert.match(ui.html(),/taproom-machine/);
-  assert.match(ui.html(),/taproom-peeker/);
+  assert.equal(ui.view(),'preview','ronde '+(i+1));
+  const html=ui.html();
+  assert.equal((html.match(/class="tavern-glass-slot/g)||[]).length,6);
+  assert.equal((html.match(/tavern-glass is-drunk/g)||[]).length,i);
+  assert.equal((html.match(/tavern-glass is-clean/g)||[]).length,5-i);
+  assert.match(html,new RegExp('data-tap-hole="'+(i+1)+'"'));
+  assert.match(html,new RegExp('data-action="pourDrink"'));
+  assert.match(html,new RegExp('BIERTJE '+(i+1)));
+  assert.match(html,new RegExp('<strong>'+i+'</strong><span>LEEGGEDRONKEN'));
+  assert.match(html,new RegExp('<strong>'+(5-i)+'</strong><span>SCHOON'));
+  for(const venue of venues)assert.ok(!html.includes(venue.replace(/'/g,'&#39;')),'kroegnaam mag niet zichtbaar zijn');
+  ui.click('action','pourDrink');
   assert.match(ui.html(),new RegExp('data-tap-hole="'+(i+1)+'"'));
-  assert.match(ui.html(),/data-action="pourDrink"/);
+  assert.equal((ui.html().match(/tavern-glass is-current is-filled/g)||[]).length,1);
+  assert.equal(ui.queue().length,0);
  }
+});
+
+test('in ronde drie staan twee lege glazen, tap je nummer drie en blijven drie schone over',()=>{
+ const golfer=player('Thomas','p1',[8,10,null,null,null,null],null,{one:'blue',two:'18'},null,0);
+ const ui=boot([golfer]);
+ assert.equal(ui.view(),'thomolIntro'); // eerst de eenmalige bonus na hole twee
+ ui.click('action','thomolSkip');
+ ui.click('action','continue');
+ assert.equal(ui.view(),'preview');
+ assert.match(ui.html(),/RONDE 3 \/ 6/);
+ assert.equal((ui.html().match(/tavern-glass is-drunk/g)||[]).length,2);
+ assert.equal((ui.html().match(/tavern-glass is-clean/g)||[]).length,3);
+ assert.match(ui.html(),/data-action="pourDrink" aria-label="Biertje 3 tappen"/);
+ ui.click('action','pourDrink');
+ assert.match(ui.html(),/tavern-glass is-current is-filled/);
+ assert.equal(ui.queue().length,0);
 });
 
 test('hole-in-one-jackpot na exact één slag in hole vier blijft zichtbaar tot zelf doorklikken',()=>{
@@ -288,7 +312,7 @@ test('Thomas stickers maken cameo bij quizvragen, scorekaart en jackpot zonder s
  const golfer=player('Thomas','p1',[8,10,null,null,null,null],null,{one:'blue',two:'18'});
  const ui=boot([golfer]);
  assert.equal(ui.view(),'preview');
- assert.match(ui.html(),/taproom-peeker/);
+ assert.match(ui.html(),/tavern-thomas-face/);
  ui.click('action','pourDrink');
  ui.click('action','gotDrink');
  assert.match(ui.html(),/sip-score-page/);
