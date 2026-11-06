@@ -1,16 +1,7 @@
-name: Android APK — Thomas Pub Golf
+name: Android APK — Manual only
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'ios-app/**'
-      - 'app.js'
-      - 'index.html'
-      - 'styles.css'
-      - 'assets/**'
-      - '.github/workflows/android-apk.yml'
 
 permissions:
   contents: read
