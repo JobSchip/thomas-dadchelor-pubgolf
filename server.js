@@ -134,7 +134,7 @@ const server=http.createServer((req,res)=>{
    headers['Accept-Ranges']='bytes';
    const range=String(req.headers.range||'');
    if(range){
-    const match=/^bytes=(\\d*)-(\\d*)$/.exec(range);
+    const match=/^bytes=(\d*)-(\d*)$/.exec(range);
     if(!match||(match[1]===''&&match[2]==='')){
      res.writeHead(416,{...headers,'Content-Range':'bytes */'+total,'Content-Length':0});return res.end();
     }
