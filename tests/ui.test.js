@@ -339,7 +339,7 @@ test('tapscherm begint op nul: elke tik telt één slok, herstel werkt en regist
 
 test('ranglijst toont minstens 16 deelnemers, met beste eerst en gelijke stand op aanmeldvolgorde',()=>{
  const raw=[9,2,7,4,1,6,3,12,8,11,10,5,16,15,14,13];
- const group=raw.map((x,i)=>player('Deelnemer '+(i+1),'p'+(i+1),[x,10,8,1,7,9],3,{one:'blue',two:'18',four:'Thomas'},'p2'));
+ const group=raw.map((x,i)=>player('Deelnemer '+(i+1),'p'+(i+1),[x,10,8,1,7,9],3,{one:'blue',two:'18',four:'Thomas'},null));
  const ui=boot(group);
  ui.click('action','board');
  assert.equal(ui.view(),'board');
