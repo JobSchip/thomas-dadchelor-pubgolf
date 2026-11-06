@@ -56,7 +56,7 @@ function staticAsset(file){
 function validId(id){return typeof id==='string'&&id.length>0&&id.length<=80&&/^[\w-]+$/.test(id)}
 function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeldige wijziging';if(s.seenActions.includes(a.id))return null;
  if(a.type==='addPlayer'){
-  if(!a.player||!validId(a.player.id)||typeof a.player.name!=='string')return 'Ongeldige speler';const name=a.player.name.trim().replace(/\s+/g,' ');if(name.length<2||name.length>32)return 'Spelersnaam moet 2-32 tekens zijn';if(s.players.length>=32)return 'Maximaal 32 spelers';if(s.players.some(p=>p.id===a.player.id||p.name.toLowerCase()===name.toLowerCase()))return 'Speler bestaat al';s.players.push({id:a.player.id,name,avatar:typeof a.player.avatar==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.player.avatar)&&a.player.avatar.length<60000?a.player.avatar:'',scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null});
+  if(!a.player||!validId(a.player.id)||typeof a.player.name!=='string')return 'Ongeldige speler';const name=a.player.name.trim().replace(/\s+/g,' ');if(name.length<2||name.length>32)return 'Spelersnaam moet 2-32 tekens zijn';if(s.players.length>=32)return 'Maximaal 32 spelers';if(s.players.some(p=>p.id===a.player.id||p.name.toLowerCase()===name.toLowerCase()))return 'Speler bestaat al';s.players.push({id:a.player.id,name,avatar:typeof a.player.avatar==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.player.avatar)&&a.player.avatar.length<60000?a.player.avatar:'',scores:Array(6).fill(null),salmari:0,checkin:null,answers:{},nomination:null,thomolHits:null});
  }else if(a.type==='setScore'){
   const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(!Number.isInteger(a.hole)||a.hole<0||a.hole>5)return 'Ongeldige hole';if(!Number.isInteger(a.value)||a.value<1||a.value>99)return 'Ongeldige score';if(Number.isInteger(p.scores[a.hole]))return 'Score is definitief en kan niet worden aangepast';p.scores[a.hole]=a.value;
  }else if(a.type==='setSalmari'){
@@ -78,6 +78,12 @@ function act(s,a){if(!a||!validId(a.id)||typeof a.type!=='string')return 'Ongeld
   if(typeof p.nomination==='string'&&p.nomination.length)return 'Er is al iemand gekozen';
   if(!validId(a.targetPlayerId)||!s.players.some(x=>x.id===a.targetPlayerId))return 'Speler niet gevonden';if(s.players.length>1&&a.targetPlayerId===a.playerId)return 'Kies een andere golfer';
   p.nomination=a.targetPlayerId;
+ }else if(a.type==='finishThomol'){
+  const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';
+  if(!Number.isInteger(p.scores?.[1])||!p.answers?.two)return 'Speel eerst de tweede ronde en de quiz';
+  if(Number.isInteger(p.thomolHits))return 'HIT THE THOMOL is al gespeeld';
+  if(!Number.isInteger(a.hits)||a.hits<0||a.hits>10)return 'Ongeldig aantal Thomol-hits';
+  p.thomolHits=a.hits;
  }else if(a.type==='setAvatar'){
   const p=s.players.find(p=>p.id===a.playerId);if(!p)return 'Speler niet gevonden';if(typeof a.avatar!=='string'||a.avatar.length>60000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(a.avatar))return 'Ongeldige profielfoto';p.avatar=a.avatar;
  }else if(a.type==='removePlayer'){
