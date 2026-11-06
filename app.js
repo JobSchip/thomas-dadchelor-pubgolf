@@ -312,6 +312,131 @@ function setView(next){
  const kind={preview:"preview",hole:"drink",board:"board",detail:"scorecard",checkin:"mood",checkinResult:"mood",quiz1:"baby",quiz2:"calendar",quiz4:"names",nominate:"gift",thomolIntro:"general",thomolPlay:"general",thomolResult:"good",quizResult:"result",giftResult:"gift",ace:"ace",finish:"finish",welcome:"welcome"}[next]||"general";
  setTimeout(()=>{if(view===next)rainIcons(kind,next==="ace"?18:next==="preview"?22:next==="board"?16:14)},120);
 }
+
+const THOMOL_DURATION=13000,THOMOL_MAX_HITS=10;
+function thomolClearTimers(){
+ if(thomolPopTimer){clearTimeout(thomolPopTimer);thomolPopTimer=null}
+ if(thomolTickTimer){clearInterval(thomolTickTimer);thomolTickTimer=null}
+}
+function thomolIntro(){
+ return `<div class="page-card thomol-intro">
+  <span class="thomol-kicker">⚡ VERBORGEN BONUSRONDE</span>
+  <div class="thomol-intro-art" aria-hidden="true">
+   <span class="thomol-impact thomol-impact-a">BOEM!</span>
+   ${sticker(3,"thomol-hero-sticker")}
+   <span class="thomol-impact thomol-impact-b">THOMAS!</span>
+  </div>
+  <h1 class="thomol-title">HIT THE<br><em>THOMOL</em></h1>
+  <p class="thomol-description">Thomas komt overal omhoog. Pak 'm als je kan.</p>
+  <div class="thomol-rules"><span>⏱️ 13 seconden</span><span>🔨 9 gaten</span><span>🎯 1 hit = −1 slag</span></div>
+  <p class="thomol-footnote">Hij is razendsnel. Eén poging. Maximaal 10 slagen korting.</p>
+  <div class="grow"></div>
+  <button type="button" class="cta thomol-start-btn" data-action="thomolStart">START HET GEKLOP <span>→</span></button>
+  <button type="button" class="thomol-skip" data-action="thomolSkip">Deze bonusronde overslaan</button>
+ </div>`;
+}
+function thomolPlay(){
+ const g=thomolRound||{hits:0,misses:0,active:-1,decoy:-1,until:Date.now()};
+ const seconds=Math.max(0,Math.ceil((g.until-Date.now())/1000));
+ return `<div class="page-card thomol-play">
+  <div class="thomol-status"><span>🔨 HIT THE THOMOL</span><strong id="thomol-timer">${seconds}s</strong></div>
+  <div class="thomol-progress-row"><div><small>RAAK</small><strong>${g.hits}<span> / ${THOMOL_MAX_HITS}</span></strong></div>
+  <div><small>MIS</small><strong>${g.misses}</strong></div></div>
+  <p class="thomol-command">HOPPA! TIK OP DE ECHTE THOMAS.</p>
+  <div class="thomol-grid" role="group" aria-label="Negen gaten met een opduikende Thomas">
+  ${Array.from({length:9},(_,i)=>`<button type="button" class="thomol-hole ${i===g.active?'mole-active':''} ${i===g.decoy?'mole-fake':''}" data-thomol-cell="${i}" aria-label="Gat ${i+1}">
+    <span class="thomol-hole-back"></span>
+    ${i===g.active?sticker(3,"thomol-mole"):i===g.decoy?sticker(4,"thomol-decoy"):''}
+    <span class="thomol-hole-front"></span>
+   </button>`).join("")}</div>
+  <div class="thomol-taunt" aria-live="polite">${g.lastQuote?`“${escapeHtml(g.lastQuote)}”`:'THOMAS KOMT ERAAN...'}</div>
+  <div class="grow"></div>
+  <p class="thomol-guidance">Eén tik per raakmoment. Laat je niet foppen door de nep-Thomas.</p>
+ </div>`;
+}
+function thomolResult(){
+ const hits=me()?.thomolHits??0;
+ return `<div class="page-card thomol-result">
+  <span class="thomol-kicker">🔨 DE BONUSRONDE IS VOORBIJ</span>
+  <div class="thomol-result-art">${sticker(3,"thomol-result-sticker")}<span class="thomol-stamp">GERAAKT!</span></div>
+  <h1 class="thomol-title">${hits?'LEKKER':'HELAAS'}<br><em>${hits?'GERAMD!':'GEKLOOPT.'}</em></h1>
+  <p class="thomol-result-description">${hits?'Thomas heeft het geweten.':"Thomas is je ontsnapt, oule."}</p>
+  <div class="thomol-score-plate"><strong>−${hits}</strong><span>${hits===1?'SLAG':'SLAGEN'} VERDIEND</span></div>
+  <p class="thomol-result-quote">“${escapeHtml(hits>2?'Hahahh wat een fucking legend':hits>0?'Goed geprobeerd':'Niet slim oule??')}” — THOMAS</p>
+  <div class="grow"></div>
+  <button type="button" class="cta thomol-next" data-action="continue">Op naar de volgende kroeg <span>→</span></button>
+ </div>`;
+}
+function thomolStart(){
+ const p=me();
+ if(!p||Number.isInteger(p.thomolHits))return nextHole();
+ if(!Number.isInteger(p.scores?.[1])||!p.answers?.two)return nextHole();
+ thomolClearTimers();
+ thomolRound={hits:0,misses:0,active:-1,decoy:-1,last:-1,lastQuote:"",until:Date.now()+THOMOL_DURATION,hitThisPop:false};
+ setView("thomolPlay");
+ thomolSpawn();
+ thomolTickTimer=setInterval(()=>{
+  if(!thomolRound||view!=="thomolPlay"){thomolClearTimers();return}
+  const remaining=thomolRound.until-Date.now();
+  if(remaining<=0){thomolFinish();return}
+  const ticker=el("thomol-timer");
+  if(ticker)ticker.textContent=Math.ceil(remaining/1000)+"s";
+ },100);
+}
+function thomolSpawn(){
+ const g=thomolRound;
+ if(!g||view!=="thomolPlay")return;
+ if(Date.now()>=g.until){thomolFinish();return}
+ const candidates=Array.from({length:9},(_,i)=>i).filter(i=>i!==g.last);
+ const target=candidates[Math.floor(Math.random()*candidates.length)];
+ g.last=target;
+ g.active=target;
+ g.hitThisPop=false;
+ // Two heads appear often, but only one counts as a hit.
+ const options=Array.from({length:9},(_,i)=>i).filter(i=>i!==target);
+ g.decoy=Math.random()<.63?options[Math.floor(Math.random()*options.length)]:-1;
+ render();
+ const exposure=310+Math.floor(Math.random()*210);
+ thomolPopTimer=setTimeout(()=>{
+  if(!thomolRound||view!=="thomolPlay")return;
+  g.active=-1;g.decoy=-1;
+  render();
+  thomolPopTimer=setTimeout(thomolSpawn,155+Math.floor(Math.random()*115));
+ },exposure);
+}
+function thomolHit(index){
+ const g=thomolRound;
+ if(!g||view!=="thomolPlay"||Date.now()>=g.until)return;
+ if(index===g.active&&!g.hitThisPop){
+  g.hits=Math.min(THOMOL_MAX_HITS,g.hits+1);
+  g.hitThisPop=true;
+  g.active=-1;
+  g.lastQuote=thomasQuote();
+  nativeFeedback("medium");
+  if(g.hits>=THOMOL_MAX_HITS){thomolFinish();return}
+ }else{
+  g.misses++;
+  g.lastQuote=g.decoy===index?'Maatje wie hou je voor de gek':'Niet slim oule??';
+  nativeFeedback("light");
+ }
+ render();
+}
+function thomolFinish(){
+ if(Number.isInteger(me()?.thomolHits))return nextHole();
+ const hits=thomolRound?.hits||0;
+ thomolClearTimers();
+ thomolRound=null;
+ update("finishThomol",{playerId:myId,hits},true);
+ setView("thomolResult");
+ if(hits>0)celebrate(Math.min(76,14+hits*7));
+}
+function thomolSkip(){
+ if(view!=="thomolIntro"||Number.isInteger(me()?.thomolHits))return;
+ thomolClearTimers();thomolRound=null;
+ update("finishThomol",{playerId:myId,hits:0},true);
+ setView("thomolResult");
+}
+
 function nextHole(){
  const p=me();if(!p){setView("choose");return}
  const done=p.scores||[];
@@ -796,6 +921,11 @@ el("menu").addEventListener("click",()=>setView("menu"));
 el("screen").addEventListener("dblclick",e=>{if(e.target.closest(".counter"))e.preventDefault()});
 el("screen").addEventListener("click",e=>{
  maybeJumpScare(e);
+ const thomol=e.target.closest("[data-thomol-cell]");
+ if(thomol){
+  thomolHit(Number(thomol.dataset.thomolCell));
+  return;
+ }
  const pick=e.target.closest("[data-player]");
  if(pick){
   myId=pick.dataset.player;localStorage.setItem(meKey,myId);
@@ -912,6 +1042,8 @@ el("screen").addEventListener("click",e=>{
    nomineeDraft="";
    nativeFeedback("success");setView("giftResult");celebrate(42);return;
   }
+  case "thomolStart":if(view==="thomolIntro")thomolStart();break;
+  case "thomolSkip":thomolSkip();break;
   case "continue":nextHole();break;
   case "pourDrink":
    if(view!=="preview"||pourReady)break;
