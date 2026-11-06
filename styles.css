@@ -1797,3 +1797,96 @@ button:focus-visible{outline:3px solid #ffb800;outline-offset:3px}
  .sip-pad.sip-pulse{animation:none!important}
  .leader-vertical-list .leader-row{animation:none!important}
 }
+
+
+/* ========================================================
+   SIP MEDIA SURPRISES v24 — real photos and 4-second clips.
+   Muted video autoplay; photo flashes; always skippable.
+   ======================================================== */
+.sip-media-scare{
+ position:fixed;inset:0;z-index:10005;
+ display:flex;align-items:center;justify-content:center;
+ padding:calc(18px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+ background:radial-gradient(circle at 50% 28%,#ec365b,#30225a 50%,#0a101f 100%);
+ color:#fff;isolation:isolate;
+ animation:sipScareBackground .18s ease-out both;
+ overscroll-behavior:contain;
+}
+.sip-media-scare:before{
+ content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+ opacity:.28;background:repeating-conic-gradient(#ffdc42 0deg 11deg,transparent 13deg 28deg);
+ animation:sipScareLights 12s linear infinite;
+}
+.sip-media-scare--video{
+ background:radial-gradient(circle at 52% 28%,#315de3,#111731 63%,#050811);
+}
+.sip-media-scare-inner{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:12px;width:100%;max-height:100%;max-width:440px;
+ transform-origin:center;
+ animation:sipScareArrival .36s cubic-bezier(.18,.83,.2,1.1) both;
+}
+.sip-media-scare-kicker{
+ color:#1c337e;background:#ffdb42;
+ padding:8px 14px;border:2px solid #fff;
+ border-radius:999px;font-size:11px;font-weight:1000;letter-spacing:.13em;
+ box-shadow:0 5px 0 #c32b55;transform:rotate(-4deg);
+}
+.sip-media-scare-frame{
+ width:min(84vw,330px);aspect-ratio:9/16;
+ display:grid;place-items:center;overflow:hidden;
+ border:5px solid #fff;background:#08101e;
+ border-radius:20px;box-shadow:11px 14px 0 #ffe046,0 24px 46px #0008;
+ transform:rotate(2deg);
+ flex-shrink:1;min-height:0;
+}
+.sip-media-scare--photo .sip-media-scare-frame{
+ width:min(85vw,390px);aspect-ratio:4/5;
+ transform:rotate(-3deg);
+ box-shadow:10px 12px 0 #165cff,0 24px 46px #0008;
+}
+.sip-media-scare-media{
+ display:block;width:100%;height:100%;object-fit:contain;
+ background:#050b14;
+}
+.sip-media-scare-caption{
+ color:#ffdf42;font-size:clamp(23px,7vw,37px);
+ font-weight:1000;letter-spacing:-.06em;line-height:1.05;
+ text-transform:uppercase;text-align:center;
+ text-shadow:3px 4px 0 #112d7e,0 10px 16px #0008;
+ transform:rotate(-3deg);max-width:96%;
+}
+.sip-media-scare-close{
+ min-height:44px;padding:10px 20px;
+ border-radius:999px;border:2px solid #fff8d0;
+ background:#ffdf42;color:#123c77;
+ font-weight:950;font-size:13px;
+ cursor:pointer;box-shadow:0 5px 0 #ddab2d;
+}
+.sip-media-scare-close:active{transform:translateY(3px);box-shadow:0 2px 0 #ddab2d}
+@keyframes sipScareBackground{
+ from{opacity:0}to{opacity:1}
+}
+@keyframes sipScareArrival{
+ 0%{opacity:0;transform:scale(.28) rotate(-18deg)}
+ 50%{opacity:1;transform:scale(1.07) rotate(7deg)}
+ 100%{opacity:1;transform:scale(1) rotate(0)}
+}
+@keyframes sipScareLights{to{transform:rotate(360deg)}}
+@media(max-height:735px){
+ .sip-media-scare{gap:8px;padding-top:calc(12px + env(safe-area-inset-top));padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+ .sip-media-scare-inner{gap:8px}
+ .sip-media-scare-frame{width:min(73vw,270px)}
+ .sip-media-scare--photo .sip-media-scare-frame{width:min(70vw,290px)}
+ .sip-media-scare-caption{font-size:clamp(22px,6vw,29px)}
+ .sip-media-scare-kicker{font-size:9px;padding:6px 11px}
+ .sip-media-scare-close{min-height:38px}
+}
+@media(max-height:585px){
+ .sip-media-scare-frame{width:min(58vw,225px)}
+ .sip-media-scare--photo .sip-media-scare-frame{width:min(55vw,240px)}
+ .sip-media-scare-caption{font-size:21px}
+}
+@media(prefers-reduced-motion:reduce){
+ .sip-media-scare,.sip-media-scare:before,.sip-media-scare-inner{animation:none!important}
+}
