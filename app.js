@@ -798,7 +798,7 @@ function holeView(){
  return `<div class="page-card hole-page sip-score-page">
   <div class="sip-score-top">
    <div class="sip-score-eyebrow">HOLE ${hole+1} VAN 6</div>
-   <div class="sip-score-venue">Biertje ${hole+1} · ${escapeHtml(h.drink)}</div>
+   <div class="sip-score-venue">Glas ${hole+1}</div>
    <div class="sip-score-par">PAR <strong>${h.par}</strong></div>
   </div>
   <div class="sip-score-main">
@@ -836,7 +836,7 @@ function ace(){
      <p class="ace-sub">HOLE IN ONE.<br><strong>Goed gedaan, maat!</strong></p>
      <div class="ace-score-chip">
        <strong>01</strong>
-       <div><span>1 SLAG · 1 SLOK</span><b>${escapeHtml(h.drink)}. In één keer.</b><small>RONDE ${hole+1} · PAR ${h.par}</small></div>
+       <div><span>1 SLAG · 1 SLOK</span><b>In één keer.</b><small>PAR ${h.par}</small></div>
      </div>
      <div class="ace-praise"><span>🏌️</span><p>Hier mag je echt onredelijk trots op zijn.</p></div>
    </div>
@@ -980,13 +980,13 @@ function detail(){
   ${avatar(p,"detail-avatar")}
   <div><h1 class="detail-player-name">${escapeHtml(p.name)}</h1><p class="detail-rank">${rankIcon(rank-1,state.players.length)} Nummer ${rank} in het klassement</p></div>
  </div>
- <div class="detail-section-title">Slagen per drankje</div>
+ <div class="detail-section-title">Slokken per glas</div>
  <div class="detail-holes">
   ${HOLES.map((h,i)=>{
    const n=p.scores?.[i],done=Number.isInteger(n);
    return `<div class="detail-hole-row">
     <span class="detail-hole-index">${i+1}</span>
-    <span class="detail-hole-name"><strong>Ronde ${i+1}</strong><small>${escapeHtml(h.drink)} · PAR ${h.par}</small></span>
+    <span class="detail-hole-name"><strong>Glas ${i+1}</strong><small>PAR ${h.par}</small></span>
     <span class="detail-hole-strokes">${done?n:'–'}<small>${done?signed(n-h.par):'Nog niet'}</small></span>
    </div>`;
   }).join("")}
