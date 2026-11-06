@@ -2502,3 +2502,110 @@ button:focus-visible{outline:3px solid #ffb800;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){
  .pluim-target-rings,.pluim-distraction,.pluim-feedback{animation:none!important}
 }
+
+
+/* ===============================================================
+   SIP MINIMAL v27 — ONE PAR, ONE BUTTON, ZERO OVERLAP
+   Tap adds a sip; hold 850 ms to lock in and advance.
+   =============================================================== */
+#app[data-view="hole"] .topbar{display:none!important}
+#app[data-view="hole"] #effects{display:none!important}
+#app[data-view="hole"] #screen{min-height:100dvh;background:#f2f6ff}
+#app[data-view="hole"] .page.page-hole{
+ min-height:100dvh;padding:0!important;
+ background:radial-gradient(circle at 50% 47%,#fffefa 0%,#f2f6ff 70%,#e8effe 100%)!important;
+ animation:none;
+}
+.sip-minimal{
+ width:100%;height:100dvh;min-height:100dvh;
+ display:grid;grid-template-rows:auto minmax(0,1fr);
+ justify-items:center;align-items:center;
+ padding:calc(7dvh + env(safe-area-inset-top)) 14px calc(6dvh + env(safe-area-inset-bottom));
+ overflow:hidden;isolation:isolate;
+}
+.sip-minimal-par{
+ display:inline-flex;align-items:center;justify-content:center;gap:12px;
+ align-self:start;justify-self:center;
+ background:#ffdf49;color:#163d87;
+ font-size:clamp(23px,6.2vw,31px);font-weight:950;letter-spacing:.1em;
+ line-height:1;padding:15px 24px;
+ border:2px solid #165cff;border-radius:999px;
+ box-shadow:0 6px 0 #154cc62c;
+ font-variant-numeric:tabular-nums;
+}
+.sip-minimal-par strong{font-size:1.15em;letter-spacing:-.06em;color:#123c94}
+.sip-hold-button{
+ position:relative;display:flex;flex-direction:column;
+ justify-content:center;align-items:center;
+ width:min(76vw,315px,44dvh);
+ aspect-ratio:1;min-width:190px;min-height:190px;
+ margin:0 auto;
+ flex-shrink:0;align-self:center;
+ border:0;border-radius:50%;
+ background:linear-gradient(145deg,#3479ff 0%,#165aff 45%,#0b3fae 100%);
+ color:white;cursor:pointer;
+ box-shadow:0 13px 0 #0b328c,0 27px 34px #09377b45,
+   inset 0 1px 0 #ffffff5a;
+ -webkit-tap-highlight-color:transparent;
+ -webkit-touch-callout:none;
+ user-select:none;-webkit-user-select:none;
+ touch-action:manipulation;
+ overflow:hidden;
+ transition:transform .12s ease-out,box-shadow .12s ease-out;
+}
+.sip-hold-button:before{
+ content:"";position:absolute;inset:12px;border-radius:50%;
+ border:1px solid #ffffff3d;
+ box-shadow:inset 0 0 27px #ffffff16;
+ pointer-events:none;
+}
+.sip-hold-button:focus-visible{outline:5px solid #ffdf49;outline-offset:7px}
+.sip-hold-button:active,
+.sip-hold-button.is-holding{
+ transform:translateY(5px) scale(.988);
+ box-shadow:0 8px 0 #0b328c,0 16px 26px #09377b3a,
+   inset 0 1px 0 #ffffff5a;
+}
+.sip-hold-ring{
+ position:absolute;inset:0;width:100%;height:100%;
+ transform:rotate(-90deg);pointer-events:none;
+}
+.sip-hold-ring circle{
+ fill:none;stroke:#ffdf49;stroke-width:11;stroke-linecap:round;
+ stroke-dasharray:100;stroke-dashoffset:100;
+ transition:stroke-dashoffset 0s;
+}
+.sip-hold-button.is-holding .sip-hold-ring circle{
+ stroke-dashoffset:0;
+ transition:stroke-dashoffset 850ms linear;
+}
+.sip-minimal-number{
+ position:relative;z-index:2;display:block;
+ font-size:clamp(90px,27vw,132px);
+ line-height:.95;letter-spacing:-.10em;font-weight:1000;
+ font-variant-numeric:tabular-nums;
+ text-shadow:0 5px 0 #092c8273;
+ margin:0;padding-right:.08em;
+}
+.sip-minimal-unit{
+ position:relative;z-index:2;display:block;
+ margin-top:15px;
+ font-size:clamp(14px,3.7vw,18px);line-height:1;
+ font-weight:950;letter-spacing:.16em;color:#fff6bf;
+}
+@media(max-width:345px){
+ .sip-minimal-par{font-size:23px;padding:12px 20px}
+ .sip-hold-button{width:min(76vw,270px,43dvh);min-width:170px;min-height:170px}
+ .sip-minimal-number{font-size:clamp(76px,24vw,106px)}
+}
+@media(max-height:620px){
+ .sip-minimal{padding-top:calc(4dvh + env(safe-area-inset-top));padding-bottom:calc(4dvh + env(safe-area-inset-bottom))}
+ .sip-minimal-par{font-size:20px;padding:9px 15px}
+ .sip-hold-button{width:min(65vw,260px,43dvh);min-width:142px;min-height:142px}
+ .sip-minimal-number{font-size:clamp(65px,18dvh,105px)}
+ .sip-minimal-unit{margin-top:7px;font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){
+ .sip-hold-button{transition:none!important}
+ .sip-hold-ring circle{transition:none!important}
+}
