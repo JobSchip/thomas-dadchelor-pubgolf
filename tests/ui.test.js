@@ -5,12 +5,13 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.resolve(__dirname,'../app.js'),'utf8');
+const styles=fs.readFileSync(path.resolve(__dirname,'../styles.css'),'utf8');
 const EPOCH='THOMAS-NOV05-FULL-RESET-4';
 
 function player(name,id,scores,checkin,answers,nomination=null){
  return {id,name,avatar:'',scores,salmari:0,checkin,answers,nomination};
 }
-function boot(players,myId='p1'){
+function boot(players,myId='p1',options={}){
  const storage=new Map([
   ['golf-room','THOMAS-OPEN'],
   ['golf-v5-THOMAS-OPEN',JSON.stringify({players,revision:4,updatedAt:0,epoch:EPOCH})],
@@ -26,14 +27,17 @@ function boot(players,myId='p1'){
   });
   return elements.get(id);
  }
+ const fakeMath=Object.create(Math);
+ if(typeof options.random==='number')fakeMath.random=()=>options.random;
  const ctx={
-  console,URLSearchParams,Math,Date,
+  console,URLSearchParams,Math:fakeMath,Date,
   location:{search:'?room=THOMAS-OPEN',pathname:'/',protocol:'https:'},
   history:{replaceState(){}},
   localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},
   document:{getElementById:get,hidden:false,addEventListener(){},
-   createElement:()=>({style:{setProperty(){}},remove(){},className:'',textContent:''})},
-  window:{scrollTo(){},addEventListener(){},matchMedia(){return{matches:true}}},
+   body:options.allowScares?{appendChild(){}}:undefined,
+   createElement:()=>({style:{setProperty(){}},remove(){},className:'',textContent:'',setAttribute(){}})},
+  window:{scrollTo(){},addEventListener(){},matchMedia(){return{matches:options.reducedMotion??true}}},
   navigator:{},
   fetch:()=>new Promise(()=>{}),
   setTimeout:()=>1,clearTimeout(){},setInterval:()=>1
@@ -51,7 +55,7 @@ function boot(players,myId='p1'){
  return {
   click,view:()=>get('app').dataset.view,html:()=>get('screen').innerHTML,
   state:()=>JSON.parse(storage.get('golf-v5-THOMAS-OPEN')),queue:()=>JSON.parse(storage.get('golf-queue-v5-THOMAS-OPEN')||'[]'),
-  element:get
+  element:get,storage
  };
 }
 
@@ -263,9 +267,39 @@ test('Thomas stickers maken cameo bij quizvragen, scorekaart en jackpot zonder s
  assert.equal(ace.view(),'ace');
  assert.equal((ace.html().match(/class="ace-sticker-fly/g)||[]).length,4);
 });
-test('jumpscare-script wordt één keer per speler en wedstrijd geactiveerd en hindert de score niet',()=>{
- assert.match(source,/golf-jumpscare-v1-/);
- assert.match(source,/localStorage\.setItem\(key,"1"\)/);
- assert.match(source,/prefers-reduced-motion: reduce/);
- assert.match(source,/wrap\.className="thomas-jumpscare"/);
+test('2 tot 4 willekeurige scares per speler worden over verschillende holes gepland',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{random:.999,allowScares:true,reducedMotion:false});
+ assert.equal(ui.view(),'preview');
+ ui.click('action','pourDrink');
+ const key='golf-scares-v2-THOMAS-OPEN-p1';
+ let record=JSON.parse(ui.storage.get(key));
+ assert.ok(record.plan.length>=2&&record.plan.length<=4);
+ assert.equal(new Set(record.plan).size,record.plan.length);
+ assert.equal(record.seen.length,0);
+ ui.click('action','gotDrink');
+ record=JSON.parse(ui.storage.get(key));
+ assert.deepEqual(Array.from(record.seen),[0]);
+ ui.click('action','plus');
+ ui.click('action','minus');
+ assert.deepEqual(Array.from(JSON.parse(ui.storage.get(key)).seen),[0],'maximaal één scare per hole');
+ assert.equal(ui.queue().length,0,'scares slaan geen scores op');
+});
+
+test('de instelling voor minder beweging voorkomt jumpscares volledig',()=>{
+ const ui=boot([player('Thomas','p1',[null,null,null,null,null,null],null,{})],'p1',{random:.999,allowScares:true,reducedMotion:true});
+ ui.click('action','pourDrink');
+ ui.click('action','gotDrink');
+ assert.equal(ui.storage.get('golf-scares-v2-THOMAS-OPEN-p1'),undefined);
+ assert.equal(ui.view(),'hole');
+});
+
+test('primaire kleuren maken check-in, quiz, kroeg en score visueel uniek',()=>{
+ for(const cls of ['.mood-0','.mood-1','.mood-2','.mood-3','.question-baby','.question-date','.question-name','.page-hole','.taproom[data-tap-hole="1"]','.leader-row']){
+  assert.ok(styles.includes(cls),'Ontbrekende styling: '+cls);
+ }
+ for(const color of ['#165cff','#f04449','#ffdb42'])assert.ok(styles.includes(color),'Kleur ontbreekt: '+color);
+ assert.match(styles,/thomas-jumpscare--mini/);
+ assert.match(styles,/thomas-jumpscare--medium/);
+ assert.match(styles,/thomas-jumpscare--full/);
+ assert.match(styles,/prefers-reduced-motion:reduce/);
 });
