@@ -759,34 +759,49 @@ const BAR_LINES=[
  ["Het laatste rondje is aangebroken.","Finale. Net doen alsof je nog scherp bent."]
 ];
 function preview(){
- const h=HOLES[hole],pic=[1,2,3,4,1,3][hole],ready=pourReady;
- return `<div class="page-card taproom ${ready?'is-served':'is-waiting'}" data-tap-hole="${hole+1}">
-  <div class="taproom-photo" aria-hidden="true"><img src="./assets/thomas-${pic}.webp" alt=""></div>
-  <div class="taproom-heading">
-   <span class="taproom-label">AAN DE BAR BIJ</span>
-   <h1>${escapeHtml(h.venue)}</h1>
-   <p class="taproom-order"><strong>${escapeHtml(h.drink)}</strong><span>${escapeHtml(h.details)}</span></p>
+ const h=HOLES[hole],ready=pourReady;
+ const drunk=hole,clean=HOLES.length-hole-1;
+ const glasses=HOLES.map((drink,i)=>{
+  const status=i<hole?"is-drunk":i===hole?"is-current":"is-clean";
+  const served=i===hole&&ready?"is-filled":"";
+  const label=i<hole?"Leeggedronken glas "+(i+1):i===hole?"Biertje "+(i+1)+" tappen":"Schoon glas "+(i+1);
+  const content=`<span class="tavern-glass ${status} ${served} glass-${drink.visual}">
+    <span class="tavern-glass-beer"></span>
+    <span class="tavern-glass-foam"></span>
+    <span class="tavern-glass-reflection"></span>
+   </span>
+   <span class="tavern-glass-number">${i+1}</span>`;
+  if(i===hole)return `<button class="tavern-glass-slot tavern-current-glass ${served}" type="button" data-action="${ready?'gotDrink':'pourDrink'}" aria-label="${ready?'Biertje '+(i+1)+' is klaar; ga naar de slokkenteller':label}">
+    ${content}
+   </button>`;
+  return `<div class="tavern-glass-slot" aria-label="${label}">${content}</div>`;
+ }).join("");
+ return `<div class="page-card taproom tavern ${ready?'is-served':'is-waiting'}" data-tap-hole="${hole+1}">
+  <div class="tavern-interior" aria-hidden="true">
+   <span class="tavern-wall-rail"></span><span class="tavern-shelf tavern-shelf-one"></span><span class="tavern-shelf tavern-shelf-two"></span>
+   <span class="tavern-bottles tavern-bottles-left"></span><span class="tavern-bottles tavern-bottles-right"></span>
+   <span class="tavern-wall-lamp lamp-left"></span><span class="tavern-wall-lamp lamp-right"></span>
   </div>
-  <div class="taproom-machine-area">
-   <button class="taproom-machine ${ready?'has-poured':''}" data-action="${ready?'gotDrink':'pourDrink'}" type="button" aria-label="${ready?'Je drankje is klaar, ga naar de score':'Tik op de tap om je glas te vullen'}">
-    <span class="taproom-tap" aria-hidden="true"><span class="taproom-tap-neck"></span><span class="taproom-tap-head"></span><span class="taproom-tap-handle"></span><span class="taproom-tap-spout"></span></span>
-    <span class="taproom-stream" aria-hidden="true"></span>
-    <span class="taproom-glass glass-${h.visual}" aria-hidden="true">
-      <span class="taproom-beer"><i></i><i></i><i></i><i></i><i></i></span>
-      <span class="taproom-foam"><i></i><i></i><i></i><i></i><i></i></span>
-      <span class="taproom-glass-shine"></span>
-    </span>
-    <span class="taproom-driptray" aria-hidden="true"></span>
-   </button>
+  <div class="tavern-topline"><span>PRE PAPA · PLUIM PUB GOLF</span><strong>RONDE ${hole+1} / 6</strong></div>
+  <div class="tavern-host" aria-label="Thomas staat achter de bar en roept Volgende ronde">
+   <div class="tavern-speech">VOLGENDE<br>RONDE<span>!</span></div>
+   <div class="tavern-thomas">${sticker([3,3,3,3,3,3][hole],"tavern-thomas-face")}<span class="tavern-host-name">THOMAS</span></div>
   </div>
-  <div class="taproom-footer">
-    <div class="taproom-peeker">${sticker([2,4,5,7,6,3][hole])}</div>
-    <button type="button" class="taproom-cta" data-action="${ready?'gotDrink':'pourDrink'}">
-      <span class="taproom-cta-icon">${ready?'✓':'🍺'}</span>
-      <span class="taproom-cta-copy"><strong>${ready?"Ik heb m'n drankje!":"Tap dat biertje"}</strong><small>${ready?'Op naar de scorekaart':'Eén tik en hij staat klaar'}</small></span>
-      <span class="taproom-arrow">→</span>
-    </button>
+  <div class="tavern-order"><span>BIERTJE ${hole+1}</span><strong>${escapeHtml(h.drink)}</strong></div>
+  <div class="tavern-stage">
+   <div class="tavern-bar-counter" aria-hidden="true"></div>
+   <div class="tavern-glass-lineup">${glasses}</div>
   </div>
+  <div class="tavern-inventory" role="group" aria-label="Glazen op de bar">
+   <div><strong>${drunk}</strong><span>LEEGGEDRONKEN<br>AL GEHAD</span></div>
+   <div class="tavern-inventory-current"><strong>1</strong><span>${ready?'VOLGETAPT':'AAN DE BEURT'}</span></div>
+   <div><strong>${clean}</strong><span>SCHOON<br>NOG TE GAAN</span></div>
+  </div>
+  <button type="button" class="tavern-action" data-action="${ready?'gotDrink':'pourDrink'}">
+   <span class="tavern-action-icon">${ready?'✓':'🍺'}</span>
+   <span><strong>${ready?"Ik heb m'n drankje!":"Tap biertje "+(hole+1)}</strong><small>${ready?'Op naar de slokkenteller':'Tik op het glas of deze knop'}</small></span>
+   <span class="tavern-action-arrow">→</span>
+  </button>
  </div>`;
 }
 function holeView(){
@@ -794,7 +809,7 @@ function holeView(){
  return `<div class="page-card hole-page sip-score-page">
   <div class="sip-score-top">
    <div class="sip-score-eyebrow">HOLE ${hole+1} VAN 6</div>
-   <div class="sip-score-venue">${escapeHtml(h.venue)}</div>
+   <div class="sip-score-venue">Biertje ${hole+1} · ${escapeHtml(h.drink)}</div>
    <div class="sip-score-par">PAR <strong>${h.par}</strong></div>
   </div>
   <div class="sip-score-main">
@@ -824,7 +839,7 @@ function ace(){
      ${icons.map((icon,i)=>`<span style="--ace-i:${i}">${icon}</span>`).join("")}
      ${[3,6,7,2].map((n,i)=>`<div class="ace-sticker-fly ace-fly-${i}">${sticker(n)}</div>`).join("")}
    </div>
-   <span class="ace-topline">⛳ HOLE ${String(hole+1).padStart(2,"0")} <span>•</span> ${escapeHtml(h.venue.toUpperCase())}</span>
+   <span class="ace-topline">⛳ HOLE ${String(hole+1).padStart(2,"0")} <span>•</span> BIERTJE ${hole+1}</span>
    <div class="ace-main">
      <div class="ace-boom"><span>💥</span> BOEM<span>!</span></div>
      <div class="ace-slot"><span>🎰</span> JACKPOT <span>🎰</span></div>
@@ -832,7 +847,7 @@ function ace(){
      <p class="ace-sub">HOLE IN ONE.<br><strong>Goed gedaan, maat!</strong></p>
      <div class="ace-score-chip">
        <strong>01</strong>
-       <div><span>1 SLAG · 1 SLOK</span><b>${escapeHtml(h.drink)}. In één keer.</b><small>${escapeHtml(h.venue)} · PAR ${h.par}</small></div>
+       <div><span>1 SLAG · 1 SLOK</span><b>${escapeHtml(h.drink)}. In één keer.</b><small>RONDE ${hole+1} · PAR ${h.par}</small></div>
      </div>
      <div class="ace-praise"><span>🏌️</span><p>Hier mag je echt onredelijk trots op zijn.</p></div>
    </div>
@@ -982,7 +997,7 @@ function detail(){
    const n=p.scores?.[i],done=Number.isInteger(n);
    return `<div class="detail-hole-row">
     <span class="detail-hole-index">${i+1}</span>
-    <span class="detail-hole-name"><strong>${escapeHtml(h.venue)}</strong><small>${escapeHtml(h.drink)} · PAR ${h.par}</small></span>
+    <span class="detail-hole-name"><strong>Ronde ${i+1}</strong><small>${escapeHtml(h.drink)} · PAR ${h.par}</small></span>
     <span class="detail-hole-strokes">${done?n:'–'}<small>${done?signed(n-h.par):'Nog niet'}</small></span>
    </div>`;
   }).join("")}
