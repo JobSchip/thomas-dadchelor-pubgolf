@@ -144,3 +144,31 @@ test('HIT THE THOMOL geeft per echte hit één slag korting, alleen na ronde twe
  assert.equal(act(solo,{id:'s-0',type:'finishThomol',playerId:'solo',hits:0}),null,'Overslaan geeft nul hits');
  assert.equal(solo.players[0].thomolHits,0);
 });
+
+
+test('STOP DE PLUIM bewaart maximaal drie bonusslagen, na hole vier en quiz en één keer per golfer',()=>{
+ const g=initial();
+ assert.equal(act(g,{id:'p-register',type:'addPlayer',player:{id:'pluim',name:'Pluim'}}),null);
+ assert.equal(g.players[0].pluimHits,null);
+ assert.match(act(g,{id:'p-early',type:'finishPluim',playerId:'pluim',hits:2}),/hole vier/);
+ for(let i=0;i<4;i++){
+  assert.equal(act(g,{id:'p-score-'+i,type:'setScore',playerId:'pluim',hole:i,value:[8,10,8,1][i]}),null);
+ }
+ assert.match(act(g,{id:'p-no-quiz',type:'finishPluim',playerId:'pluim',hits:2}),/quiz/);
+ assert.equal(act(g,{id:'p-quiz',type:'answerRound',playerId:'pluim',round:'four',choice:'Thomas'}),null);
+ assert.match(act(g,{id:'p-bad-max',type:'finishPluim',playerId:'pluim',hits:4}),/Ongeldig/);
+ assert.match(act(g,{id:'p-bad-neg',type:'finishPluim',playerId:'pluim',hits:-1}),/Ongeldig/);
+ assert.match(act(g,{id:'p-bad-float',type:'finishPluim',playerId:'pluim',hits:1.5}),/Ongeldig/);
+ assert.equal(act(g,{id:'p-win',type:'finishPluim',playerId:'pluim',hits:2}),null);
+ assert.equal(g.players[0].pluimHits,2);
+ assert.match(act(g,{id:'p-repeat',type:'finishPluim',playerId:'pluim',hits:3}),/al gespeeld/);
+ assert.equal(act(g,{id:'p-win',type:'finishPluim',playerId:'pluim',hits:2}),null);
+ assert.equal(g.players[0].pluimHits,2);
+ assert.equal(g.players[0].scores[3],1,'de hole-score wordt niet aangepast');
+ const single=initial();
+ act(single,{id:'p-solo',type:'addPlayer',player:{id:'solo',name:'Solo'}});
+ act(single,{id:'p-hole4',type:'setScore',playerId:'solo',hole:3,value:3});
+ act(single,{id:'p-quiz4',type:'answerRound',playerId:'solo',round:'four',choice:'Thomas'});
+ assert.equal(act(single,{id:'p-skip',type:'finishPluim',playerId:'solo',hits:0}),null);
+ assert.equal(single.players[0].pluimHits,0,'ook overslaan is definitief');
+});
