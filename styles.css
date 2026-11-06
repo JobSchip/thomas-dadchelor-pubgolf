@@ -2549,7 +2549,7 @@ button:focus-visible{outline:3px solid #ffb800;outline-offset:3px}
  -webkit-tap-highlight-color:transparent;
  -webkit-touch-callout:none;
  user-select:none;-webkit-user-select:none;
- touch-action:manipulation;
+ touch-action:none;
  overflow:hidden;
  transition:transform .12s ease-out,box-shadow .12s ease-out;
 }
