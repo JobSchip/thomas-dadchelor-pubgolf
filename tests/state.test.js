@@ -117,3 +117,30 @@ test('mobiele videos ondersteunen video/mp4, iPhone byte ranges en HEAD',async()
   assert.equal(invalid.status,416);
  }finally{await new Promise(resolve=>server.close(resolve))}
 });
+
+
+test('HIT THE THOMOL geeft per echte hit één slag korting, alleen na ronde twee en maar één keer',()=>{
+ const g=initial();
+ assert.equal(act(g,{id:'t-add',type:'addPlayer',player:{id:'thomol',name:'Thomas'}}),null);
+ assert.equal(g.players[0].thomolHits,null);
+ assert.match(act(g,{id:'t-early',type:'finishThomol',playerId:'thomol',hits:4}),/Speel eerst/);
+ assert.equal(act(g,{id:'t-score1',type:'setScore',playerId:'thomol',hole:0,value:8}),null);
+ assert.equal(act(g,{id:'t-answer1',type:'answerRound',playerId:'thomol',round:'one',choice:'blue'}),null);
+ assert.equal(act(g,{id:'t-score2',type:'setScore',playerId:'thomol',hole:1,value:10}),null);
+ assert.match(act(g,{id:'t-earlyquiz',type:'finishThomol',playerId:'thomol',hits:4}),/Speel eerst/);
+ assert.equal(act(g,{id:'t-answer2',type:'answerRound',playerId:'thomol',round:'two',choice:'18'}),null);
+ assert.match(act(g,{id:'t-fake',type:'finishThomol',playerId:'thomol',hits:11}),/Ongeldig/);
+ assert.match(act(g,{id:'t-negative',type:'finishThomol',playerId:'thomol',hits:-1}),/Ongeldig/);
+ assert.equal(act(g,{id:'t-win',type:'finishThomol',playerId:'thomol',hits:4}),null);
+ assert.equal(g.players[0].thomolHits,4);
+ assert.match(act(g,{id:'t-again',type:'finishThomol',playerId:'thomol',hits:10}),/al gespeeld/);
+ assert.equal(g.players[0].thomolHits,4);
+ assert.equal(act(g,{id:'t-win',type:'finishThomol',playerId:'thomol',hits:4}),null,'Idempotent replay');
+ const solo=initial();
+ act(solo,{id:'s-add',type:'addPlayer',player:{id:'solo',name:'Solo'}});
+ act(solo,{id:'s-first',type:'setScore',playerId:'solo',hole:0,value:9});
+ act(solo,{id:'s-second',type:'setScore',playerId:'solo',hole:1,value:9});
+ act(solo,{id:'s-q2',type:'answerRound',playerId:'solo',round:'two',choice:'18'});
+ assert.equal(act(solo,{id:'s-0',type:'finishThomol',playerId:'solo',hits:0}),null,'Overslaan geeft nul hits');
+ assert.equal(solo.players[0].thomolHits,0);
+});
