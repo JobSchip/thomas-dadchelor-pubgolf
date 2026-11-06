@@ -8,8 +8,8 @@ const source=fs.readFileSync(path.resolve(__dirname,'../app.js'),'utf8');
 const styles=fs.readFileSync(path.resolve(__dirname,'../styles.css'),'utf8');
 const EPOCH='THOMAS-NOV05-FULL-RESET-4';
 
-function player(name,id,scores,checkin,answers,nomination=null,thomolHits=0){
- return {id,name,avatar:'',scores,salmari:0,checkin,answers,nomination,thomolHits};
+function player(name,id,scores,checkin,answers,nomination=null,thomolHits=0,pluimHits=0){
+ return {id,name,avatar:'',scores,salmari:0,checkin,answers,nomination,thomolHits,pluimHits};
 }
 function boot(players,myId='p1',options={}){
  const storage=new Map([
@@ -28,6 +28,7 @@ function boot(players,myId='p1',options={}){
   return elements.get(id);
  }
  const intervals=[];
+ const timeouts=[];
  const clock={now:Date.now()};
  class FakeDate extends Date{static now(){return clock.now}}
  const fakeMath=Object.create(Math);
@@ -43,7 +44,7 @@ function boot(players,myId='p1',options={}){
   window:{scrollTo(){},addEventListener(){},matchMedia(){return{matches:options.reducedMotion??true}}},
   navigator:{},
   fetch:()=>new Promise(()=>{}),
-  setTimeout:()=>1,clearTimeout(){},clearInterval(){},setInterval:fn=>{if(options.clock)intervals.push(fn);return 1}
+  setTimeout:(fn,delay)=>{if(options.clock)timeouts.push({fn,delay});return 1},clearTimeout(){},clearInterval(){},setInterval:fn=>{if(options.clock)intervals.push(fn);return 1}
  };
  vm.runInNewContext(source,ctx,{timeout:2500,filename:'app.js'});
  function click(kind,value){
@@ -60,7 +61,8 @@ function boot(players,myId='p1',options={}){
   click,view:()=>get('app').dataset.view,html:()=>get('screen').innerHTML,
   state:()=>JSON.parse(storage.get('golf-v5-THOMAS-OPEN')),queue:()=>JSON.parse(storage.get('golf-queue-v5-THOMAS-OPEN')||'[]'),
   element:get,storage,
-  advance(ms){clock.now+=ms;for(const fn of intervals.slice())fn()}
+  advance(ms){clock.now+=ms;for(const fn of intervals.slice())fn()},
+  runGameTimeout(){const index=timeouts.findLastIndex(x=>x.delay===920);if(index<0)throw Error('Geen Pluim-actie in wachtrij');const next=timeouts.splice(index,1)[0];clock.now+=next.delay;next.fn()}
  };
 }
 
@@ -472,4 +474,81 @@ test('Thomas-citaten uit de export verschijnen in willekeurige jumpscares',()=>{
  assert.match(styles,/\.thomol-grid/);
  assert.match(styles,/\.thomol-mole/);
  assert.match(styles,/\.thomol-decoy/);
+});
+
+
+test('STOP DE PLUIM verschijnt na hole vier en quiz, met drie snel moeilijker wordende pogingen',()=>{
+ const p=player('Thomas','p1',[8,10,8,1,null,null],2,{one:'blue',two:'18',four:'Thomas'},null,0,null);
+ const ui=boot([p],'p1',{random:.99,clock:true});
+ assert.equal(ui.view(),'pluimIntro');
+ assert.match(ui.html(),/STOP DE/);
+ assert.match(ui.html(),/PLUIM!/);
+ assert.match(ui.html(),/3 POGINGEN/);
+ assert.match(ui.html(),/HIT = −1 SLAG/);
+ ui.click('action','pluimStart');
+ assert.equal(ui.view(),'pluimPlay');
+ assert.match(ui.html(),/width:18%/);
+ assert.match(ui.html(),/RONDE 1\/3/);
+ ui.advance(580);
+ ui.click('action','pluimStop');
+ assert.match(ui.html(),/BOEM! −1 SLAG!/);
+ assert.match(ui.html(),/RAAK!/);
+ assert.equal(ui.queue().length,0,'tussentijdse tik mag niet worden opgeslagen');
+ ui.runGameTimeout();
+ assert.equal(ui.view(),'pluimPlay');
+ assert.match(ui.html(),/width:13%/);
+ assert.match(ui.html(),/RONDE 2\/3/);
+ ui.advance(30);
+ ui.click('action','pluimStop');
+ assert.match(ui.html(),/NET MIS, MAAT!/);
+ ui.runGameTimeout();
+ assert.match(ui.html(),/width:9%/);
+ assert.match(ui.html(),/RONDE 3\/3/);
+ ui.advance(303);
+ ui.click('action','pluimStop');
+ assert.match(ui.html(),/BOEM! −1 SLAG!/);
+ ui.runGameTimeout();
+ assert.equal(ui.view(),'pluimResult');
+ assert.equal(ui.state().players[0].pluimHits,2);
+ assert.equal(ui.queue().filter(x=>x.type==='finishPluim').length,1);
+ assert.match(ui.html(),/−2/);
+ ui.click('action','continue');
+ assert.equal(ui.view(),'preview','na het spel volgt de vijfde kroeg');
+ assert.match(ui.html(),/Café De Lift/);
+ ui.click('action','board');
+ ui.click('leader','p1');
+ assert.equal(ui.view(),'detail');
+ assert.match(ui.html(),/Stop de Pluim/);
+ assert.match(ui.html(),/2 <small>× −1/);
+});
+
+test('STOP DE PLUIM overslaan registreert nul en biedt geen tweede poging',()=>{
+ const p=player('Thomas','p1',[8,10,8,2,null,null],2,{one:'blue',two:'18',four:'Thomas'},null,0,null);
+ const ui=boot([p]);
+ assert.equal(ui.view(),'pluimIntro');
+ ui.click('action','pluimSkip');
+ assert.equal(ui.view(),'pluimResult');
+ assert.equal(ui.state().players[0].pluimHits,0);
+ assert.equal(ui.queue().filter(x=>x.type==='finishPluim').length,1);
+ ui.click('action','continue');
+ assert.equal(ui.view(),'preview');
+ assert.doesNotMatch(ui.html(),/pluim-intro/);
+});
+
+test('STOP DE PLUIM heeft live wijzer, kleurzone, tijdlimiet en veilige stopactie',()=>{
+ const p=player('Thomas','p1',[8,10,8,1,null,null],2,{one:'blue',two:'18',four:'Thomas'},null,0,null);
+ const ui=boot([p],'p1',{random:.99,clock:true});
+ ui.click('action','pluimStart');
+ assert.equal(ui.view(),'pluimPlay');
+ assert.match(ui.html(),/id="pluim-needle"/);
+ assert.match(ui.html(),/id="pluim-countdown"/);
+ ui.advance(90);
+ assert.ok(Number.parseFloat(ui.element('pluim-needle').style.left)>0,'wijzer beweegt');
+ ui.advance(4600);
+ assert.match(ui.html(),/TE LAAT, OUWE!/);
+ ui.click('action','pluimStop');
+ assert.match(ui.html(),/TE LAAT, OUWE!/, 'twee keer stoppen telt niet dubbel');
+ assert.match(styles,/\.pluim-zone/);
+ assert.match(styles,/\.pluim-stop-button/);
+ assert.match(styles,/prefers-reduced-motion:reduce/);
 });
