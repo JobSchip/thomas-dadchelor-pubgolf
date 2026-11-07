@@ -13,7 +13,7 @@ const room=(q.get("room")||localStorage.getItem("golf-room")||"THOMAS-OPEN").toU
 q.set("room",room);
 history.replaceState(null,"",location.pathname+"?"+q.toString());
 localStorage.setItem("golf-room",room);
-const RESET_EPOCH="THOMAS-NOV07-FULL-RESET-5";
+const RESET_EPOCH="THOMAS-NOV07-FULL-RESET-6";
 const API_BASE=String(globalThis.__PUBGOLF_API_BASE__||"").replace(/\/+$/,"");
 const isNative=()=>globalThis.__PUBGOLF_NATIVE__===true;
 function nativeFeedback(kind="light"){
