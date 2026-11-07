@@ -8,9 +8,9 @@ const root=__dirname;
 const dataDir=process.env.DATA_DIR||path.join(root,'data');
 fs.mkdirSync(dataDir,{recursive:true});
 const port=Number(process.env.PORT)||3000;
-const resetEpoch='THOMAS-NOV07-FULL-RESET-5';
+const resetEpoch='THOMAS-NOV07-FULL-RESET-6';
 const resetRoom='THOMAS-OPEN';
-const resetMarker=path.join(dataDir,'.pubgolf-full-reset-20261107-v5');
+const resetMarker=path.join(dataDir,'.pubgolf-full-reset-20261107-v6');
 if(!fs.existsSync(resetMarker)){
  const gameFile=path.join(dataDir,resetRoom+'.json');
  try{
