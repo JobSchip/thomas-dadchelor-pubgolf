@@ -1,19 +1,19 @@
 (function appMain(){
 "use strict";
 const HOLES=[
-  {venue:"Jopen",drink:"Mooie Nel IPA",details:"Halve liter",par:8,visual:"ipa"},
-  {venue:"Tierney's Irish Pub",drink:"Guinness",details:"Pint",par:10,visual:"stout"},
-  {venue:"Proeflokaal In den Uiver",drink:"Halve liter bier",details:"50 cl",par:8,visual:"mug"},
-  {venue:"Bierlokaal de Uiver",drink:"Fluitje",details:"Hole-in-one",par:1,visual:"flute",special:true},
-  {venue:"Café De Lift",drink:"Brugse Zot",details:"33 cl",par:7,visual:"chalice"},
-  {venue:"Café Studio",drink:"Vaasje",details:"25 cl",par:9,visual:"vaasje"}
+  {venue:"Jopen",drink:"Mooie Nel IPA",details:"Halve liter",par:5,visual:"ipa"},
+  {venue:"Tierney's Irish Pub",drink:"Guinness",details:"Pint",par:6,visual:"stout"},
+  {venue:"Proeflokaal In den Uiver",drink:"Halve liter bier",details:"50 cl",par:5,visual:"mug"},
+  {venue:"Bierlokaal de Uiver",drink:"Fluitje",details:"Hole-in-one",par:6,visual:"flute",special:true},
+  {venue:"Café De Lift",drink:"Brugse Zot",details:"33 cl",par:5,visual:"chalice"},
+  {venue:"Café Studio",drink:"Vaasje",details:"25 cl",par:6,visual:"vaasje"}
 ];
 const q=new URLSearchParams(location.search);
 const room=(q.get("room")||localStorage.getItem("golf-room")||"THOMAS-OPEN").toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,24)||"THOMAS-OPEN";
 q.set("room",room);
 history.replaceState(null,"",location.pathname+"?"+q.toString());
 localStorage.setItem("golf-room",room);
-const RESET_EPOCH="THOMAS-NOV05-FULL-RESET-4";
+const RESET_EPOCH="THOMAS-NOV07-FULL-RESET-5";
 const API_BASE=String(globalThis.__PUBGOLF_API_BASE__||"").replace(/\/+$/,"");
 const isNative=()=>globalThis.__PUBGOLF_NATIVE__===true;
 function nativeFeedback(kind="light"){
